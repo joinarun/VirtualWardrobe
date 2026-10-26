@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: Virtual Wardrobe foundation API
+  version: 0.1.0
+paths:
+  /api/v1/health:
+    get:
+      summary: Application liveness and non-secret execution metadata
+      responses:
+        '200':
+          description: Application process accepts requests
+  /actuator/health/readiness:
+    get:
+      summary: Readiness including PostgreSQL connectivity
+      responses:
+        '200':
+          description: Ready
+        '503':
+          description: Dependency unavailable

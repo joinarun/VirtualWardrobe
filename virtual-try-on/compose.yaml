@@ -1,0 +1,95 @@
+name: virtualwardrobe
+services:
+  db:
+    image: postgres:17-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-virtualwardrobe}
+      POSTGRES_USER: ${POSTGRES_USER:-virtualwardrobe}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run make bootstrap first}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  api:
+    build:
+      context: services/backend
+      target: development
+    image: virtualwardrobe-backend-dev
+    command: ["java", "-jar", "target/backend-0.0.1-SNAPSHOT.jar"]
+    environment: &backend-env
+      PORT: 8080
+      APP_MODE: api
+      APP_ADAPTER_MODE: local
+      APP_IMAGE_PROVIDER: mock
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-virtualwardrobe}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-virtualwardrobe}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_LOCAL_DATA_DIRECTORY: /workspace/work/local-data
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    volumes:
+      - ./services/backend:/workspace
+      - maven-cache:/root/.m2
+    depends_on:
+      db:
+        condition: service_healthy
+  worker:
+    image: virtualwardrobe-backend-dev
+    command: ["java", "-jar", "target/backend-0.0.1-SNAPSHOT.jar"]
+    environment:
+      <<: *backend-env
+      APP_MODE: worker
+    volumes:
+      - ./services/backend:/workspace
+      - maven-cache:/root/.m2
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+  web:
+    build:
+      context: apps/web
+      target: development
+    image: virtualwardrobe-web-dev
+    environment:
+      API_PROXY_TARGET: http://api:8080
+    volumes:
+      - ./apps/web/src:/app/src
+      - ./apps/web/public:/app/public
+      - ./apps/web/vite.config.ts:/app/vite.config.ts:ro
+    ports:
+      - "127.0.0.1:${WEB_PORT:-5173}:5173"
+    depends_on:
+      api:
+        condition: service_started
+  backend-tests:
+    profiles: [tools]
+    image: virtualwardrobe-backend-dev
+    command: ["./mvnw", "-B", "test"]
+    environment:
+      <<: *backend-env
+    volumes:
+      - ./services/backend:/workspace
+      - maven-cache:/root/.m2
+    depends_on:
+      db:
+        condition: service_healthy
+  e2e:
+    profiles: [tools]
+    build:
+      context: apps/web
+      target: e2e
+    environment:
+      BASE_URL: http://web:5173
+    depends_on:
+      web:
+        condition: service_started
+volumes:
+  postgres-data:
+  maven-cache:

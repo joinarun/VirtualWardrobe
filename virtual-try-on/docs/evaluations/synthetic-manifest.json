@@ -1,0 +1,25 @@
+{
+  "assetRoot": "../../apps/web/public/demo",
+  "source": "AI-generated synthetic wardrobe assets; apps/web/public/demo/provenance.json",
+  "license": "Generated assets owned for this project; not retailer images",
+  "permittedUsage": "Local demonstration and model connectivity/evaluation",
+  "consentRecorded": true,
+  "synthetic": true,
+  "pairs": [
+    {
+      "id": "synthetic-indigo",
+      "person": "hero-emerald.png",
+      "garment": "saree-indigo.png"
+    },
+    {
+      "id": "synthetic-rose",
+      "person": "hero-emerald.png",
+      "garment": "saree-rose.png"
+    },
+    {
+      "id": "synthetic-ivory",
+      "person": "hero-emerald.png",
+      "garment": "saree-ivory.png"
+    }
+  ]
+}

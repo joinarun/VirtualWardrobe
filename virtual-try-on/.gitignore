@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+work/
+target/
+node_modules/
+dist/
+.DS_Store
+*.log
+playwright-report/
+test-results/
+demo-credentials.txt

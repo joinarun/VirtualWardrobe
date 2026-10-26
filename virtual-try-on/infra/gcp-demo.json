@@ -1,0 +1,21 @@
+{
+  "project_id": "virtualtryon-511016",
+  "region": "asia-south1",
+  "prefix": "virtualwardrobe",
+  "environment": "demo",
+  "firebase_site": "virtualwardrobe-511016",
+  "database_version": "POSTGRES_17",
+  "database_tier": "db-f1-micro",
+  "database_storage_gb": 10,
+  "database_storage_max_gb": 20,
+  "api_max_instances": 2,
+  "worker_max_instances": 1,
+  "image_provider": "mock",
+  "google_image_model": "gemini-nano-banana-2.1",
+  "google_image_location": "global",
+  "daily_customer_limit": 5,
+  "daily_global_limit": 100,
+  "daily_provider_budget_usd": "5.00",
+  "bootstrap_email": "superadmin_1@gmail.com",
+  "firebase_tools_version": "15.34.1"
+}
