@@ -1,6 +1,6 @@
 # Virtual Wardrobe
 
-Responsive customer shopping and store workspace, developed feature by feature with Spec Kit. Product requirements and architecture are in the parent workspace's `docs/` directory. This first feature delivers the local application foundation; customer accounts, catalog and generation workflows follow in subsequent features.
+Responsive customer shopping and store workspace, developed feature by feature with Spec Kit. Product requirements and architecture are in the parent workspace's `docs/` directory. Feature specifications record the implemented scope and acceptance evidence.
 
 ## Run locally
 
@@ -27,9 +27,17 @@ make down
 
 - `services/backend`: Java21 / Spring Boot4.1.2 / Maven Wrapper3.10.0 / PostgreSQL/Flyway. One codebase and image, selected with `APP_MODE=api|worker`.
 - `apps/web`: React19 / TypeScript6 / Vite8. Customer and staff layouts are separate.
-- `/api/v1` is the public API prefix. API mode denies all `/internal/**` paths; worker mode has no public business API. No business authentication endpoints exist in foundation.
-- `APP_ADAPTER_MODE=local` and `APP_IMAGE_PROVIDER=mock` are the only foundation adapters. Their output is explicitly `Demo preview`; no paid image API call is made.
-- Database configuration uses standard `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`. The eventual web session cookie is `__session` for Firebase Hosting compatibility.
+- `/api/v1` is the public API prefix. API mode denies all `/internal/**` paths; worker mode has no public business API. Customer and workforce credentials are separate, with store-scoped workforce memberships.
+- `APP_ADAPTER_MODE=local` and `APP_IMAGE_PROVIDER=mock` are the safe local defaults. Mock outputs are explicitly `Demo preview`. The provider evaluator supports an opt-in live Google mode with bounded spending and separate human scoring.
+- Database configuration uses standard `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`. Web sessions persist in PostgreSQL and use the `__session` HttpOnly cookie, CSRF headers and credential-version checks.
 - Local storage and queued task references are ignored under `work/`. Private customer media and production job workers will be implemented with their own authorization/lifecycle tests.
 
 Do not commit `.env`, credentials, photos, `work/`, build artifacts or browser reports. The private worker also requires Cloud Run IAM when deployed; application route selection is not a substitute for infrastructure authorization.
+
+## Accounts and stores
+
+Run `make bootstrap-admin` to create the first super admin if none exists. Generated credentials are written once to a local owner-readable file, with the location reported by the command. Workforce temporary passwords expire after 24 hours and require rotation. If a browser test rotates the local operator password, its current fixture remains only in ignored `work/e2e/admin-credential.json`; the initial bootstrap file is then stale.
+
+Customers use mobile/password signup, explicitly unverified phone numbers, and hashed one-use recovery codes. Local signup uses an explicit local test CAPTCHA adapter. Cloud signup must use real server-validated CAPTCHA and fails closed if configuration is missing.
+
+Super admins create pending stores and workforce accounts. An invited store admin signs in, changes their temporary password, accepts their membership and activates the store. Store admins manage only their stores and memberships. Database transactions protect the last active global/store administrator, and membership removal preserves audit history.

@@ -27,3 +27,7 @@ e2e:
 .PHONY: ai-benchmark
 ai-benchmark:
 	MODE="$(or $(MODE),mock)" PAIRS="$(or $(PAIRS),3)" MANIFEST="$(or $(MANIFEST),/project/docs/evaluations/synthetic-manifest.json)" MAX_USD="$(or $(MAX_USD),0)" ./scripts/ai-benchmark.sh
+
+.PHONY: bootstrap-admin
+bootstrap-admin:
+	./scripts/bootstrap-admin.sh

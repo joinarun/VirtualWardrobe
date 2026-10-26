@@ -1,9 +1,28 @@
-# Virtual try on requirements and development guide
+# VirtualWardrobe
 
-Start with [the corrected product requirements](docs/PRD.md), then review [the architecture decisions](docs/architecture.md).
+A web application for discovering Indian clothing, previewing garments with AI, and connecting customers with stores. Sarees are the priority category. The implementation lives in [`virtual-try-on`](virtual-try-on/), with one Java Spring Boot backend and separate React customer and staff interfaces.
 
-Follow [the Spec Kit guide](SPEC-KIT-GUIDE.md) to initialize the project and build its eight features in order. It contains exact terminal commands and Codex prompts, including local development, demo data, verification and GCP deployment preparation.
+## Run locally
 
-The baseline keeps Java Spring Boot, uses React for the Phase 1 website, and reserves React Native/Expo for later mobile clients. No application code has been implemented in this package. Project-specific Makefile targets and deployment scripts are instructions for the coding agent to create and verify.
+With Docker running:
 
-Spec Kit commands and linked Google service information were checked on 26 October 2026. Recheck model availability, pricing and service support during implementation.
+```bash
+cd virtual-try-on
+make bootstrap
+make dev
+make bootstrap-admin
+```
+
+The storefront is at http://localhost:5173 and the staff workspace at http://localhost:5173/staff. The bootstrap command writes its generated credential to an ignored, owner-readable local file and requires a password change before business access. It never prints or commits passwords.
+
+Run `make test lint build e2e` for the current acceptance checks. `make down` stops the local services while preserving database data.
+
+## Product and development documents
+
+- [Product requirements](docs/PRD.md)
+- [Architecture](docs/architecture.md)
+- [Spec Kit development guide](SPEC-KIT-GUIDE.md)
+- [Application setup and operations](virtual-try-on/README.md)
+- [Feature specifications and acceptance evidence](virtual-try-on/specs/)
+
+The public web app is Phase 1. React Native and Expo mobile clients are planned to reuse the backend in a later phase. Demo fixtures must remain labelled; a live-model connectivity check does not establish saree fidelity. Human visual evaluation is a separate release gate.

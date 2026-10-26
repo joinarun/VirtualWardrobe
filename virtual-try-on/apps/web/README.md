@@ -1,32 +1,17 @@
-# React + TypeScript + Vite
+# Virtual Wardrobe web application
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React and TypeScript customer website and store workspace. Development uses Vite with same-origin /api proxying. The project-level Makefile supplies portable container commands.
 
-Currently, two official plugins are available:
+Identity routes:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- /account/login, /account/signup, /account/recover and /account/password.
+- /account for customer account details and privacy controls.
+- /staff/login and /staff for the separate workforce workspace.
 
-## React Compiler
+The API client uses HttpOnly server sessions and a memory-only CSRF token obtained from /api/v1/auth/csrf. Never add session credentials, recovery codes or temporary passwords to browser storage. Provider secrets belong on the backend; only the CAPTCHA public site key reaches this client.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Signup availability and CAPTCHA mode come from /api/v1/auth/config. A deployed missing/disabled configuration cannot fall back to the explicit local development adapter. Customer and workforce identities remain separate account kinds.
 
-## Expanding the Oxlint configuration
+Local checks from this directory: npm run build, npm run lint and npm run e2e. Browser tests use the running application and real local API for account journeys. The privileged workforce test additionally requires TEST_BOOTSTRAP_FILE and TEST_STATE_DIRECTORY paths supplied by the operator; it never embeds or logs credentials. A missing fixture is an explicit test skip. Product-quality evidence must distinguish that skip from a fully exercised run.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Original demo images and provenance are in public/demo. They are illustrative assets, not actual customer try-on results. Catalog, generation, gallery and enquiry interfaces will be added through their own feature contracts.
