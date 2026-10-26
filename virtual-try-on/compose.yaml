@@ -91,6 +91,21 @@ services:
       target: e2e
     environment:
       BASE_URL: http://web:5173
+      TEST_BOOTSTRAP_FILE: /test-bootstrap.txt
+      TEST_STATE_DIRECTORY: /test-state
+      TEST_FIXTURES_REQUIRED: "true"
+    volumes:
+      - type: bind
+        source: ${E2E_BOOTSTRAP_FILE:-./work/bootstrap-credentials.txt}
+        target: /test-bootstrap.txt
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${E2E_STATE_DIRECTORY:-./work/e2e}
+        target: /test-state
+        bind:
+          create_host_path: false
     depends_on:
       web:
         condition: service_started

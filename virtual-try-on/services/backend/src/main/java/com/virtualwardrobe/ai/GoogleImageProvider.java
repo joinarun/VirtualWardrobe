@@ -7,9 +7,11 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.*;
 
 /** Server-side provider; errors deliberately contain no raw response, token or image bytes. */
 public final class GoogleImageProvider implements ImageProvider {
@@ -58,25 +60,56 @@ public final class GoogleImageProvider implements ImageProvider {
         var httpRequest = HttpRequest.newBuilder(endpoint).timeout(Duration.ofSeconds(properties.timeoutSeconds()))
                 .header("Authorization", "Bearer " + token).header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString())).build();
+        return generateResponse(httpRequest);
+    }
+
+    /** The deadline covers the entire capped body, including a response that stalls after headers. */
+    GenerationResult generateResponse(HttpRequest httpRequest) {
+        CompletableFuture<HttpResponse<byte[]>> pending = null;
         try {
-            var response = client.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
-            byte[] responseBytes;
-            try (var stream = response.body()) { responseBytes = stream.readNBytes(MAX_RESPONSE_BYTES + 1); }
-            if (responseBytes.length > MAX_RESPONSE_BYTES)
-                throw new ProviderFailure(ProviderFailure.Kind.INVALID_RESPONSE, "Provider result exceeds size limit");
+            pending = client.sendAsync(httpRequest, ignored -> new CappedBodySubscriber());
+            var response = pending.get(properties.timeoutSeconds(), TimeUnit.SECONDS);
             if (response.statusCode() == 429 || response.statusCode() == 503)
                 throw new ProviderFailure(ProviderFailure.Kind.RETRYABLE, "Image provider is temporarily unavailable");
             if (response.statusCode() < 200 || response.statusCode() >= 300)
                 throw new ProviderFailure(ProviderFailure.Kind.REJECTED, "Image provider rejected this request");
-            return parseResponse(new String(responseBytes, StandardCharsets.UTF_8), properties.model());
-        } catch (HttpTimeoutException e) {
+            return parseResponse(new String(response.body(), StandardCharsets.UTF_8), properties.model());
+        } catch (TimeoutException e) {
             throw new ProviderFailure(ProviderFailure.Kind.UNKNOWN_OUTCOME, "Provider outcome is unknown after timeout; do not automatically retry");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new ProviderFailure(ProviderFailure.Kind.UNKNOWN_OUTCOME, "Provider request was interrupted; outcome requires review");
-        } catch (IOException e) {
+        } catch (ExecutionException e) {
+            for (Throwable cause = e.getCause(); cause != null; cause = cause.getCause()) {
+                if (cause instanceof ProviderFailure failure) throw failure;
+                if (cause instanceof HttpTimeoutException)
+                    throw new ProviderFailure(ProviderFailure.Kind.UNKNOWN_OUTCOME, "Provider outcome is unknown after timeout; do not automatically retry");
+            }
             throw new ProviderFailure(ProviderFailure.Kind.UNKNOWN_OUTCOME, "Provider connection ended without a confirmed outcome");
+        } finally {
+            if (pending != null && !pending.isDone()) pending.cancel(true);
         }
+    }
+
+    private static final class CappedBodySubscriber implements HttpResponse.BodySubscriber<byte[]> {
+        private final HttpResponse.BodySubscriber<byte[]> delegate = HttpResponse.BodySubscribers.ofByteArray();
+        private Flow.Subscription subscription;
+        private int received;
+        @Override public CompletionStage<byte[]> getBody() { return delegate.getBody(); }
+        @Override public void onSubscribe(Flow.Subscription value) { subscription = value; delegate.onSubscribe(value); }
+        @Override public void onNext(List<ByteBuffer> buffers) {
+            for (var buffer : buffers) {
+                if (buffer.remaining() > MAX_RESPONSE_BYTES - received) {
+                    subscription.cancel();
+                    delegate.onError(new ProviderFailure(ProviderFailure.Kind.INVALID_RESPONSE, "Provider result exceeds size limit"));
+                    return;
+                }
+                received += buffer.remaining();
+            }
+            delegate.onNext(buffers);
+        }
+        @Override public void onError(Throwable failure) { delegate.onError(failure); }
+        @Override public void onComplete() { delegate.onComplete(); }
     }
 
     private static JsonObject imagePart(byte[] bytes, String mime) {

@@ -25,6 +25,12 @@ Cloud Tasks tests verify deterministic UUID/sequence identity, OIDC audience/ser
 
 The final backend jar packaged successfully, API and worker restarted, and readiness passed. Migrations V5 and V6 apply to real PostgreSQL. The local worker uses a durable PostgreSQL delivery table and its execution thread pool is not the queue.
 
+## Whole-response provider deadline
+
+The Google adapter enforces an explicit deadline until the complete response body arrives and cancels an unfinished exchange. Its streaming subscriber rejects a body above 24 MiB before unbounded allocation. A timeout retains UNKNOWN_OUTCOME semantics and does not authorize an automatic retry.
+
+An independent Java 21 test run against an isolated feature005 snapshot passed all seven provider tests. A real localhost HTTP server sent headers and then stalled its body: the one-second configured deadline returned UNKNOWN_OUTCOME in 1.151 seconds. A chunked 24 MiB + 1 response was rejected in 0.053 seconds, and a normal final image was accepted. This run used neither cloud credentials nor the shared backend build directory; subsequent full-feature regression includes these three additional HTTP checks.
+
 ## Frontend and remaining release evidence
 
 The actual local fixture customer journey already passed, covering invalid source rejection, explicit consent, returned job, duplicate create, private access denial, attachment download, save, re-login, gallery survival after archival and deletion. All 11 final browser tests passed in 25.5 seconds against the final V6 runtime, including the real private fixture journey in 9.9 seconds, existing catalog/identity regressions, unused-source replacement/deletion, and axe contrast checks across seven rendered screens with zero color-contrast violations. SVG icons, frontend build/types, lint and whitespace checks pass. See [frontend-validation.md](frontend-validation.md) for exact evidence. All 16 tasks are complete.

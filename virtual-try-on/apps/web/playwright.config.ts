@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.ts",
   use: {
     baseURL: process.env.BASE_URL || "http://localhost:5173",
     headless: true,
@@ -10,5 +11,5 @@ export default defineConfig({
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
     },
   },
-  reporter: "list",
+  reporter: [["list"], ["./e2e/required-reporter.ts"]],
 });

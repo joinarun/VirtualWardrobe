@@ -10,3 +10,6 @@ dist/
 playwright-report/
 test-results/
 demo-credentials.txt
+
+__pycache__/
+*.py[cod]

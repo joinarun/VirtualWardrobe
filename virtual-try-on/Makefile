@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 COMPOSE := docker compose
-.PHONY: bootstrap dev down test lint build e2e
+.PHONY: bootstrap dev down test lint build e2e e2e-clean
 bootstrap:
 	./scripts/bootstrap.sh
 dev:
@@ -20,9 +20,10 @@ build:
 	docker build --target runtime -t virtualwardrobe-backend:local services/backend
 	$(COMPOSE) run --rm --no-deps web npm run build
 e2e:
-	./scripts/wait-ready.sh
-	$(COMPOSE) build e2e
-	$(COMPOSE) run --rm e2e
+	./scripts/e2e.sh
+
+e2e-clean:
+	python3 scripts/e2e-clean.py
 
 .PHONY: ai-benchmark
 ai-benchmark:
