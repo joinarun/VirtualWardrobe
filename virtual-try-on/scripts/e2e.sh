@@ -5,6 +5,10 @@ umask 077
 ./scripts/wait-ready.sh
 # Readiness comes from make dev's packaged runtime; do not recompile a concurrently edited working tree.
 BOOTSTRAP_SKIP_PACKAGE=true ./scripts/bootstrap-admin.sh
+# Use the reviewed standalone CLI and the same packaged build. It never invokes a provider.
+e2e_demo_dataset="${E2E_DEMO_DATASET:-virtualwardrobe-demo-v1}"
+export DEMO_CREDENTIALS_FILE="${E2E_DEMO_CREDENTIALS_FILE:-$PWD/work/demo/demo-credentials-$e2e_demo_dataset.json}"
+DATASET="$e2e_demo_dataset" PROFILE=standard DEMO_SKIP_PACKAGE=true ./scripts/demo.sh seed
 bootstrap_directory="${BOOTSTRAP_OUTPUT_DIRECTORY:-$PWD/work}"
 e2e_state_directory="${E2E_STATE_DIRECTORY:-$PWD/work/e2e}"
 mkdir -p "$e2e_state_directory"
@@ -26,5 +30,6 @@ fi
 chmod 600 "$e2e_bootstrap_file"
 export E2E_BOOTSTRAP_FILE="$e2e_bootstrap_file"
 export E2E_STATE_DIRECTORY="$e2e_state_directory"
+export E2E_DEMO_CREDENTIALS_FILE="$DEMO_CREDENTIALS_FILE"
 docker compose build e2e
 docker compose run --rm --no-deps e2e "$@"

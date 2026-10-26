@@ -47,13 +47,13 @@
 }
 .callback-form .field,
 .enquiry-operations .field {
-  font-size: 11px;
+  font-size: 12px;
 }
 .callback-form .badge {
   margin: 0 0 13px;
 }
 .callback-form .form-hint {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   margin-bottom: 25px;
 }
@@ -81,7 +81,7 @@
   flex-shrink: 0;
 }
 .contact-consent > small {
-  font-size: 10px;
+  font-size: 12px;
   color: #6a5960;
   overflow-wrap: anywhere;
 }
@@ -90,7 +90,7 @@
   font-size: 12px;
 }
 .callback-form > .text-button {
-  font-size: 11px;
+  font-size: 12px;
   display: block;
   margin-top: 20px;
 }
@@ -111,7 +111,7 @@
 .ticket-status {
   display: inline-block;
   padding: 8px 10px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
   border-radius: 3px;
   background: #eee5d6;
@@ -161,7 +161,7 @@
 }
 .enquiry-summary-card p:not(.eyebrow),
 .enquiry-summary-card small {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6a5960;
 }
@@ -190,7 +190,7 @@
   margin: 0 0 15px;
 }
 .conversation-panel > .form-hint {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   margin-bottom: 25px;
 }
@@ -226,7 +226,7 @@
   line-height: 1.7;
 }
 .event-visibility {
-  font-size: 9px;
+  font-size: 12px;
   white-space: nowrap;
   padding: 3px 6px;
   background: #e8eddf;
@@ -239,13 +239,13 @@
   color: #654d37;
 }
 .event-actor {
-  font-size: 10px;
+  font-size: 12px;
   color: #6a5960;
   line-height: 1.8;
   margin: 8px 0 0;
 }
 .event-transition {
-  font-size: 11px;
+  font-size: 12px;
   color: #6a5960;
   line-height: 1.9;
   margin: 10px 0 0;
@@ -255,7 +255,7 @@
   flex-wrap: wrap;
 }
 .event-outcome {
-  font-size: 11px;
+  font-size: 12px;
   color: #57614b;
   line-height: 1.9;
   margin-top: 10px;
@@ -269,7 +269,7 @@
   margin: 14px 0 0;
 }
 .event-redacted {
-  font-size: 11px;
+  font-size: 12px;
   font-style: italic;
   line-height: 1.9;
   color: #6a5960;
@@ -298,7 +298,7 @@
 }
 .enquiry-customer-context dt,
 .enquiry-contact dt {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.4px;
   text-transform: uppercase;
   color: #6a5960;
@@ -313,14 +313,14 @@
 }
 .enquiry-customer-context > .secondary-button,
 .enquiry-customer-context > .text-button {
-  font-size: 11px;
+  font-size: 12px;
   display: flex;
   justify-content: center;
   margin: 18px 0;
 }
 .enquiry-customer-context > .form-hint {
   margin-top: 25px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
 }
 .sidebar-enquiry-count {
@@ -330,7 +330,7 @@
   background: #755361;
   color: #fff8ed;
   padding: 3px 6px;
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.5;
 }
 .enquiry-counts {
@@ -359,7 +359,7 @@
   line-height: 1.8;
 }
 .enquiry-claim-notice {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6a5960;
   padding: 0 0 20px;
@@ -372,16 +372,16 @@
 }
 .enquiry-search .field {
   margin: 0;
-  font-size: 10px;
+  font-size: 12px;
   min-width: 0;
 }
 .enquiry-search .secondary-button {
-  font-size: 10px;
+  font-size: 12px;
   white-space: nowrap;
   padding: 13px 14px;
 }
 .enquiry-table td {
-  font-size: 11px;
+  font-size: 12px;
 }
 .enquiry-table td > strong {
   display: block;
@@ -390,17 +390,17 @@
 }
 .enquiry-table td > small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   color: #6a5960;
   margin: 7px 0;
 }
 .enquiry-table .badge {
-  font-size: 8px;
+  font-size: 12px;
   margin-top: 5px;
 }
 .enquiry-table .text-button {
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .staff-enquiry-layout {
@@ -434,10 +434,10 @@
   margin: 15px 0;
 }
 .enquiry-contact > .badge {
-  font-size: 9px;
+  font-size: 12px;
 }
 .enquiry-contact > .full-width {
-  font-size: 11px;
+  font-size: 12px;
   justify-content: center;
 }
 .enquiry-composer {
@@ -451,16 +451,16 @@
   margin: 0 0 12px;
 }
 .enquiry-composer > p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6a5960;
   margin: 0 0 20px;
 }
 .enquiry-composer .field {
-  font-size: 11px;
+  font-size: 12px;
 }
 .enquiry-composer button {
-  font-size: 11px;
+  font-size: 12px;
 }
 .internal-composer {
   background: #f0e7da;
@@ -469,15 +469,15 @@
   padding: 20px;
 }
 .enquiry-operations .form-hint {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
 }
 .enquiry-operations form button {
-  font-size: 11px;
+  font-size: 12px;
 }
 .enquiry-operations form select,
 .enquiry-operations form textarea {
-  font-size: 12px;
+  font-size: 16px;
 }
 @media (max-width: 1100px) {
   .enquiry-search {
@@ -565,7 +565,7 @@
     gap: 13px;
   }
   .enquiry-counts span {
-    font-size: 11px;
+    font-size: 12px;
   }
 }
 @media (max-width: 500px) {
@@ -583,11 +583,11 @@
     font-size: 24px;
   }
   .callback-product .eyebrow {
-    font-size: 8px;
+    font-size: 12px;
     line-height: 1.8;
   }
   .callback-product > p:not(.eyebrow) {
-    font-size: 10px;
+    font-size: 12px;
   }
   .callback-form h2 {
     font-size: 28px;
@@ -611,7 +611,7 @@
     font-size: 12px;
   }
   .contact-consent > small {
-    font-size: 10px;
+    font-size: 12px;
   }
   .customer-enquiry-detail > .page-title-row h1,
   .staff-enquiry-detail > .page-title-row h1 {
@@ -627,7 +627,7 @@
     gap: 10px;
   }
   .event-actor {
-    font-size: 11px;
+    font-size: 12px;
   }
   .event-heading > strong {
     font-size: 12px;
@@ -636,13 +636,13 @@
     font-size: 13px;
   }
   .event-transition {
-    font-size: 11px;
+    font-size: 12px;
   }
   .enquiry-timeline > li {
     padding: 16px;
   }
   .enquiry-customer-context .form-hint {
-    font-size: 11px;
+    font-size: 12px;
   }
   .staff-enquiry-detail > .page-title-row {
     flex-wrap: wrap;
@@ -662,7 +662,7 @@
   .enquiry-counts span {
     display: block;
     margin-top: 9px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .enquiry-search {
     grid-template-columns: 1fr;
@@ -675,20 +675,20 @@
     font-size: 16px;
   }
   .enquiry-search .field {
-    font-size: 11px;
+    font-size: 12px;
   }
   .enquiry-table .ticket-status {
     white-space: normal;
     min-width: 75px;
   }
   .enquiry-table th {
-    font-size: 8px;
+    font-size: 12px;
   }
   .enquiry-table td {
-    font-size: 10px;
+    font-size: 12px;
   }
   .enquiry-claim-notice {
-    font-size: 11px;
+    font-size: 12px;
   }
   .internal-composer {
     padding: 17px;
@@ -720,7 +720,7 @@
   margin-top: 20px;
 }
 .enquiry-jump-links > a {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   justify-content: center;
 }

@@ -11,7 +11,8 @@ artifacts.mkdir(parents=True,mode=0o700)
 bootstrap=artifacts/'bootstrap'
 state=artifacts/'state'
 media=artifacts/'media'
-for directory in (bootstrap,state,media): directory.mkdir(mode=0o700)
+demo=artifacts/'demo'
+for directory in (bootstrap,state,media,demo): directory.mkdir(mode=0o700)
 source=artifacts/'source'
 source.mkdir(mode=0o700)
 ignored=shutil.ignore_patterns('node_modules','target','work','.env','.env.*','demo-credentials*','__pycache__','*.pyc','test-results','playwright-report','dist')
@@ -44,7 +45,7 @@ ports=set()
 while len(ports)<3: ports.add(port())
 api_port,web_port,db_port=sorted(ports)
 environment=dict(os.environ)
-environment.update({'COMPOSE_PROJECT_NAME':project,'COMPOSE_FILE':str(source/'compose.yaml')+os.pathsep+str(override_file),'POSTGRES_DB':'virtualwardrobe','POSTGRES_USER':'virtualwardrobe','POSTGRES_PASSWORD':secrets.token_hex(24),'API_PORT':str(api_port),'WEB_PORT':str(web_port),'DB_PORT':str(db_port),'BOOTSTRAP_OUTPUT_DIRECTORY':str(bootstrap),'E2E_BOOTSTRAP_FILE':str(bootstrap/'bootstrap-credentials.txt'),'E2E_STATE_DIRECTORY':str(state)})
+environment.update({'COMPOSE_PROJECT_NAME':project,'COMPOSE_FILE':str(source/'compose.yaml')+os.pathsep+str(override_file),'POSTGRES_DB':'virtualwardrobe','POSTGRES_USER':'virtualwardrobe','POSTGRES_PASSWORD':secrets.token_hex(24),'API_PORT':str(api_port),'WEB_PORT':str(web_port),'DB_PORT':str(db_port),'BOOTSTRAP_OUTPUT_DIRECTORY':str(bootstrap),'E2E_BOOTSTRAP_FILE':str(bootstrap/'bootstrap-credentials.txt'),'E2E_STATE_DIRECTORY':str(state),'E2E_DEMO_DATASET':'virtualwardrobe-demo-v1','E2E_DEMO_CREDENTIALS_FILE':str(demo/'demo-credentials-virtualwardrobe-demo-v1.json')})
 log=artifacts/'verification.log'
 result=1
 with log.open('w') as output:

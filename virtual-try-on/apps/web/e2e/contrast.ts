@@ -15,3 +15,18 @@ export async function assertTextContrast(page: Page) {
     })),
   ).toEqual([]);
 }
+
+export async function assertWcagAA(page: Page) {
+  const result = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(
+    result.violations.map((rule) => ({
+      id: rule.id,
+      nodes: rule.nodes.map((node) => ({
+        target: node.target,
+        summary: node.failureSummary,
+      })),
+    })),
+  ).toEqual([]);
+}

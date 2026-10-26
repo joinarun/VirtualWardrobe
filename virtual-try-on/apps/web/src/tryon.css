@@ -11,7 +11,7 @@
   gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 30px;
-  font-size: 11px;
+  font-size: 12px;
   color: #755463;
 }
 .tryon-title {
@@ -52,7 +52,7 @@
   margin-bottom: 22px;
 }
 .tryon-product-card .eyebrow {
-  font-size: 9px;
+  font-size: 12px;
 }
 .tryon-product-card h2 {
   font-size: 25px;
@@ -65,13 +65,13 @@
   font-weight: 500;
 }
 .tryon-product-card > p:not(.eyebrow) {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   color: #6a585f;
   margin: 10px 0;
 }
 .tryon-product-card > .text-button {
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 12px;
 }
 .private-note {
@@ -86,7 +86,7 @@
   color: #725944;
 }
 .private-note > p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6d5858;
 }
@@ -103,7 +103,7 @@
 }
 .mode-label {
   display: inline-block;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.8px;
   line-height: 1.6;
@@ -130,11 +130,11 @@
   padding-top: 17px;
 }
 .provider-disclosure dt {
-  font-size: 9px;
+  font-size: 12px;
   color: #6f584a;
 }
 .provider-disclosure dd {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.7;
   color: #78554a;
   margin: 6px 0 0;
@@ -149,7 +149,7 @@
   margin-bottom: 20px;
   border-top: 1px solid #e3d7c8;
   border-bottom: 1px solid #e3d7c8;
-  font-size: 11px;
+  font-size: 12px;
   color: #725662;
 }
 .quota-note strong {
@@ -158,11 +158,11 @@
   color: #6a4658;
 }
 .quota-note small {
-  font-size: 9px;
+  font-size: 12px;
   color: #695a61;
 }
 .quota-note a {
-  font-size: 10px;
+  font-size: 12px;
   color: #725843;
   margin-left: auto;
 }
@@ -226,7 +226,7 @@
   stroke-width: 1.5;
 }
 .photo-silhouette p {
-  font-size: 11px;
+  font-size: 12px;
   color: #6e594c;
   margin-top: 15px;
 }
@@ -237,15 +237,15 @@
   margin: 17px 0 12px;
 }
 .photo-choose-row .upload-file-label {
-  font-size: 11px;
+  font-size: 12px;
   padding: 12px 16px;
 }
 .photo-step > .form-hint {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
 }
 .selected-photo-name {
-  font-size: 10px;
+  font-size: 12px;
   color: #6e5951;
   margin-top: 13px;
   overflow-wrap: anywhere;
@@ -258,7 +258,7 @@
   margin: 20px 0;
 }
 .consent-step > .text-button {
-  font-size: 11px;
+  font-size: 12px;
 }
 .retention-facts {
   padding: 17px;
@@ -268,7 +268,7 @@
   gap: 9px;
 }
 .retention-facts span {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   color: #6e5a49;
 }
@@ -283,7 +283,7 @@
   flex-shrink: 0;
 }
 .consent-version {
-  font-size: 9px;
+  font-size: 12px;
   color: #685961;
   margin-top: 23px;
 }
@@ -303,7 +303,7 @@
   height: 7px;
 }
 .generation-note {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6a5861;
   margin-top: 17px;
@@ -323,7 +323,7 @@
   margin-top: 12px;
 }
 .preview-state {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.6px;
   font-weight: 500;
   display: inline-block;
@@ -395,7 +395,7 @@
   gap: 10px;
   flex-wrap: wrap;
   padding: 15px;
-  font-size: 9px;
+  font-size: 12px;
   color: #705948;
 }
 .result-image-caption > strong {
@@ -453,7 +453,7 @@
   margin: 15px 0;
 }
 .preview-store {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   color: #6a5960;
   margin: 12px 0;
@@ -474,13 +474,13 @@
   margin-bottom: 22px;
 }
 .preview-details dt {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.3px;
   text-transform: uppercase;
   color: #685860;
 }
 .preview-details dd {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   color: #715663;
   margin: 5px 0 0;
@@ -494,15 +494,15 @@
 .result-actions > .full-width,
 .preview-actions > .full-width {
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
 }
 .result-actions .form-hint {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
 }
 .preview-actions > .text-button {
-  font-size: 10px;
+  font-size: 12px;
   display: block;
   margin-top: 19px;
 }
@@ -519,7 +519,7 @@
   margin-bottom: 13px;
 }
 .preview-confirm p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6d5858;
 }
@@ -528,18 +528,18 @@
   margin-top: 18px;
 }
 .preview-confirm .danger-button {
-  font-size: 10px;
+  font-size: 12px;
 }
 .preview-privacy {
   border-top: 1px solid #e7dbcd;
   padding-top: 20px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6a585f;
   margin-top: 23px;
 }
 .ai-limitations {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6a5962;
   background: #eee6db;
@@ -554,7 +554,7 @@
   border-bottom: 1px solid #e1d2c0;
   padding-bottom: 19px;
   margin: 7px 0 35px;
-  font-size: 11px;
+  font-size: 12px;
   color: #69585e;
 }
 .wardrobe-nav a[aria-current="page"] {
@@ -576,7 +576,7 @@
   margin-top: 15px;
 }
 .wardrobe-count {
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
   padding: 10px 13px;
   border: 1px solid #ddccb6;
@@ -614,7 +614,7 @@
   left: 10px;
   right: 10px;
   bottom: 10px;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.3px;
   padding: 7px 9px;
   background: #fcf6e8e8;
@@ -634,7 +634,7 @@
   font-size: 55px;
 }
 .wardrobe-job-placeholder strong {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
   font-weight: 500;
 }
@@ -642,7 +642,7 @@
   padding: 20px 17px;
 }
 .wardrobe-card-copy > .eyebrow {
-  font-size: 8px;
+  font-size: 12px;
   line-height: 1.8;
   overflow-wrap: anywhere;
 }
@@ -652,24 +652,24 @@
   margin: 12px 0;
 }
 .wardrobe-card-copy > p:not(.eyebrow) {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   color: #6a5960;
   margin: 10px 0;
 }
 .wardrobe-card-copy > .preview-state {
   margin: 3px 0 6px;
-  font-size: 8px;
+  font-size: 12px;
 }
 .wardrobe-card-copy > .wardrobe-preview-notice {
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6c5950;
   white-space: pre-line;
 }
 .wardrobe-card-copy > .gallery-availability {
   color: #715846;
-  font-size: 10px;
+  font-size: 12px;
   padding: 10px;
   background: #f0e5d5;
   border-radius: 3px;
@@ -683,10 +683,10 @@
   padding-top: 17px;
 }
 .wardrobe-card-actions > .text-button {
-  font-size: 10px;
+  font-size: 12px;
 }
 .wardrobe-privacy {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6a5960;
   border-top: 1px solid #e5d7c6;
@@ -791,7 +791,7 @@
   }
   .wardrobe-nav {
     gap: 18px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .wardrobe-nav a:last-child {
     margin-left: 0;
@@ -814,7 +814,7 @@
     font-size: 12px;
   }
   .preview-breadcrumbs {
-    font-size: 10px;
+    font-size: 12px;
     gap: 15px;
     margin-bottom: 22px;
   }
@@ -822,13 +822,13 @@
     font-size: 22px;
   }
   .tryon-product-card > .eyebrow {
-    font-size: 8px;
+    font-size: 12px;
   }
   .tryon-product-card > strong {
     font-size: 16px;
   }
   .tryon-product-card > .text-button {
-    font-size: 10px;
+    font-size: 12px;
   }
   .provider-disclosure,
   .preview-mode-notice {
@@ -849,21 +849,21 @@
   }
   .provider-disclosure dd {
     margin: 0;
-    font-size: 11px;
+    font-size: 12px;
   }
   .provider-disclosure dt {
-    font-size: 10px;
+    font-size: 12px;
   }
   .quota-note {
-    font-size: 11px;
+    font-size: 12px;
     gap: 10px;
   }
   .quota-note small {
-    font-size: 10px;
+    font-size: 12px;
   }
   .quota-note a {
     margin: 0;
-    font-size: 11px;
+    font-size: 12px;
   }
   .photo-step h2,
   .consent-step h2 {
@@ -881,14 +881,14 @@
     gap: 10px;
   }
   .photo-choose-row > .upload-file-label {
-    font-size: 11px;
+    font-size: 12px;
     padding: 12px 13px;
   }
   .consent-step .checkbox-field {
     font-size: 12px;
   }
   .generation-note {
-    font-size: 11px;
+    font-size: 12px;
   }
   .preview-page > .page-title-row {
     flex-wrap: wrap;
@@ -898,7 +898,7 @@
     font-size: 34px;
   }
   .preview-state {
-    font-size: 10px;
+    font-size: 12px;
   }
   .generation-state {
     min-height: 360px;
@@ -914,13 +914,13 @@
     font-size: 29px;
   }
   .preview-details dt {
-    font-size: 10px;
+    font-size: 12px;
   }
   .preview-details dd {
     font-size: 12px;
   }
   .preview-privacy {
-    font-size: 11px;
+    font-size: 12px;
   }
   .result-actions > .full-width,
   .preview-actions > .full-width {
@@ -929,7 +929,7 @@
     text-align: center;
   }
   .preview-actions > .text-button {
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.9;
   }
   .preview-confirm p {
@@ -956,17 +956,17 @@
     overflow-wrap: anywhere;
   }
   .wardrobe-card-copy > .eyebrow {
-    font-size: 8px;
+    font-size: 12px;
   }
   .wardrobe-card-copy > p:not(.eyebrow) {
-    font-size: 10px;
+    font-size: 12px;
   }
   .wardrobe-card-copy > .wardrobe-preview-notice {
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.8;
   }
   .wardrobe-image-label {
-    font-size: 8px;
+    font-size: 12px;
     left: 6px;
     right: 6px;
     bottom: 6px;
@@ -976,17 +976,17 @@
     gap: 12px;
   }
   .wardrobe-card-actions > .text-button {
-    font-size: 10px;
+    font-size: 12px;
   }
   .wardrobe-nav {
     gap: 15px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .wardrobe-privacy {
-    font-size: 11px;
+    font-size: 12px;
   }
   .wardrobe-page > .panel > .primary-button {
-    font-size: 11px;
+    font-size: 12px;
   }
   .gallery-delete-confirm h2 {
     font-size: 26px;
@@ -999,7 +999,7 @@
 }
 
 .service-refresh {
-  font-size: 11px;
+  font-size: 12px;
   margin: 8px 0 20px;
   line-height: 1.8;
 }

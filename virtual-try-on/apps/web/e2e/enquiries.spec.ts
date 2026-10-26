@@ -3,7 +3,7 @@ import type { Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { assertTextContrast } from "./contrast";
+import { assertWcagAA } from "./contrast";
 const baseURL = process.env.BASE_URL || "http://localhost:5173";
 async function mutate(
   page: Page,
@@ -184,7 +184,7 @@ test("real customer callback, atomic staff claim, public and private conversatio
     await customer
       .getByLabel(/^I agree to share my name, unverified mobile number/)
       .check();
-    await assertTextContrast(customer);
+    await assertWcagAA(customer);
     await customer
       .getByRole("button", { name: "Request a callback", exact: true })
       .click();
@@ -438,7 +438,7 @@ test("real customer callback, atomic staff claim, public and private conversatio
       .getByRole("button", { name: "Update status", exact: true })
       .click();
     await expect(staffB.locator(".ticket-status")).toHaveText("Closed");
-    await assertTextContrast(staffB);
+    await assertWcagAA(staffB);
     await customer.setViewportSize({ width: 360, height: 800 });
     await customer.reload();
     expect(
@@ -446,7 +446,7 @@ test("real customer callback, atomic staff claim, public and private conversatio
         () => document.documentElement.scrollWidth <= window.innerWidth,
       ),
     ).toBeTruthy();
-    await assertTextContrast(customer);
+    await assertWcagAA(customer);
     if (stateDirectory)
       await customer.screenshot({
         path: join(stateDirectory, "customer-enquiry-mobile.png"),

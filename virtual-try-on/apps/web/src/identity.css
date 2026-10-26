@@ -32,7 +32,7 @@ a.secondary-button {
   color: #4b3246;
   border-radius: 3px;
   padding: 12px 17px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
   cursor: pointer;
 }
@@ -47,7 +47,7 @@ a.secondary-button {
   color: #5e3e55;
   cursor: pointer;
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -68,7 +68,7 @@ a.secondary-button {
   border: 1px solid #9a443e;
   color: #fff;
   padding: 12px 18px;
-  font-size: 11px;
+  font-size: 12px;
   border-radius: 3px;
   cursor: pointer;
 }
@@ -101,7 +101,7 @@ a.secondary-button {
   flex-direction: column;
   gap: 8px;
   margin: 0 0 19px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: #5a424f;
   min-width: 0;
@@ -112,7 +112,7 @@ a.secondary-button {
   gap: 8px;
 }
 .field small {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
 }
 .field input,
@@ -124,7 +124,7 @@ a.secondary-button {
   background: #fffefa;
   border-radius: 3px;
   padding: 12px 13px;
-  font-size: 13px;
+  font-size: 16px;
   color: #3f2f3d;
   outline: none;
   line-height: 1.4;
@@ -155,11 +155,11 @@ a.secondary-button {
   bottom: 0;
   background: transparent;
   padding: 0 13px;
-  font-size: 10px;
+  font-size: 12px;
   color: #715846;
 }
 .form-hint {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   color: #675b5e;
   font-weight: 400;
@@ -171,7 +171,7 @@ a.secondary-button {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.7;
   color: #6b5863;
   margin: 19px 0;
@@ -189,7 +189,7 @@ a.secondary-button {
   background: #fff2ed;
   border-radius: 3px;
   color: #874b42;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   padding: 13px 15px;
   margin: 18px 0;
@@ -218,7 +218,7 @@ a.secondary-button {
   position: relative;
   min-width: 0;
 }
-.auth-story > img {
+.auth-story img {
   width: 100%;
   aspect-ratio: 0.84;
   object-fit: cover;
@@ -233,7 +233,7 @@ a.secondary-button {
   margin: 13px 0;
 }
 .auth-story p:not(.eyebrow) {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #685a61;
 }
@@ -247,7 +247,7 @@ a.secondary-button {
   margin-top: 26px;
   border-top: 1px solid #e8ddd2;
   padding-top: 22px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #695a61;
 }
@@ -257,7 +257,7 @@ a.secondary-button {
   text-underline-offset: 4px;
 }
 .auth-links .muted-link {
-  font-size: 10px;
+  font-size: 12px;
   color: #675a60;
 }
 .phone-fields {
@@ -266,7 +266,7 @@ a.secondary-button {
   gap: 13px;
 }
 .privacy-details {
-  font-size: 10px;
+  font-size: 12px;
   color: #6d5a4d;
   line-height: 1.9;
   padding: 13px 0;
@@ -289,7 +289,7 @@ a.secondary-button {
   margin-bottom: 8px;
 }
 .local-captcha > small {
-  font-size: 9px;
+  font-size: 12px;
   color: #6b5b4d;
   line-height: 1.8;
   display: block;
@@ -375,7 +375,7 @@ a.secondary-button {
 }
 .photo-caption > span {
   display: block;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 2px;
 }
 .photo-caption > em {
@@ -459,7 +459,7 @@ a.secondary-button {
   gap: 15px;
   padding: 14px 0;
   border-bottom: 1px solid #eee4da;
-  font-size: 11px;
+  font-size: 12px;
 }
 .detail-list dt {
   color: #685961;
@@ -472,7 +472,7 @@ a.secondary-button {
 .badge {
   display: inline-flex;
   align-items: center;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.4px;
   border-radius: 3px;
   padding: 5px 8px;
@@ -505,14 +505,14 @@ a.secondary-button {
   margin: 16px 0 11px;
 }
 .empty-state p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #675a61;
   max-width: 450px;
   margin: auto;
 }
 .account-security > p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #685a61;
   max-width: 680px;
@@ -559,20 +559,20 @@ a.secondary-button {
   color: #e4d3bf;
 }
 .staff-identity strong {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   display: block;
   overflow-wrap: anywhere;
 }
 .staff-identity small {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   color: #b69caa;
   margin-top: 5px;
 }
 .workspace-brand-label {
   display: block;
-  font-size: 8px;
+  font-size: 12px;
   font-style: normal;
   letter-spacing: 2.2px;
   color: #baa4b4;
@@ -606,11 +606,11 @@ a.secondary-button {
   flex-direction: column;
   gap: 20px;
   padding-top: 50px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .sidebar-bottom .text-button {
   color: #dfc8d8;
-  font-size: 10px;
+  font-size: 12px;
 }
 .sidebar-bottom .back-link {
   padding: 0;
@@ -655,7 +655,7 @@ a.secondary-button {
   margin: 12px 0;
 }
 .credential-card > p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #57614f;
 }
@@ -665,10 +665,10 @@ a.secondary-button {
   margin: 20px 0;
 }
 .credential-values > div {
-  font-size: 11px;
+  font-size: 12px;
 }
 .credential-values dt {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1px;
   color: #57604f;
   margin-bottom: 6px;
@@ -691,10 +691,10 @@ a.secondary-button {
   border-collapse: collapse;
   width: 100%;
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
 }
 .data-table th {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -725,7 +725,7 @@ a.secondary-button {
 }
 .data-table td > small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #675a60;
   margin-top: 7px;
 }
@@ -737,7 +737,7 @@ a.secondary-button {
   align-items: flex-start;
 }
 .table-actions .text-button {
-  font-size: 10px;
+  font-size: 12px;
 }
 .inline-form {
   display: flex;
@@ -751,7 +751,7 @@ a.secondary-button {
   margin-top: 10px;
 }
 .confirm-panel > p {
-  font-size: 11px;
+  font-size: 12px;
   color: #6a5861;
   line-height: 1.9;
   margin-bottom: 10px;
@@ -761,7 +761,7 @@ a.secondary-button {
   margin: 13px 0;
 }
 .invitations-panel > p:not(.eyebrow) {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.9;
   color: #6a5861;
 }
@@ -781,7 +781,7 @@ a.secondary-button {
 }
 .invitation-row > div > span {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #685860;
   margin-top: 6px;
 }
@@ -793,7 +793,7 @@ a.secondary-button {
   margin-top: 22px;
 }
 .pagination > span {
-  font-size: 10px;
+  font-size: 12px;
   color: #685961;
 }
 .visually-hidden {
@@ -808,7 +808,7 @@ a.secondary-button {
   border: 0;
 }
 .site-header .account-link {
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .site-header nav {
@@ -818,7 +818,7 @@ a.secondary-button {
   white-space: nowrap;
 }
 footer > a:not(.wordmark) {
-  font-size: 10px;
+  font-size: 12px;
   color: #6a5863;
 }
 .credential-card .eyebrow {
@@ -841,7 +841,7 @@ footer > a:not(.wordmark) {
     font-size: 28px;
   }
   .data-table {
-    font-size: 10px;
+    font-size: 12px;
   }
   .panel {
     padding: 25px;
@@ -893,7 +893,7 @@ footer > a:not(.wordmark) {
   }
   .identity-workspace .sidebar nav > button {
     padding: 10px 12px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-identity {
     margin-top: 20px;
@@ -924,7 +924,7 @@ footer > a:not(.wordmark) {
     padding: 25px;
   }
   .data-table th {
-    font-size: 8px;
+    font-size: 12px;
     padding-left: 10px;
     padding-right: 10px;
   }
@@ -933,7 +933,7 @@ footer > a:not(.wordmark) {
     padding-right: 10px;
   }
   .data-table strong {
-    font-size: 11px;
+    font-size: 12px;
   }
   .panel-heading h1 {
     font-size: 30px;
@@ -963,23 +963,23 @@ footer > a:not(.wordmark) {
     padding: 12px 10px;
   }
   .field {
-    font-size: 10px;
+    font-size: 12px;
   }
   .field > span:first-child > small {
-    font-size: 9px;
+    font-size: 12px;
   }
   .notice {
-    font-size: 10px;
+    font-size: 12px;
     padding: 12px;
   }
   .phone-fields .field select {
-    font-size: 12px;
+    font-size: 16px;
   }
   .recovery-codes {
     grid-template-columns: 1fr;
   }
   .recovery-codes code {
-    font-size: 11px;
+    font-size: 12px;
   }
   .store-toolbar {
     align-items: stretch;
@@ -1023,30 +1023,30 @@ footer > a:not(.wordmark) {
     width: calc(100% + 4px);
   }
   .data-table th {
-    font-size: 7px;
+    font-size: 12px;
     letter-spacing: 0.6px;
   }
   .data-table td {
-    font-size: 9px;
+    font-size: 12px;
     padding: 16px 7px;
   }
   .data-table td > small {
-    font-size: 8px;
+    font-size: 12px;
     max-width: 125px;
     overflow-wrap: anywhere;
   }
   .data-table strong {
-    font-size: 10px;
+    font-size: 12px;
   }
   .table-actions {
     min-width: 65px;
     gap: 9px;
   }
   .table-actions .text-button {
-    font-size: 9px;
+    font-size: 12px;
   }
   .badge {
-    font-size: 8px;
+    font-size: 12px;
     padding: 4px 6px;
   }
   .invitation-row {
@@ -1060,10 +1060,10 @@ footer > a:not(.wordmark) {
   }
   .pagination .secondary-button {
     padding: 10px 12px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .pagination > span {
-    font-size: 9px;
+    font-size: 12px;
   }
   .credential-card {
     padding: 20px 16px;
@@ -1081,18 +1081,18 @@ footer > a:not(.wordmark) {
     display: none;
   }
   .site-header .account-link {
-    font-size: 11px;
+    font-size: 12px;
   }
   .site-header {
     padding-top: 22px;
     padding-bottom: 22px;
   }
   .primary-button {
-    font-size: 11px;
+    font-size: 12px;
     padding: 15px 17px;
   }
   .auth-links {
-    font-size: 10px;
+    font-size: 12px;
   }
   .home-notice .notice {
     margin-top: 0;
@@ -1107,7 +1107,7 @@ footer > a:not(.wordmark) {
 }
 
 .hero-photograph > img,
-.auth-story > img {
+.auth-story img {
   object-position: right center;
 }
 .hero-photograph::after {

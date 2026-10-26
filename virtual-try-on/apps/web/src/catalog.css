@@ -30,7 +30,7 @@
   border-radius: 42% 42% 4px 4px;
   background: #eadfcd;
 }
-.catalog-hero-image > img {
+.catalog-hero-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -49,7 +49,7 @@
   z-index: 1;
   color: #fbf5e8;
   letter-spacing: 2.2px;
-  font-size: 8px;
+  font-size: 12px;
 }
 .collection-section {
   max-width: 1350px;
@@ -70,7 +70,7 @@
   margin-top: 12px;
 }
 .collection-title > p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
   color: #685a60;
 }
@@ -88,7 +88,7 @@
   background: #fffdf9;
   color: #614352;
   border-radius: 3px;
-  font-size: 12px;
+  font-size: 16px;
 }
 .catalog-search input:focus {
   outline: 2px solid #bea28b;
@@ -131,7 +131,7 @@
   content: "+";
 }
 .catalog-filters > summary > span {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 500;
   background: #eae0d4;
   padding: 3px 6px;
@@ -140,12 +140,12 @@
   margin-left: 8px;
 }
 .catalog-filters .field {
-  font-size: 10px;
+  font-size: 12px;
   margin-bottom: 18px;
 }
 .catalog-filters input,
 .catalog-filters select {
-  font-size: 11px;
+  font-size: 16px;
   padding: 10px 9px;
   background: #fcfaf5;
 }
@@ -155,7 +155,7 @@
   gap: 10px;
 }
 .filter-note {
-  font-size: 10px;
+  font-size: 12px;
   color: #685960;
   line-height: 1.9;
   border-top: 1px solid #e7dcd0;
@@ -171,7 +171,7 @@
   margin-bottom: 19px;
 }
 .active-query {
-  font-size: 10px;
+  font-size: 12px;
   color: #685861;
   line-height: 1.8;
 }
@@ -183,12 +183,12 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  font-size: 9px;
+  font-size: 12px;
   color: #695861;
   white-space: nowrap;
 }
 .sort-label select {
-  font-size: 10px;
+  font-size: 16px;
   color: #775464;
   background: transparent;
   border: 1px solid #ded1c6;
@@ -204,11 +204,11 @@
   padding: 9px 12px;
   background: #f0e8df;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 12px;
   color: #6b5856;
 }
 .filter-count .text-button {
-  font-size: 9px;
+  font-size: 12px;
 }
 .product-grid {
   display: grid;
@@ -263,7 +263,7 @@
   place-items: center;
   color: #67595b;
   background: #f0e9df;
-  font-size: 11px;
+  font-size: 12px;
   padding: 20px;
   text-align: center;
 }
@@ -275,14 +275,14 @@
   color: #695b53;
   padding: 6px 8px;
   border-radius: 2px;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.2px;
 }
 .product-card-copy {
   padding: 14px 2px 0;
 }
 .product-store {
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 1.4px;
   text-transform: uppercase;
   color: #6d594f;
@@ -304,7 +304,7 @@
   min-height: 19px;
 }
 .product-fabric {
-  font-size: 9px;
+  font-size: 12px;
   color: #665960;
   margin-top: 6px;
   white-space: nowrap;
@@ -324,7 +324,7 @@
   color: #704958;
 }
 .product-price-row > span {
-  font-size: 8px;
+  font-size: 12px;
   color: #685a61;
   overflow: hidden;
   white-space: nowrap;
@@ -379,7 +379,7 @@
   flex-wrap: wrap;
   gap: 9px;
   align-items: center;
-  font-size: 9px;
+  font-size: 12px;
   color: #665960;
   margin: 0 0 25px;
   line-height: 1.8;
@@ -445,11 +445,11 @@
 }
 .gallery-thumbnails small {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   margin-top: 5px;
 }
 .image-retry {
-  font-size: 9px;
+  font-size: 12px;
   margin-top: 13px;
   color: #675960;
 }
@@ -478,7 +478,7 @@
 }
 .detail-price > small {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   color: #685960;
   font-weight: 400;
   letter-spacing: 0.2px;
@@ -494,7 +494,7 @@
   border-bottom: 1px solid #e5d9cd;
 }
 .product-specs dt {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: #675960;
@@ -519,13 +519,13 @@
   opacity: 0.55;
 }
 .try-on-coming > p {
-  font-size: 9px;
+  font-size: 12px;
   color: #6b5a51;
   line-height: 1.9;
 }
 .product-information > .secondary-button {
   justify-content: center;
-  font-size: 10px;
+  font-size: 12px;
   opacity: 1;
 }
 .product-information > button.secondary-button:disabled {
@@ -539,7 +539,7 @@
   margin-bottom: 14px;
 }
 .product-description > p {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 2;
   color: #695960;
   white-space: pre-line;
@@ -551,7 +551,7 @@
   margin-top: 18px;
 }
 .product-tags > a {
-  font-size: 9px;
+  font-size: 12px;
   background: #efe6db;
   border-radius: 2px;
   color: #72584a;
@@ -575,7 +575,7 @@
   font-size: 22px;
 }
 .store-byline p {
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 1.3px;
   color: #685a5d;
 }
@@ -619,7 +619,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 12px;
   padding: 11px 14px;
   border: 1px solid #d7c4b0;
   background: #fbf6ed;
@@ -645,7 +645,7 @@
   cursor: not-allowed;
 }
 .upload-progress {
-  font-size: 10px;
+  font-size: 12px;
   color: #73583f;
   line-height: 1.9;
   margin-top: 9px;
@@ -663,7 +663,7 @@
   margin: 25px 0;
 }
 .definition-tabs > button {
-  font-size: 10px;
+  font-size: 12px;
   color: #71584c;
   background: transparent;
   border: 0;
@@ -715,7 +715,7 @@
   flex-shrink: 0;
 }
 .read-only-brand > p {
-  font-size: 10px;
+  font-size: 12px;
   color: #695860;
   line-height: 1.8;
 }
@@ -749,7 +749,7 @@
 }
 .category-management-list span {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #685860;
   line-height: 1.9;
   margin-top: 6px;
@@ -792,13 +792,13 @@
   min-width: 0;
 }
 .staff-product-cell strong {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.8;
   overflow-wrap: anywhere;
 }
 .staff-product-cell small {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   color: #685a62;
   margin-top: 6px;
   overflow-wrap: anywhere;
@@ -817,7 +817,7 @@
   font-size: 29px;
 }
 .product-editor .field {
-  font-size: 10px;
+  font-size: 12px;
 }
 .product-editor .panel-heading .text-button {
   flex-shrink: 0;
@@ -837,7 +837,7 @@
 .product-media-editor .panel-heading .tag {
   margin-top: 18px;
   white-space: nowrap;
-  font-size: 8px;
+  font-size: 12px;
 }
 .media-management-list {
   list-style: none;
@@ -876,7 +876,7 @@
 }
 .managed-media-preview small {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   margin-top: 8px;
 }
 .managed-media-description {
@@ -885,13 +885,13 @@
 }
 .managed-media-description > strong {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: #765462;
 }
 .managed-media-description > small {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   color: #695960;
   margin-top: 8px;
 }
@@ -908,10 +908,10 @@
   margin-top: 13px;
 }
 .media-button-row .text-button {
-  font-size: 9px;
+  font-size: 12px;
 }
 .product-upload-label {
-  font-size: 11px;
+  font-size: 12px;
   padding: 13px 17px;
 }
 .upload-status-list {
@@ -929,7 +929,7 @@
   padding: 12px;
   background: #f3ede4;
   border-radius: 3px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   color: #6a5862;
 }
@@ -938,7 +938,7 @@
   overflow-wrap: anywhere;
 }
 .upload-status-list strong {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 500;
   color: #715944;
   max-width: 60%;
@@ -1004,7 +1004,7 @@
     font-size: 12px;
   }
   .catalog-hero .primary-button {
-    font-size: 10px;
+    font-size: 12px;
   }
   .product-detail-layout {
     gap: 27px;
@@ -1029,7 +1029,7 @@
   }
   .product-editor .field input,
   .product-editor .field select {
-    font-size: 12px;
+    font-size: 16px;
   }
 }
 @media (max-width: 620px) {
@@ -1052,16 +1052,16 @@
     width: 100%;
     border-radius: 4px;
   }
-  .catalog-hero-image > img {
+  .catalog-hero-image img {
     object-position: right center;
   }
   .catalog-hero-image > span {
-    font-size: 7px;
+    font-size: 12px;
     bottom: 17px;
     left: 18px;
   }
   .catalog-hero .hero-note {
-    font-size: 10px;
+    font-size: 12px;
   }
   .collection-section {
     padding-top: 15px;
@@ -1078,18 +1078,18 @@
     margin-top: 12px;
   }
   .collection-title > p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .catalog-search {
     gap: 8px;
     margin-bottom: 20px;
   }
   .catalog-search input {
-    font-size: 14px;
+    font-size: 16px;
     padding: 13px 12px;
   }
   .catalog-search .primary-button {
-    font-size: 10px;
+    font-size: 12px;
     padding: 12px 15px;
     gap: 10px;
   }
@@ -1106,7 +1106,7 @@
   }
   .catalog-filters > summary {
     margin-bottom: 20px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .catalog-filters:not([open]) > summary {
     margin-bottom: 0;
@@ -1131,7 +1131,7 @@
   }
   .catalog-filters .field input,
   .catalog-filters .field select {
-    font-size: 14px;
+    font-size: 16px;
   }
   .filter-prices {
     gap: 14px;
@@ -1140,19 +1140,19 @@
     gap: 10px;
   }
   .sort-label {
-    font-size: 8px;
+    font-size: 12px;
     gap: 7px;
   }
   .sort-label > span {
     display: none;
   }
   .sort-label select {
-    font-size: 9px;
+    font-size: 16px;
     padding: 9px 7px;
     max-width: 140px;
   }
   .active-query {
-    font-size: 9px;
+    font-size: 12px;
   }
   .product-grid {
     gap: 26px 15px;
@@ -1162,17 +1162,17 @@
     line-height: 1.6;
   }
   .product-store {
-    font-size: 9px;
+    font-size: 12px;
     letter-spacing: 1.2px;
   }
   .product-fabric {
-    font-size: 10px;
+    font-size: 12px;
   }
   .product-price-row > strong {
     font-size: 13px;
   }
   .product-price-row > span {
-    font-size: 9px;
+    font-size: 12px;
   }
   .product-open {
     opacity: 1;
@@ -1187,7 +1187,7 @@
     top: 8px;
     left: 6px;
     padding: 5px 6px;
-    font-size: 7px;
+    font-size: 12px;
     max-width: calc(100% - 12px);
     line-height: 1.5;
   }
@@ -1211,10 +1211,10 @@
     gap: 22px;
   }
   .detail-category {
-    font-size: 11px;
+    font-size: 12px;
   }
   .product-information .try-on-coming > p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .product-description > p {
     font-size: 12px;
@@ -1223,7 +1223,7 @@
     width: 58px;
   }
   .breadcrumbs {
-    font-size: 8px;
+    font-size: 12px;
   }
   .collection-results > .empty-state {
     min-height: 250px;
@@ -1236,7 +1236,7 @@
     width: 100%;
   }
   .product-table th {
-    font-size: 7px;
+    font-size: 12px;
   }
   .staff-product-cell {
     gap: 9px;
@@ -1248,10 +1248,10 @@
     height: 51px;
   }
   .staff-product-cell strong {
-    font-size: 10px;
+    font-size: 12px;
   }
   .staff-product-cell small {
-    font-size: 8px;
+    font-size: 12px;
   }
   .logo-uploader {
     align-items: flex-start;
@@ -1262,14 +1262,14 @@
     height: 50px;
   }
   .logo-uploader .form-hint {
-    font-size: 9px;
+    font-size: 12px;
   }
   .upload-file-label {
-    font-size: 9px;
+    font-size: 12px;
     padding: 10px 12px;
   }
   .product-upload-label {
-    font-size: 10px;
+    font-size: 12px;
     padding: 13px 15px;
   }
   .definition-tabs {
@@ -1277,17 +1277,17 @@
   }
   .definition-tabs > button {
     flex: 1;
-    font-size: 10px;
+    font-size: 12px;
     padding: 10px 12px;
   }
   .brand-row-heading h3 {
     font-size: 22px;
   }
   .category-management-list strong {
-    font-size: 11px;
+    font-size: 12px;
   }
   .category-management-list span {
-    font-size: 9px;
+    font-size: 12px;
   }
   .product-editor > .panel-heading h2 {
     font-size: 27px;
@@ -1298,7 +1298,7 @@
     font-size: 16px;
   }
   .product-media-editor .panel-heading .tag {
-    font-size: 8px;
+    font-size: 12px;
   }
   .media-management-list > li {
     gap: 14px;
@@ -1308,13 +1308,13 @@
     width: 57px;
   }
   .managed-media-description > strong {
-    font-size: 10px;
+    font-size: 12px;
   }
   .media-button-row {
     gap: 10px 13px;
   }
   .media-button-row .text-button {
-    font-size: 9px;
+    font-size: 12px;
   }
   .upload-status-list > li {
     flex-direction: column;
@@ -1325,10 +1325,10 @@
     text-align: left;
   }
   .product-editor .panel-heading .text-button {
-    font-size: 9px;
+    font-size: 12px;
   }
   .catalog-admin .page-title-row .primary-button {
-    font-size: 10px;
+    font-size: 12px;
     padding: 12px 15px;
   }
 }

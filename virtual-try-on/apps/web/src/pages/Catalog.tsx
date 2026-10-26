@@ -1,3 +1,4 @@
+import { EditorialImage } from "../components/EditorialImage";
 import { UiIcon } from "../components/UiIcon";
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth-context";
@@ -44,7 +45,7 @@ function ProductCard({ product }: { product: Product }) {
       <a
         className="product-image-link"
         href={`/products/${product.id}`}
-        aria-label={`View ${product.title}`}
+        aria-label={`View ${product.title}${product.availability === "UNAVAILABLE" ? " · Currently unavailable" : ""}`}
       >
         {product.coverUrl ? (
           <img
@@ -187,13 +188,7 @@ export function CatalogHome() {
           </div>
         </div>
         <div className="catalog-hero-image">
-          <img
-            src="/demo/hero-emerald.png"
-            alt="AI-created editorial image of a woman wearing an emerald saree with a gold border"
-            fetchPriority="high"
-            width={720}
-            height={480}
-          />
+          <EditorialImage priority />
           <span>THE ART OF FINDING YOUR DRAPE</span>
         </div>
       </section>

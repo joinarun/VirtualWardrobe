@@ -27,6 +27,7 @@ import { LogoUploader } from "../components/LogoUploader";
 import { StoreEnquiries } from "./StoreEnquiries";
 import type { EnquiryCounts } from "../enquiry-types";
 import { useVisibleResource } from "../use-visible-resource";
+import { DemoNotice } from "../components/DemoNotice";
 
 type Tab =
   | "overview"
@@ -125,6 +126,9 @@ export function Workspace() {
   };
   return (
     <div className="workspace identity-workspace">
+      <a className="skip-link" href="#workspace-main">
+        Skip to workspace content
+      </a>
       <aside className="sidebar">
         <Brand light />
         <em className="workspace-brand-label">STORE WORKSPACE</em>
@@ -199,7 +203,7 @@ export function Workspace() {
               </button>
               <button
                 type="button"
-                aria-label="Enquiries"
+                aria-label={`Enquiries ${enquiryCounts.data ? enquiryCounts.data.unassignedNew : enquiryCounts.error ? "?" : "…"}`}
                 className={tab === "enquiries" ? "nav-active" : ""}
                 onClick={() => chooseTab("enquiries")}
               >
@@ -236,7 +240,7 @@ export function Workspace() {
           </a>
         </div>
       </aside>
-      <main className="workspace-main">
+      <main id="workspace-main" tabIndex={-1} className="workspace-main">
         <header className="workspace-header">
           <span>
             {auth.user.superAdmin
@@ -247,6 +251,7 @@ export function Workspace() {
             View storefront <UiIcon kind="up-right" />
           </a>
         </header>
+        <DemoNotice />
         {auth.error && <Notice>{auth.error}</Notice>}
         {workspaceMessage && <Notice tone="success">{workspaceMessage}</Notice>}
         {new URLSearchParams(window.location.search).get("notice") ===
@@ -293,6 +298,7 @@ export function Workspace() {
             <span>Current store</span>
             <select
               id="selected-store"
+              aria-label="Current store"
               value={selectedStore?.id || ""}
               disabled={storesRequest.loading || stores.length === 0}
               onChange={(event) => {

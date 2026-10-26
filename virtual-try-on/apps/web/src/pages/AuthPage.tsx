@@ -1,3 +1,4 @@
+import { EditorialImage } from "../components/EditorialImage";
 import { UiIcon } from "../components/UiIcon";
 import { useState } from "react";
 import type { FormEvent } from "react";
@@ -221,10 +222,7 @@ export function AuthPage({
   return (
     <div className="auth-page">
       <aside className="auth-story">
-        <img
-          src="/demo/hero-emerald.png"
-          alt="AI-created editorial image of a woman in an emerald saree with a gold border"
-        />
+        <EditorialImage sizes="(max-width: 869px) 1px, (max-width: 1200px) 42vw, 480px" />
         <div>
           <p className="eyebrow">A WARDROBE THAT FEELS LIKE YOU</p>
           <h2>

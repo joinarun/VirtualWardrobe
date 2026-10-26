@@ -12,6 +12,7 @@ import {
   unlinkSync,
 } from "node:fs";
 import { join } from "node:path";
+import { demoFixture } from "./demo-fixture";
 type Credential = { email: string; password: string };
 const required = () =>
   process.env.TEST_FIXTURES_REQUIRED === "true" || process.env.CI === "true";
@@ -64,6 +65,8 @@ export default async function setup(config: FullConfig) {
       );
     return;
   }
+  // Validate private seeded inputs before changing the bootstrap credential.
+  demoFixture();
   mkdirSync(stateDirectory, { recursive: true, mode: 0o700 });
   const directory = lstatSync(stateDirectory);
   if (

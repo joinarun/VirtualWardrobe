@@ -1,6 +1,8 @@
 # Develop the virtual try on app with Spec Kit
 
-This guide turns the accompanying PRD into a working application through eight small features. It uses **Codex** as the coding agent and **Spec Kit 1.2.3**, verified on 26 October 2026. It prepares the development workflow; the application, Makefile targets and deployment scripts described below still need to be generated and tested by the coding agent.
+This guide describes the original eight-feature build workflow using **Codex** and **Spec Kit 1.2.3**, verified on 26 October 2026. The implemented application is now in [`virtual-try-on`](virtual-try-on/); use its [README](virtual-try-on/README.md) for runnable commands and its [feature specifications](virtual-try-on/specs/) for acceptance evidence.
+
+The existing workspace was initialized with the operator's installed Spec Kit `1.2.4.dev0`. Keep that workspace and its constitution when continuing development. The installation and initialization commands below are a reusable playbook for starting a fresh project; do not initialize over the implemented application. This repository keeps product documents in the parent `docs/` directory and application specifications in `virtual-try-on/specs/`.
 
 Keep the PRD about product behavior and put technical decisions in the plan. Complete and verify one feature before starting the next. A single command to build the entire marketplace makes defects in permissions, AI behavior and privacy harder to isolate.
 

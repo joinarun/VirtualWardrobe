@@ -64,7 +64,9 @@ function Routes() {
     return (
       <>
         <SiteHeader />
-        <PasswordChangePage />
+        <div id="main-content" tabIndex={-1}>
+          <PasswordChangePage />
+        </div>
         <SiteFooter />
       </>
     );
@@ -73,7 +75,9 @@ function Routes() {
       return (
         <>
           <SiteHeader />
-          <Loading />
+          <div id="main-content" tabIndex={-1}>
+            <Loading />
+          </div>
           <SiteFooter />
         </>
       );
@@ -81,7 +85,9 @@ function Routes() {
       return (
         <>
           <SiteHeader />
-          <AuthPage kind="WORKFORCE" />
+          <div id="main-content" tabIndex={-1}>
+            <AuthPage kind="WORKFORCE" />
+          </div>
           <SiteFooter />
         </>
       );
@@ -157,7 +163,9 @@ function Routes() {
   return (
     <>
       <SiteHeader />
-      {page}
+      <div id="main-content" tabIndex={-1}>
+        {page}
+      </div>
       <SiteFooter />
     </>
   );

@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { errorMessage } from "../api";
 import { useAuth } from "../auth-context";
+import { DemoNotice } from "./DemoNotice";
 
 export function Brand({ light = false }: { light?: boolean }) {
   return (
@@ -15,9 +16,13 @@ export function SiteHeader() {
   const { user, loading } = useAuth();
   return (
     <>
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <div className="announcement">
         A more personal way to discover Indian style.
       </div>
+      <DemoNotice />
       <header className="site-header">
         <Brand />
         <nav aria-label="Customer navigation">

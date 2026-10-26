@@ -32,3 +32,13 @@ ai-benchmark:
 .PHONY: bootstrap-admin
 bootstrap-admin:
 	./scripts/bootstrap-admin.sh
+
+.PHONY: demo-seed demo-status demo-cleanup demo-cleanup-execute
+demo-seed:
+	./scripts/demo.sh seed
+demo-status:
+	./scripts/demo.sh status
+demo-cleanup:
+	./scripts/demo.sh cleanup
+demo-cleanup-execute:
+	./scripts/demo.sh cleanup-execute

@@ -8,7 +8,7 @@ Secrets are passed through stdin or HTTPS JSON bodies, never command arguments.
 from __future__ import annotations
 
 import argparse
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
 import os
 from pathlib import Path
@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_PROJECT = "virtualtryon-511016"
 EXPECTED_PREFIX = "virtualwardrobe"
 EXPECTED_HOSTING_SITE = "virtualwardrobe-511016"
+EXPECTED_REGION = "asia-south1"
 REQUIRED_APIS = [
     "run.googleapis.com", "artifactregistry.googleapis.com",
     "cloudbuild.googleapis.com", "sqladmin.googleapis.com",
@@ -48,8 +49,30 @@ def command(args: list[str], *, data: bytes | None = None,
                           check=check, env=env)
 
 
+def reviewed_limits(config: dict) -> bool:
+    integer_bounds = {"api_max_instances": 2, "worker_max_instances": 1,
+                      "daily_customer_limit": 5, "daily_global_limit": 100,
+                      "saved_preview_limit": 100}
+    try:
+        return (config.get("database_version") == "POSTGRES_17" and
+                config.get("database_tier") == "db-f1-micro" and
+                config.get("database_storage_gb") == 10 and config.get("database_storage_max_gb") == 20 and
+                all(type(config.get(key)) is int and 1 <= config[key] <= bound for key, bound in integer_bounds.items()) and
+                Decimal("0") < Decimal(config.get("daily_provider_budget_usd", "0")) <= Decimal("5.00") and
+                Decimal("0.25") <= Decimal(config.get("attempt_reservation_usd", "0")) <= Decimal("5.00") and
+                isinstance(config.get("generation_enabled"), bool))
+    except (TypeError, ValueError, InvalidOperation):
+        return False
+
+
 class Deployment:
     def __init__(self, config: dict):
+        # Operator helpers import this class without passing through main().
+        # Keep their project/resource/cost boundary identical to the CLI.
+        if (config.get("project_id") != EXPECTED_PROJECT or config.get("prefix") != EXPECTED_PREFIX or
+                config.get("firebase_site") != EXPECTED_HOSTING_SITE or config.get("region") != EXPECTED_REGION or
+                config.get("environment") != "demo" or not reviewed_limits(config)):
+            raise RuntimeError("Deployment helpers require the reviewed VirtualWardrobe project, names, region and cost bounds")
         self.cfg = config
         self.project = config["project_id"]
         self.region = config["region"]
@@ -71,7 +94,8 @@ class Deployment:
             for role in ("api", "worker", "dispatch", "build")
         }
         self.work = ROOT / "work" / "gcp"
-        self.work.mkdir(parents=True, exist_ok=True)
+        self.work.mkdir(parents=True, exist_ok=True, mode=0o700)
+        self.work.chmod(0o700)
 
     def gc(self, *args: str, capture: bool = False,
            check: bool = True, data: bytes | None = None):

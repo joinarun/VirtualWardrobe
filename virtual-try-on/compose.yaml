@@ -93,8 +93,15 @@ services:
       BASE_URL: http://web:5173
       TEST_BOOTSTRAP_FILE: /test-bootstrap.txt
       TEST_STATE_DIRECTORY: /test-state
+      TEST_DEMO_CREDENTIALS_FILE: /test-demo-credentials.json
       TEST_FIXTURES_REQUIRED: "true"
     volumes:
+      - type: bind
+        source: ${E2E_DEMO_CREDENTIALS_FILE:-./work/demo/demo-credentials-virtualwardrobe-demo-v1.json}
+        target: /test-demo-credentials.json
+        read_only: true
+        bind:
+          create_host_path: false
       - type: bind
         source: ${E2E_BOOTSTRAP_FILE:-./work/bootstrap-credentials.txt}
         target: /test-bootstrap.txt

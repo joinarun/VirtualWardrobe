@@ -58,3 +58,18 @@ Customers can request a callback from an available product without generating a 
 Store teams see counts and scoped queues, atomically claim unassigned work, send customer-visible replies or internal notes, reassign enquiries, and close or reopen them with recorded history. Customers see only their own public conversation. Removing an employee's store access returns their active assignments to the unassigned queue.
 
 Account deletion removes stored contact and all free-text enquiry content. Closed contact retention defaults to 180 days; increasing configuration cannot extend an earlier consent promise. Contact search uses a request body to keep names and phone numbers out of request URLs.
+
+## Demo data
+
+Create the independent operator with `make bootstrap-admin` and finish its first-login password change before seeding. Then run:
+
+```bash
+make demo-seed
+make demo-status
+```
+
+The default dataset contains three users per role, three stores, 30 sarees, owned images/video, private labelled fixture previews and all enquiry statuses. The seed makes no paid AI calls. Repeating it preserves the same data and credentials. Read generated sign-in details locally in `work/demo/demo-credentials-virtualwardrobe-demo-v1.txt`; its JSON sibling supports private automation. Both files are ignored and owner-only.
+
+`make demo-cleanup` previews removal; `make demo-cleanup-execute` executes it. Cleanup preserves the independent operator and refuses unrelated incoming activity. A removed dataset ID is retired; choose an explicit new version for another seed. See [demo quickstart](specs/007-demo-data/quickstart.md) for load datasets and recovery, and [cloud operator commands](docs/gcp-demo-data.md) for the private GCP path.
+
+Use `make e2e-clean` for frequent complete browser checks against a disposable copy. It generates protected fixtures, verifies all roles and removes its own database/containers without changing the primary instance's credentials or security counters.

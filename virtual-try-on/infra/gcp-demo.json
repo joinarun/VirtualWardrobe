@@ -16,6 +16,9 @@
   "daily_customer_limit": 5,
   "daily_global_limit": 100,
   "daily_provider_budget_usd": "5.00",
+  "generation_enabled": true,
+  "attempt_reservation_usd": "0.25",
+  "saved_preview_limit": 100,
   "monthly_alert_budget": {"amount": "2500", "currency": "INR"},
   "bootstrap_email": "superadmin_1@gmail.com",
   "firebase_tools_version": "15.34.1"

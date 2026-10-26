@@ -215,7 +215,21 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
                   <a
                     className="wardrobe-image-link"
                     href={`/account/previews/${jobId}`}
-                    aria-label={`Open preview of ${item.product.title}`}
+                    aria-label={[
+                      `Open preview of ${item.product.title}`,
+                      [
+                        !image
+                          ? job?.discarded
+                            ? "REMOVED"
+                            : job?.state
+                          : null,
+                        item.label,
+                      ]
+                        .filter(Boolean)
+                        .join(" "),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   >
                     {image ? (
                       <PrivateThumbnail
@@ -238,7 +252,7 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
                           {job?.discarded ? "REMOVED" : job?.state}
                         </strong>
                       </div>
-                    )}
+                    )}{" "}
                     <span className="wardrobe-image-label">{item.label}</span>
                   </a>
                   <div className="wardrobe-card-copy">

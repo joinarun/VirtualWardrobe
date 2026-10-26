@@ -21,3 +21,24 @@ body {
   vertical-align: -0.12em;
   flex-shrink: 0;
 }
+
+.skip-link {
+  position: fixed;
+  left: 16px;
+  top: -100px;
+  background: #fffdf9;
+  color: #432d40;
+  border: 2px solid #6f485e;
+  border-radius: 4px;
+  padding: 12px 18px;
+  z-index: 1000;
+  font-size: 14px;
+  font-weight: 600;
+}
+.skip-link:focus {
+  top: 12px;
+}
+#main-content:focus,
+#workspace-main:focus {
+  outline: none;
+}

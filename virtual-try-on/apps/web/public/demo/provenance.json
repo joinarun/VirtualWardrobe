@@ -99,5 +99,42 @@
     "people": "Synthetic adult model; no intended real-person likeness",
     "usage": "Fictional product gallery demo, not evidence of real garment fidelity",
     "createdAt": "2026-10-27"
+  },
+  {
+    "file": "hero-emerald-large.jpg",
+    "source": "Display derivative of the original owned hero-emerald.png; no new image generation",
+    "reference": "hero-emerald.png",
+    "processor": "Existing backend ImageProcessor JPEG normalization; original retained",
+    "quality": 0.92,
+    "width": 1536,
+    "height": 1024,
+    "bytes": 349645,
+    "sha256": "06c20d10f84640bd8a8f65eb19a792c013e703747d89b40beeab25ec799280e8",
+    "people": "Original synthetic adult model; no intended real-person likeness",
+    "usage": "Responsive editorial display only; original PNG retained for owned source/benchmark use",
+    "createdAt": "2026-10-27"
+  },
+  {
+    "file": "hero-emerald-small.jpg",
+    "source": "Display derivative of the original owned hero-emerald.png; no new image generation",
+    "reference": "hero-emerald.png",
+    "processor": "Existing backend ImageProcessor JPEG normalization; original retained",
+    "quality": 0.84,
+    "width": 640,
+    "height": 427,
+    "bytes": 63594,
+    "sha256": "2b619e74373bc0832c8b31d3b28b50ea1cce31710740a4f20d488b0b8d83aac5",
+    "people": "Original synthetic adult model; no intended real-person likeness",
+    "usage": "Responsive editorial display only; original PNG retained for owned source/benchmark use",
+    "createdAt": "2026-10-27"
+  },
+  {
+    "file": "demo-preview.mp4",
+    "source": "Original local video derived from owned AI-generated saree-ruby.png",
+    "generator": "FFmpeg still-image video, H.264, 480px wide, 15fps, four seconds, no audio",
+    "reference": "saree-ruby.png",
+    "people": "Synthetic adult model; no real person",
+    "usage": "Fictional product video demonstration; not filmed garment evidence or human quality evaluation",
+    "createdAt": "2026-10-27"
   }
 ]

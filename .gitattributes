@@ -1,0 +1,2 @@
+# Preserve upstream font licence bytes, including their original line endings.
+virtual-try-on/apps/web/public/fonts/*OFL.txt -whitespace

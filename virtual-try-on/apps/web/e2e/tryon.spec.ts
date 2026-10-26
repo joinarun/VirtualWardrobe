@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { assertTextContrast } from "./contrast";
+import { assertWcagAA } from "./contrast";
 import type { Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
@@ -160,7 +160,7 @@ test("real private photo consent, idempotent job, download, gallery persistence 
         exact: true,
       }),
     ).toBeVisible();
-    await assertTextContrast(page);
+    await assertWcagAA(page);
     await expect(page.getByLabel("AI service disclosure")).toContainText(
       config.label,
     );
@@ -270,7 +270,7 @@ test("real private photo consent, idempotent job, download, gallery persistence 
     expect((await download).suggestedFilename()).toBe(
       "virtualwardrobe-preview.jpg",
     );
-    await assertTextContrast(page);
+    await assertWcagAA(page);
     await page.setViewportSize({ width: 360, height: 800 });
     expect(
       await page.evaluate(
@@ -297,7 +297,7 @@ test("real private photo consent, idempotent job, download, gallery persistence 
       .click();
     await expect(
       page.getByRole("link", {
-        name: `Open preview of ${product.title}`,
+        name: `Open preview of ${product.title} · Demo preview`,
         exact: true,
       }),
     ).toBeVisible();
@@ -319,7 +319,7 @@ test("real private photo consent, idempotent job, download, gallery persistence 
     ).toBeVisible();
     await expect(
       page.getByRole("link", {
-        name: `Open preview of ${product.title}`,
+        name: `Open preview of ${product.title} · Demo preview`,
         exact: true,
       }),
     ).toBeVisible();
@@ -338,7 +338,7 @@ test("real private photo consent, idempotent job, download, gallery persistence 
         await page.request.get(`/api/v1/private-media/${savedMediaId}/content`)
       ).ok(),
     ).toBeTruthy();
-    await assertTextContrast(page);
+    await assertWcagAA(page);
     if (stateDirectory)
       await page.screenshot({
         path: join(stateDirectory, "private-gallery-mobile.png"),
@@ -539,6 +539,27 @@ test("UI only: queued cancellation, unknown outcomes and full-gallery errors sta
   await expect(
     page.getByRole("button", { name: "Save to my gallery", exact: true }),
   ).toBeEnabled();
+  job = { ...basic };
+  await page.route(/\/api\/v1\/me\/try-on\/jobs\?/, (route) =>
+    route.fulfill({ json: { items: [job], total: 1, page: 0, size: 12 } }),
+  );
+  await page.route("**/api/v1/me/try-on/quota", (route) =>
+    route.fulfill({
+      json: {
+        used: 1,
+        remaining: 4,
+        limit: 5,
+        resetsAt: new Date(Date.now() + 86400000).toISOString(),
+        saved: 0,
+        savedLimit: 100,
+      },
+    }),
+  );
+  await page.goto("/account/previews");
+  await expect(page.locator(".wardrobe-job-placeholder strong")).toHaveText(
+    "QUEUED",
+  );
+  await assertWcagAA(page);
 });
 
 test("UI only: personal-photo consent is renewed for each photo and disclosure version", async ({
