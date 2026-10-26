@@ -1,3 +1,4 @@
+import { UiIcon } from "../components/UiIcon";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { api, errorMessage } from "../api";
@@ -233,7 +234,7 @@ export function ProductAdmin({ store }: { store: Store }) {
                               className="small-image-placeholder"
                               aria-hidden="true"
                             >
-                              ✧
+                              <UiIcon kind="sparkle" />
                             </span>
                           )}
                           <div>
@@ -283,7 +284,7 @@ export function ProductAdmin({ store }: { store: Store }) {
                             <span className="visually-hidden">
                               {product.title}
                             </span>{" "}
-                            ↗
+                            <UiIcon kind="up-right" />
                           </a>
                           {product.status !== "ARCHIVED" && (
                             <button
@@ -771,7 +772,9 @@ function ProductEditor({
               : product
                 ? "Save product details"
                 : "Create draft"}{" "}
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true">
+              <UiIcon kind="right" />
+            </span>
           </button>
         </fieldset>
       </form>
@@ -800,7 +803,8 @@ function ProductEditor({
                   <div className="managed-media-preview">
                     {media.kind === "VIDEO" ? (
                       <span>
-                        ▶<small>Video</small>
+                        <UiIcon kind="play" />
+                        <small>Video</small>
                       </span>
                     ) : (
                       <img
@@ -846,7 +850,7 @@ function ProductEditor({
                         disabled={busy !== null || index === 0}
                         onClick={() => reorder(index, -1)}
                       >
-                        ↑ Up
+                        <UiIcon kind="up" /> Up
                       </button>
                       <button
                         className="text-button"
@@ -857,7 +861,7 @@ function ProductEditor({
                         }
                         onClick={() => reorder(index, 1)}
                       >
-                        ↓ Down
+                        <UiIcon kind="down" /> Down
                       </button>
                       {media.kind === "IMAGE" && (
                         <>

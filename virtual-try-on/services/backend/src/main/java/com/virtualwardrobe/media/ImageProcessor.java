@@ -25,6 +25,15 @@ public class ImageProcessor {
         }catch(InterruptedException e){Thread.currentThread().interrupt();throw new ApiProblem(429,"MEDIA_BUSY","Image processing was interrupted; retry shortly");}
         finally{if(acquired)decoding.release();}
     }
+    /** Already validated source/reference bytes are decoded with the same shared resource bound. */
+    public byte[] providerJpeg(byte[] normalized){
+        boolean acquired=false;
+        try{
+            acquired=decoding.tryAcquire(1,java.util.concurrent.TimeUnit.SECONDS);if(!acquired)throw new ApiProblem(429,"MEDIA_BUSY","Image preparation is busy; retry shortly");
+            if(normalized.length<1||normalized.length>50*1024*1024)throw ApiProblem.bad("Invalid normalized image size");
+            try(var input=ImageIO.createImageInputStream(new ByteArrayInputStream(normalized))){var readers=ImageIO.getImageReaders(input);if(!readers.hasNext())throw ApiProblem.bad("Normalized image is invalid");var reader=readers.next();try{reader.setInput(input,true,true);long w=reader.getWidth(0),h=reader.getHeight(0);if(w<1||h<1||w*h>limits.imagePixels())throw ApiProblem.bad("Normalized image exceeds pixel limit");byte[] jpeg=jpeg(scale(reader.read(0),2048),.90f);if(jpeg.length>10*1024*1024)throw ApiProblem.bad("Prepared image exceeds provider limit");return jpeg;}finally{reader.dispose();}}
+        }catch(ApiProblem e){throw e;}catch(InterruptedException e){Thread.currentThread().interrupt();throw new ApiProblem(429,"MEDIA_BUSY","Image preparation interrupted");}catch(IOException e){throw ApiProblem.bad("Normalized image cannot be prepared");}finally{if(acquired)decoding.release();}
+    }
     private Processed processAcquired(byte[] bytes,String mime) {
         if(bytes.length==0||bytes.length>limits.imageBytes())throw ApiProblem.bad("Image exceeds the configured byte limit");
         try(var input=ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))){

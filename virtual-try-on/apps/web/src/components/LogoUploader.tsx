@@ -1,3 +1,4 @@
+import { UiIcon } from "./UiIcon";
 import { useId, useState } from "react";
 import { errorMessage } from "../api";
 import { uploadMedia } from "../uploads";
@@ -24,7 +25,9 @@ export function LogoUploader({
         {url ? (
           <img src={url} alt={label} width={64} height={64} />
         ) : (
-          <span aria-hidden="true">✧</span>
+          <span aria-hidden="true">
+            <UiIcon kind="sparkle" />
+          </span>
         )}
       </div>
       <div>

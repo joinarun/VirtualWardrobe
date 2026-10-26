@@ -1,3 +1,4 @@
+import { UiIcon } from "./components/UiIcon";
 import { Component } from "react";
 import type { ReactNode } from "react";
 import { AuthProvider } from "./auth";
@@ -7,6 +8,11 @@ import { AccountPage } from "./pages/AccountPage";
 import { AuthPage, PasswordChangePage } from "./pages/AuthPage";
 import { Workspace } from "./pages/Workspace";
 import { CatalogHome, ProductDetail } from "./pages/Catalog";
+import { CustomerOnly } from "./components/CustomerOnly";
+import { TryOnPage } from "./pages/TryOn";
+import { PreviewPage } from "./pages/Preview";
+import { WardrobePage } from "./pages/Wardrobe";
+import "./tryon.css";
 import "./App.css";
 import "./identity.css";
 import "./catalog.css";
@@ -81,6 +87,30 @@ function Routes() {
   else if (path === "/account/recover") page = <AuthPage mode="recover" />;
   else if (path === "/account/login") page = <AuthPage />;
   else if (path === "/account/password") page = <PasswordChangePage />;
+  else if (path === "/try-on")
+    page = (
+      <CustomerOnly>
+        <TryOnPage />
+      </CustomerOnly>
+    );
+  else if (path === "/account/gallery")
+    page = (
+      <CustomerOnly>
+        <WardrobePage gallery />
+      </CustomerOnly>
+    );
+  else if (path === "/account/previews")
+    page = (
+      <CustomerOnly>
+        <WardrobePage />
+      </CustomerOnly>
+    );
+  else if (path.startsWith("/account/previews/"))
+    page = (
+      <CustomerOnly>
+        <PreviewPage id={path.slice("/account/previews/".length)} />
+      </CustomerOnly>
+    );
   else if (path === "/account") page = <AccountPage />;
   else if (path.startsWith("/products/"))
     page = <ProductDetail id={path.slice("/products/".length)} />;
@@ -94,7 +124,7 @@ function Routes() {
             Return to your wardrobe and find your next step.
           </p>
           <a className="primary-button" href="/">
-            Back to storefront →
+            Back to storefront <UiIcon kind="right" />
           </a>
         </section>
       </div>

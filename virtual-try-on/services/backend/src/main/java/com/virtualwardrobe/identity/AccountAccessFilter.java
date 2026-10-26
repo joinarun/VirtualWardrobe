@@ -14,6 +14,7 @@ public final class AccountAccessFilter extends OncePerRequestFilter {
     public AccountAccessFilter(IdentityService identity,String mode){this.identity=identity;this.mode=mode;}
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain)throws ServletException,IOException {
         if(mode.equals("api")&&(request.getRequestURI().equals("/internal")||request.getRequestURI().startsWith("/internal/"))){response.setStatus(404);return;}
+        if(mode.equals("worker")){chain.doFilter(request,response);return;}
         if(request.getRequestURI().startsWith("/api/"))response.setHeader("Cache-Control","no-store");
         var auth=SecurityContextHolder.getContext().getAuthentication();
         if(auth!=null&&auth.isAuthenticated()&&!auth.getName().equals("anonymousUser")){

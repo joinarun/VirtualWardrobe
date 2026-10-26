@@ -1,3 +1,4 @@
+import { UiIcon } from "./UiIcon";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { errorMessage } from "../api";
@@ -40,7 +41,10 @@ export function SiteHeader() {
                 : "Sign in"}
           </a>
           <a className="workspace-link" href="/staff">
-            Store workspace <span>↗</span>
+            Store workspace{" "}
+            <span>
+              <UiIcon kind="up-right" />
+            </span>
           </a>
         </nav>
       </header>
@@ -52,7 +56,9 @@ export function SiteFooter() {
     <footer>
       <Brand />
       <p>Style is personal. Your photos should be, too.</p>
-      <a href="/staff">For stores ↗</a>
+      <a href="/staff">
+        For stores <UiIcon kind="up-right" />
+      </a>
       <span>© 2026 Virtual Wardrobe</span>
     </footer>
   );
@@ -94,7 +100,9 @@ export function EmptyState({
 }) {
   return (
     <div className="empty-state">
-      <span className="empty-symbol">✧</span>
+      <span className="empty-symbol">
+        <UiIcon kind="sparkle" />
+      </span>
       <h3>{title}</h3>
       <p>{children}</p>
     </div>

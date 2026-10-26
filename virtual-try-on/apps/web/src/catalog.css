@@ -17,7 +17,7 @@
 .catalog-hero > div > p:not(.eyebrow) {
   font-size: 13px;
   line-height: 1.9;
-  color: #8a7480;
+  color: #6a5963;
   max-width: 380px;
 }
 .catalog-hero .primary-button {
@@ -72,7 +72,7 @@
 .collection-title > p {
   font-size: 10px;
   line-height: 1.7;
-  color: #a08a94;
+  color: #685a60;
 }
 .catalog-search {
   display: flex;
@@ -125,7 +125,7 @@
 .catalog-filters > summary::after {
   content: "−";
   font-size: 16px;
-  color: #b49c8a;
+  color: #685a50;
 }
 .catalog-filters:not([open]) > summary::after {
   content: "+";
@@ -156,7 +156,7 @@
 }
 .filter-note {
   font-size: 10px;
-  color: #aa929e;
+  color: #685960;
   line-height: 1.9;
   border-top: 1px solid #e7dcd0;
   margin-top: 24px;
@@ -172,7 +172,7 @@
 }
 .active-query {
   font-size: 10px;
-  color: #9d8693;
+  color: #685861;
   line-height: 1.8;
 }
 .active-query strong {
@@ -184,12 +184,12 @@
   gap: 10px;
   align-items: center;
   font-size: 9px;
-  color: #a48a98;
+  color: #695861;
   white-space: nowrap;
 }
 .sort-label select {
   font-size: 10px;
-  color: #785565;
+  color: #775464;
   background: transparent;
   border: 1px solid #ded1c6;
   padding: 9px 10px;
@@ -205,7 +205,7 @@
   background: #f0e8df;
   border-radius: 3px;
   font-size: 9px;
-  color: #9e827f;
+  color: #6b5856;
 }
 .filter-count .text-button {
   font-size: 9px;
@@ -247,7 +247,7 @@
   display: grid;
   place-items: center;
   font-size: 14px;
-  color: #8a6b58;
+  color: #715848;
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -261,7 +261,7 @@
   min-height: 180px;
   display: grid;
   place-items: center;
-  color: #b29a9d;
+  color: #67595b;
   background: #f0e9df;
   font-size: 11px;
   padding: 20px;
@@ -272,7 +272,7 @@
   top: 11px;
   left: 10px;
   background: #faf6eedf;
-  color: #907c72;
+  color: #695b53;
   padding: 6px 8px;
   border-radius: 2px;
   font-size: 8px;
@@ -285,7 +285,7 @@
   font-size: 8px;
   letter-spacing: 1.4px;
   text-transform: uppercase;
-  color: #a38576;
+  color: #6d594f;
   margin-bottom: 8px;
   white-space: nowrap;
   overflow: hidden;
@@ -305,7 +305,7 @@
 }
 .product-fabric {
   font-size: 9px;
-  color: #a5909b;
+  color: #665960;
   margin-top: 6px;
   white-space: nowrap;
   overflow: hidden;
@@ -325,7 +325,7 @@
 }
 .product-price-row > span {
   font-size: 8px;
-  color: #aa949f;
+  color: #685a61;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -380,12 +380,12 @@
   gap: 9px;
   align-items: center;
   font-size: 9px;
-  color: #b09aa5;
+  color: #665960;
   margin: 0 0 25px;
   line-height: 1.8;
 }
 .breadcrumbs > a {
-  color: #886273;
+  color: #755463;
 }
 .product-detail-layout {
   display: grid;
@@ -441,7 +441,7 @@
   place-content: center;
   height: 100%;
   font-size: 16px;
-  color: #98775e;
+  color: #725946;
 }
 .gallery-thumbnails small {
   display: block;
@@ -451,7 +451,7 @@
 .image-retry {
   font-size: 9px;
   margin-top: 13px;
-  color: #b29aa6;
+  color: #675960;
 }
 .product-information {
   padding-top: 15px;
@@ -466,7 +466,7 @@
 }
 .detail-category {
   font-size: 12px;
-  color: #a18a95;
+  color: #695a61;
   line-height: 1.8;
 }
 .detail-price {
@@ -479,7 +479,7 @@
 .detail-price > small {
   display: block;
   font-size: 9px;
-  color: #b097a2;
+  color: #685960;
   font-weight: 400;
   letter-spacing: 0.2px;
   margin-top: 9px;
@@ -497,12 +497,12 @@
   font-size: 9px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #af97a2;
+  color: #675960;
 }
 .product-specs dd {
   font-size: 12px;
   margin: 8px 0 0;
-  color: #785564;
+  color: #775463;
   overflow-wrap: anywhere;
 }
 .try-on-coming {
@@ -520,7 +520,7 @@
 }
 .try-on-coming > p {
   font-size: 9px;
-  color: #9b8275;
+  color: #6b5a51;
   line-height: 1.9;
 }
 .product-information > .secondary-button {
@@ -538,7 +538,7 @@
 .product-description > p {
   font-size: 11px;
   line-height: 2;
-  color: #9c8590;
+  color: #695960;
   white-space: pre-line;
 }
 .product-tags {
@@ -551,7 +551,7 @@
   font-size: 9px;
   background: #efe6db;
   border-radius: 2px;
-  color: #9c7866;
+  color: #72584a;
   padding: 6px 9px;
 }
 .store-byline {
@@ -566,7 +566,7 @@
   width: 38px;
   height: 38px;
   background: #eee3d4;
-  color: #a38062;
+  color: #705844;
   display: grid;
   place-items: center;
   font-size: 22px;
@@ -574,13 +574,13 @@
 .store-byline p {
   font-size: 8px;
   letter-spacing: 1.3px;
-  color: #b1999e;
+  color: #685a5d;
 }
 .store-byline a {
   font-size: 13px;
   display: inline-block;
   margin-top: 7px;
-  color: #7f5669;
+  color: #795264;
 }
 .logo-uploader {
   display: flex;
@@ -606,7 +606,7 @@
 }
 .logo-preview > span {
   font-size: 25px;
-  color: #bc9c78;
+  color: #6d5a46;
 }
 .logo-uploader > div:last-child {
   min-width: 0;
@@ -620,7 +620,7 @@
   padding: 11px 14px;
   border: 1px solid #d7c4b0;
   background: #fbf6ed;
-  color: #9a7458;
+  color: #755843;
   border-radius: 3px;
   cursor: pointer;
   overflow: hidden;
@@ -643,7 +643,7 @@
 }
 .upload-progress {
   font-size: 10px;
-  color: #a67f5b;
+  color: #73583f;
   line-height: 1.9;
   margin-top: 9px;
 }
@@ -661,7 +661,7 @@
 }
 .definition-tabs > button {
   font-size: 10px;
-  color: #a17e6d;
+  color: #71584c;
   background: transparent;
   border: 0;
   padding: 10px 16px;
@@ -713,7 +713,7 @@
 }
 .read-only-brand > p {
   font-size: 10px;
-  color: #af93a0;
+  color: #695860;
   line-height: 1.8;
 }
 .category-management-list {
@@ -747,7 +747,7 @@
 .category-management-list span {
   display: block;
   font-size: 10px;
-  color: #b196a3;
+  color: #685860;
   line-height: 1.9;
   margin-top: 6px;
 }
@@ -796,7 +796,7 @@
 .staff-product-cell small {
   display: block;
   font-size: 9px;
-  color: #b49ba9;
+  color: #685a62;
   margin-top: 6px;
   overflow-wrap: anywhere;
 }
@@ -806,7 +806,7 @@
   width: 44px;
   height: 66px;
   background: #f2e9dc;
-  color: #c0a383;
+  color: #6c5b49;
   flex-shrink: 0;
   font-size: 20px;
 }
@@ -869,7 +869,7 @@
   text-align: center;
   height: 100%;
   font-size: 22px;
-  color: #a08366;
+  color: #6e5a46;
 }
 .managed-media-preview small {
   display: block;
@@ -884,12 +884,12 @@
   display: block;
   font-size: 11px;
   font-weight: 500;
-  color: #886171;
+  color: #765462;
 }
 .managed-media-description > small {
   display: block;
   font-size: 9px;
-  color: #b59aa6;
+  color: #695960;
   margin-top: 8px;
 }
 .media-badges {
@@ -928,7 +928,7 @@
   border-radius: 3px;
   font-size: 10px;
   line-height: 1.8;
-  color: #ad91a0;
+  color: #6a5862;
 }
 .upload-status-list span {
   min-width: 0;
@@ -937,13 +937,13 @@
 .upload-status-list strong {
   font-size: 9px;
   font-weight: 500;
-  color: #9f7e60;
+  color: #715944;
   max-width: 60%;
   text-align: right;
   overflow-wrap: anywhere;
 }
 .upload-status-list .danger-text {
-  color: #a05b50;
+  color: #884d44;
 }
 @media (max-width: 1100px) {
   .catalog-layout {
@@ -1370,4 +1370,10 @@
   margin: 0;
   padding: 0;
   min-width: 0;
+}
+
+.catalog-hero-image > span {
+  background: #342334e6;
+  padding: 7px 9px;
+  border-radius: 2px;
 }

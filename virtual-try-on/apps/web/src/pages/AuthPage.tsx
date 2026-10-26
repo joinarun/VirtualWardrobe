@@ -1,3 +1,4 @@
+import { UiIcon } from "../components/UiIcon";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { api, errorMessage, passwordError, refreshCsrf } from "../api";
@@ -10,16 +11,22 @@ import {
   PasswordInput,
 } from "../components/Common";
 import type { AccountKind, User } from "../types";
+import { authLink, customerReturnPath } from "../navigation";
 
 type Mode = "login" | "signup" | "recover";
 export function AuthPage({
   mode = "login",
   kind = "CUSTOMER",
+  returnTo,
 }: {
   mode?: Mode;
   kind?: AccountKind;
+  returnTo?: string;
 }) {
   const auth = useAuth();
+  const destination = customerReturnPath(
+    returnTo || new URLSearchParams(window.location.search).get("next"),
+  );
   const [identifier, setIdentifier] = useState("");
   const [name, setName] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
@@ -116,7 +123,7 @@ export function AuthPage({
             ? "/account/password"
             : result.user.kind === "WORKFORCE"
               ? "/staff"
-              : "/account",
+              : destination,
         );
       }
     } catch (failure) {
@@ -175,11 +182,16 @@ export function AuthPage({
             disabled={!savedCodes}
             onClick={() => {
               setRecoveryCodes([]);
-              window.location.assign("/account");
+              window.location.assign(destination);
             }}
             type="button"
           >
-            Continue to my account <span aria-hidden="true">→</span>
+            {destination === "/account"
+              ? "Continue to my account"
+              : "Continue to your preview"}{" "}
+            <span aria-hidden="true">
+              <UiIcon kind="right" />
+            </span>
           </button>
         </section>
       </div>
@@ -194,8 +206,14 @@ export function AuthPage({
             Previous sessions have ended. Sign in with your new password. The
             recovery code you just used cannot be used again.
           </p>
-          <a className="primary-button full-width" href="/account/login">
-            Sign in <span aria-hidden="true">→</span>
+          <a
+            className="primary-button full-width"
+            href={authLink("/account/login", destination)}
+          >
+            Sign in{" "}
+            <span aria-hidden="true">
+              <UiIcon kind="right" />
+            </span>
           </a>
         </section>
       </div>
@@ -468,22 +486,30 @@ export function AuthPage({
                   : mode === "recover"
                     ? "Reset password"
                     : "Sign in"}
-              <span aria-hidden="true">→</span>
+              <span aria-hidden="true">
+                <UiIcon kind="right" />
+              </span>
             </button>
           </form>
         )}
         <div className="auth-links">
           {!workforce && mode === "login" && (
             <>
-              <a href="/account/recover">Forgot your password?</a>
+              <a href={authLink("/account/recover", destination)}>
+                Forgot your password?
+              </a>
               <p>
-                New here? <a href="/account/signup">Create an account</a>
+                New here?{" "}
+                <a href={authLink("/account/signup", destination)}>
+                  Create an account
+                </a>
               </p>
             </>
           )}
           {mode === "signup" && (
             <p>
-              Already have an account? <a href="/account/login">Sign in</a>
+              Already have an account?{" "}
+              <a href={authLink("/account/login", destination)}>Sign in</a>
             </p>
           )}
           {mode === "recover" && (
@@ -492,7 +518,9 @@ export function AuthPage({
                 Lost every recovery code? Automated recovery is unavailable.
                 Support cannot restore an account from a phone number alone.
               </p>
-              <a href="/account/login">← Back to sign in</a>
+              <a href={authLink("/account/login", destination)}>
+                <UiIcon kind="left" /> Back to sign in
+              </a>
             </>
           )}
           {workforce ? (
@@ -501,11 +529,16 @@ export function AuthPage({
                 Need access or a password reset? Contact your store
                 administrator or the platform operator.
               </p>
-              <a href="/account/login">Customer sign-in →</a>
+              <a
+                aria-label="Customer sign-in →"
+                href={authLink("/account/login", destination)}
+              >
+                Customer sign-in <UiIcon kind="right" />
+              </a>
             </>
           ) : (
             <a className="muted-link" href="/staff/login">
-              Store team sign-in →
+              Store team sign-in <UiIcon kind="right" />
             </a>
           )}
         </div>
@@ -606,7 +639,9 @@ export function PasswordChangePage() {
             type="submit"
           >
             {busy ? "Updating password…" : "Save new password"}
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true">
+              <UiIcon kind="right" />
+            </span>
           </button>
         </form>
         <div className="auth-links">

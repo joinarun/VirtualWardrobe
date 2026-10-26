@@ -1,3 +1,4 @@
+import { UiIcon } from "../components/UiIcon";
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth-context";
 import { EmptyState, Loading, Notice } from "../components/Common";
@@ -61,7 +62,7 @@ function ProductCard({ product }: { product: Product }) {
           <span className="availability-pill">Currently unavailable</span>
         )}
         <span className="product-open" aria-hidden="true">
-          ↗
+          <UiIcon kind="up-right" />
         </span>
       </a>
       <div className="product-card-copy">
@@ -111,7 +112,10 @@ function CatalogSearch({
         maxLength={200}
       />
       <button className="primary-button" type="submit">
-        Search <span aria-hidden="true">↗</span>
+        Search{" "}
+        <span aria-hidden="true">
+          <UiIcon kind="up-right" />
+        </span>
       </button>
     </form>
   );
@@ -170,11 +174,16 @@ export function CatalogHome() {
             own point of view.
           </p>
           <a href="#collection" className="primary-button">
-            Explore the collection <span aria-hidden="true">↓</span>
+            Explore the collection{" "}
+            <span aria-hidden="true">
+              <UiIcon kind="down" />
+            </span>
           </a>
           <div className="hero-note">
-            <span aria-hidden="true">✧</span> Thoughtfully built around your
-            privacy.
+            <span aria-hidden="true">
+              <UiIcon kind="sparkle" />
+            </span>{" "}
+            Thoughtfully built around your privacy.
           </div>
         </div>
         <div className="catalog-hero-image">
@@ -471,8 +480,8 @@ export function CatalogHome() {
           <p className="eyebrow">A MORE PERSONAL WAY TO SHOP</p>
           <h2>See it. Picture it. Make it yours.</h2>
           <p>
-            Discover the details first. Personal previews and store callbacks
-            are being prepared.
+            Discover the details, create a private visual preview and keep what
+            inspires you.
           </p>
         </div>
         <div className="steps">
@@ -487,8 +496,8 @@ export function CatalogHome() {
             <span>02 / PREVIEW</span>
             <h3>A little imagination, made visible.</h3>
             <p>
-              Personal AI previews are coming soon, with clear guidance on their
-              visual limits.
+              Upload your own photo with consent. Create a private preview, then
+              explicitly save or discard it. AI appearance and drape can differ.
             </p>
           </article>
           <article>
@@ -594,7 +603,8 @@ export function ProductDetail({ id }: { id: string }) {
                 >
                   {item.kind === "VIDEO" ? (
                     <span>
-                      ▶<small>Video</small>
+                      <UiIcon kind="play" />
+                      <small>Video</small>
                     </span>
                   ) : (
                     <img
@@ -655,17 +665,35 @@ export function ProductDetail({ id }: { id: string }) {
             </Notice>
           )}
           <div className="try-on-coming">
-            <span className="tag">A more personal preview is on its way</span>
-            <button
-              className="primary-button full-width"
-              disabled
-              type="button"
-            >
-              Try it on me <span aria-hidden="true">✧</span>
-            </button>
+            <span className="tag">A more personal point of view</span>
+            {product.status === "PUBLISHED" &&
+            product.availability === "AVAILABLE" &&
+            product.tryOnEnabled ? (
+              <a
+                className="primary-button full-width"
+                href={`/try-on?product=${product.id}`}
+              >
+                Try it on me{" "}
+                <span aria-hidden="true">
+                  <UiIcon kind="sparkle" />
+                </span>
+              </a>
+            ) : (
+              <button
+                className="primary-button full-width"
+                disabled
+                type="button"
+              >
+                Try it on me{" "}
+                <span aria-hidden="true">
+                  <UiIcon kind="sparkle" />
+                </span>
+              </button>
+            )}
             <p>
-              Virtual try-on is being prepared. AI previews will be visual
-              approximations, with no size or fit guarantee.
+              {!product.tryOnEnabled
+                ? "The store has not enabled try-on for this piece."
+                : "Create a private preview using your own full-body photo. Provider and retention details are shown before upload. AI appearance, garment details and drape can differ; there is no size or fit guarantee."}
             </p>
           </div>
           <button
@@ -692,7 +720,9 @@ export function ProductDetail({ id }: { id: string }) {
             )}
           </section>
           <div className="store-byline">
-            <span aria-hidden="true">↗</span>
+            <span aria-hidden="true">
+              <UiIcon kind="up-right" />
+            </span>
             <div>
               <p>FROM THE COLLECTION OF</p>
               <a href={`/?storeId=${product.storeId}`}>{product.storeName}</a>

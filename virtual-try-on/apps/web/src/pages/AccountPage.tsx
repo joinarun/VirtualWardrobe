@@ -1,3 +1,4 @@
+import { UiIcon } from "../components/UiIcon";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { api, clearCsrf, errorMessage } from "../api";
@@ -32,7 +33,7 @@ export function AccountPage() {
           </p>
           <div className="button-row">
             <a className="primary-button" href="/staff">
-              Open store workspace →
+              Open store workspace <UiIcon kind="right" />
             </a>
             <a className="secondary-button" href="/account/login">
               Switch to customer sign-in
@@ -111,13 +112,20 @@ export function AccountPage() {
           </a>
         </section>
         <section className="panel">
-          <EmptyState title="Your wardrobe starts here.">
-            Saved try-on previews and store enquiries will appear in this space
-            as those features are added. Your personal photos will remain
-            separate from the store workspace.
+          <EmptyState title="Your wardrobe, your point of view.">
+            Return to recent requests or keep inspiration in your saved gallery.
+            Your personal photos stay separate from the store workspace.
           </EmptyState>
+          <div className="button-row">
+            <a className="primary-button" href="/account/previews">
+              My previews <UiIcon kind="right" />
+            </a>
+            <a className="secondary-button" href="/account/gallery">
+              Saved gallery
+            </a>
+          </div>
           <a className="text-button" href="/">
-            Explore the storefront →
+            Explore the storefront <UiIcon kind="right" />
           </a>
         </section>
       </div>

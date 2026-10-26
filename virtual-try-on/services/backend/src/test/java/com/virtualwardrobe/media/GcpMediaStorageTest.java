@@ -2,6 +2,7 @@ package com.virtualwardrobe.media;
 
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.http.HttpTransportOptions;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -37,6 +38,20 @@ class GcpMediaStorageTest {
     };
 
     private GcpMediaStorage adapter(Storage storage) { return new GcpMediaStorage(storage, BUCKET, SIGNER, CLOCK); }
+
+    @Test
+    void objectOperationsUseAnExplicitBudgetBelowTheSavingRecoveryLease() {
+        var options = GcpMediaStorage.cloudOptions("test-project", GoogleCredentials.newBuilder().build());
+        var retries = options.getRetrySettings();
+        var transport = (HttpTransportOptions) options.getTransportOptions();
+        assertEquals(2, retries.getMaxAttempts());
+        assertEquals(Duration.ofSeconds(30), retries.getTotalTimeoutDuration());
+        assertEquals(Duration.ofSeconds(20), retries.getInitialRpcTimeoutDuration());
+        assertEquals(Duration.ofSeconds(20), retries.getMaxRpcTimeoutDuration());
+        assertEquals(5_000, transport.getConnectTimeout());
+        assertEquals(10_000, transport.getReadTimeout());
+        assertTrue(retries.getTotalTimeoutDuration().multipliedBy(3).compareTo(Duration.ofMinutes(5)) < 0);
+    }
 
     @Test
     void unsafeKeysCannotReachCloudStorageOrSigning() {

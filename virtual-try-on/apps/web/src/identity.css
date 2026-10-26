@@ -58,7 +58,7 @@ a.secondary-button {
 }
 .text-button:hover,
 .inline-button:hover {
-  color: #9c6547;
+  color: #80533a;
 }
 .danger-text {
   color: #9d403b;
@@ -92,7 +92,7 @@ a.secondary-button {
 }
 .form-intro {
   font-size: 12px;
-  color: #897a80;
+  color: #655a5f;
   line-height: 1.9;
   margin: 0 0 25px;
 }
@@ -136,7 +136,7 @@ a.secondary-button {
   box-shadow: 0 0 0 3px #b9917320;
 }
 .field input::placeholder {
-  color: #b4a4aa;
+  color: #635a5e;
 }
 .field textarea {
   resize: vertical;
@@ -156,12 +156,12 @@ a.secondary-button {
   background: transparent;
   padding: 0 13px;
   font-size: 10px;
-  color: #876953;
+  color: #715846;
 }
 .form-hint {
   font-size: 10px;
   line-height: 1.8;
-  color: #97868a;
+  color: #675b5e;
   font-weight: 400;
 }
 .password-hint {
@@ -173,7 +173,7 @@ a.secondary-button {
   align-items: flex-start;
   font-size: 11px;
   line-height: 1.7;
-  color: #74606c;
+  color: #6b5863;
   margin: 19px 0;
   font-weight: 400;
 }
@@ -198,12 +198,12 @@ a.secondary-button {
 .notice-success {
   background: #edf2e9;
   border-color: #cbd7c2;
-  color: #4d6b4c;
+  color: #486547;
 }
 .notice-info {
   background: #f4efe6;
   border-color: #e1d5c2;
-  color: #7d654a;
+  color: #6f5a42;
 }
 .auth-page {
   max-width: 1120px;
@@ -235,7 +235,7 @@ a.secondary-button {
 .auth-story p:not(.eyebrow) {
   font-size: 11px;
   line-height: 1.9;
-  color: #89777f;
+  color: #685a61;
 }
 .auth-page .form-card {
   max-width: none;
@@ -249,7 +249,7 @@ a.secondary-button {
   padding-top: 22px;
   font-size: 11px;
   line-height: 1.9;
-  color: #927d87;
+  color: #695a61;
 }
 .auth-links a {
   color: #6f485e;
@@ -258,7 +258,7 @@ a.secondary-button {
 }
 .auth-links .muted-link {
   font-size: 10px;
-  color: #9a8790;
+  color: #675a60;
 }
 .phone-fields {
   display: grid;
@@ -267,7 +267,7 @@ a.secondary-button {
 }
 .privacy-details {
   font-size: 10px;
-  color: #8e7564;
+  color: #6d5a4d;
   line-height: 1.9;
   padding: 13px 0;
   border-bottom: 1px solid #e5dbcf;
@@ -290,7 +290,7 @@ a.secondary-button {
 }
 .local-captcha > small {
   font-size: 9px;
-  color: #9b846f;
+  color: #6b5b4d;
   line-height: 1.8;
   display: block;
 }
@@ -327,7 +327,7 @@ a.secondary-button {
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: #8a7380;
+  color: #6a5963;
   padding: 30px;
   text-align: center;
 }
@@ -402,7 +402,7 @@ a.secondary-button {
 .page-title-row p:not(.eyebrow) {
   font-size: 12px;
   line-height: 1.8;
-  color: #927d88;
+  color: #685961;
 }
 .account-columns {
   display: grid;
@@ -445,7 +445,7 @@ a.secondary-button {
   height: 42px;
   border-radius: 50%;
   background: #eadfd2;
-  color: #8f6f56;
+  color: #725945;
   font-family: "Playfair Display", serif;
   font-size: 21px;
   flex-shrink: 0;
@@ -462,7 +462,7 @@ a.secondary-button {
   font-size: 11px;
 }
 .detail-list dt {
-  color: #97818c;
+  color: #685961;
 }
 .detail-list dd {
   margin: 0;
@@ -477,27 +477,27 @@ a.secondary-button {
   border-radius: 3px;
   padding: 5px 8px;
   background: #f0e8df;
-  color: #8d6b4f;
+  color: #745841;
 }
 .badge-active {
   background: #eaf1e6;
-  color: #5f7659;
+  color: #50634b;
 }
 .badge-invited,
 .badge-pending {
   background: #f4ead6;
-  color: #987542;
+  color: #745932;
 }
 .badge-archived {
   background: #eee6e7;
-  color: #99717a;
+  color: #74565d;
 }
 .empty-state {
   text-align: center;
   padding: 30px 10px;
 }
 .empty-symbol {
-  color: #bc9671;
+  color: #6f5843;
   font-size: 31px;
 }
 .empty-state h3 {
@@ -507,14 +507,14 @@ a.secondary-button {
 .empty-state p {
   font-size: 11px;
   line-height: 1.9;
-  color: #93808a;
+  color: #675a61;
   max-width: 450px;
   margin: auto;
 }
 .account-security > p {
   font-size: 11px;
   line-height: 1.9;
-  color: #97828c;
+  color: #685a61;
   max-width: 680px;
   margin-bottom: 20px;
 }
@@ -657,7 +657,7 @@ a.secondary-button {
 .credential-card > p {
   font-size: 11px;
   line-height: 1.9;
-  color: #79876e;
+  color: #57614f;
 }
 .credential-values {
   display: grid;
@@ -670,14 +670,14 @@ a.secondary-button {
 .credential-values dt {
   font-size: 9px;
   letter-spacing: 1px;
-  color: #849278;
+  color: #57604f;
   margin-bottom: 6px;
   text-transform: uppercase;
 }
 .credential-values dd {
   margin: 0;
   overflow-wrap: anywhere;
-  color: #4f6848;
+  color: #4c6445;
 }
 .credential-values code {
   user-select: all;
@@ -698,7 +698,7 @@ a.secondary-button {
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #9d8791;
+  color: #695a61;
   padding: 0 14px 15px;
   border-bottom: 1px solid #e6dbd1;
   white-space: nowrap;
@@ -707,7 +707,7 @@ a.secondary-button {
   padding: 18px 14px;
   border-bottom: 1px solid #ede4db;
   vertical-align: middle;
-  color: #77616d;
+  color: #6c5863;
 }
 .data-table th:first-child,
 .data-table td:first-child {
@@ -726,7 +726,7 @@ a.secondary-button {
 .data-table td > small {
   display: block;
   font-size: 10px;
-  color: #a18c96;
+  color: #675a60;
   margin-top: 7px;
 }
 .table-actions {
@@ -752,7 +752,7 @@ a.secondary-button {
 }
 .confirm-panel > p {
   font-size: 11px;
-  color: #9c828e;
+  color: #6a5861;
   line-height: 1.9;
   margin-bottom: 10px;
 }
@@ -763,7 +763,7 @@ a.secondary-button {
 .invitations-panel > p:not(.eyebrow) {
   font-size: 11px;
   line-height: 1.9;
-  color: #9a7f8c;
+  color: #6a5861;
 }
 .invitation-row {
   display: flex;
@@ -777,12 +777,12 @@ a.secondary-button {
   display: block;
   font-size: 12px;
   font-weight: 500;
-  color: #755666;
+  color: #745565;
 }
 .invitation-row > div > span {
   display: block;
   font-size: 10px;
-  color: #a58c98;
+  color: #685860;
   margin-top: 6px;
 }
 .pagination {
@@ -794,7 +794,7 @@ a.secondary-button {
 }
 .pagination > span {
   font-size: 10px;
-  color: #9e8793;
+  color: #685961;
 }
 .visually-hidden {
   position: absolute;
@@ -819,10 +819,10 @@ a.secondary-button {
 }
 footer > a:not(.wordmark) {
   font-size: 10px;
-  color: #8c7482;
+  color: #6a5863;
 }
 .credential-card .eyebrow {
-  color: #7e8d71;
+  color: #57614e;
 }
 .panel .notice:first-child {
   margin-top: 0;

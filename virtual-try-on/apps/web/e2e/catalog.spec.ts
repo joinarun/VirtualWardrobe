@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { assertTextContrast } from "./contrast";
 import type { Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
@@ -237,6 +238,7 @@ test("real catalog publishing, media validation, logos, gallery, discovery, pagi
   await expect(
     page.getByRole("button", { name: `Archive ${title}`, exact: true }),
   ).toBeDisabled();
+  await assertTextContrast(page);
   await page.setViewportSize({ width: 360, height: 800 });
   expect(
     await page.evaluate(
@@ -274,6 +276,7 @@ test("real catalog publishing, media validation, logos, gallery, discovery, pagi
   await expect(
     customer.getByRole("link", { name: `View ${title}`, exact: true }),
   ).toBeVisible();
+  await assertTextContrast(customer);
   const thumbnail = customer.getByRole("img", { name: title, exact: true });
   const thumbnailUrl = await thumbnail.getAttribute("src");
   expect(thumbnailUrl).toMatch(/\/thumbnail$/);
@@ -289,8 +292,8 @@ test("real catalog publishing, media validation, logos, gallery, discovery, pagi
     customer.getByRole("heading", { name: title, exact: true }),
   ).toBeVisible();
   await expect(
-    customer.getByRole("button", { name: "Try it on me", exact: true }),
-  ).toBeDisabled();
+    customer.getByRole("link", { name: "Try it on me", exact: true }),
+  ).toHaveAttribute("href", `/try-on?product=${product.id}`);
   await customer
     .getByRole("button", { name: "View product image 2", exact: true })
     .click();

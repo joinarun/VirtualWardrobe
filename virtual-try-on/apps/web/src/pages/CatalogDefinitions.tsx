@@ -1,3 +1,4 @@
+import { UiIcon } from "../components/UiIcon";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { api, errorMessage } from "../api";
@@ -92,7 +93,9 @@ export function BrandManager({
           <div className="button-row">
             <button className="primary-button" type="submit" disabled={busy}>
               {busy ? "Saving…" : editing ? "Save brand" : "Create brand"}{" "}
-              <span aria-hidden="true">→</span>
+              <span aria-hidden="true">
+                <UiIcon kind="right" />
+              </span>
             </button>
             {editing && (
               <button
@@ -284,7 +287,9 @@ function CategoryManager() {
           <div className="button-row">
             <button className="primary-button" type="submit" disabled={busy}>
               {busy ? "Saving…" : editing ? "Save category" : "Create category"}{" "}
-              <span aria-hidden="true">→</span>
+              <span aria-hidden="true">
+                <UiIcon kind="right" />
+              </span>
             </button>
             {editing && (
               <button

@@ -30,7 +30,7 @@ make down
 - `/api/v1` is the public API prefix. API mode denies all `/internal/**` paths; worker mode has no public business API. Customer and workforce credentials are separate, with store-scoped workforce memberships.
 - `APP_ADAPTER_MODE=local` and `APP_IMAGE_PROVIDER=mock` are the safe local defaults. Mock outputs are explicitly `Demo preview`. The provider evaluator supports an opt-in live Google mode with bounded spending and separate human scoring.
 - Database configuration uses standard `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`. Web sessions persist in PostgreSQL and use the `__session` HttpOnly cookie, CSRF headers and credential-version checks.
-- Local storage and queued task references are ignored under `work/`. Private customer media and production job workers will be implemented with their own authorization/lifecycle tests.
+- Local media objects are ignored under `work/`. PostgreSQL stores durable local task deliveries, generation attempts, customer allowances and provider spend reservations. GCP uses private Cloud Storage and Cloud Tasks behind the same service interfaces.
 
 Do not commit `.env`, credentials, photos, `work/`, build artifacts or browser reports. The private worker also requires Cloud Run IAM when deployed; application route selection is not a substitute for infrastructure authorization.
 
@@ -41,3 +41,11 @@ Run `make bootstrap-admin` to create the first super admin if none exists. Gener
 Customers use mobile/password signup, explicitly unverified phone numbers, and hashed one-use recovery codes. Local signup uses an explicit local test CAPTCHA adapter. Cloud signup must use real server-validated CAPTCHA and fails closed if configuration is missing.
 
 Super admins create pending stores and workforce accounts. An invited store admin signs in, changes their temporary password, accepts their membership and activates the store. Store admins manage only their stores and memberships. Database transactions protect the last active global/store administrator, and membership removal preserves audit history.
+
+## Virtual try-on
+
+Customers open an available product, select **Try it on me**, and consent before uploading their own adult photo. Requests survive navigation and refresh. Customers can cancel work, explicitly save results to their private gallery, download them, or delete them. Store employees have no customer-photo access through the application.
+
+Local development uses deterministic previews with no paid model calls. The hosted demo uses Google in an explicitly labelled evaluation mode. Production live generation fails closed until an operator supplies a matching human quality review. The 40-pair saree benchmark remains a human review gate; neither fixture tests nor a successful provider call establish garment fidelity.
+
+Source photos are removed after terminal processing and within 24 hours. Unsaved outputs expire within 24 hours. Saved outputs persist until deletion. Removal prevents new application access immediately; previously issued private URLs expire within five minutes, and cloud backup/soft-delete retention is separate. Daily customer, global-request and provider-spend limits are configurable and checked transactionally.

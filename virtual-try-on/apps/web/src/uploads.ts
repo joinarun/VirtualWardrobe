@@ -21,22 +21,11 @@ export function validateFile(file: File, imagesOnly = false) {
     throw Error("This file is empty. Please choose another file.");
   return image ? ("IMAGE" as const) : ("VIDEO" as const);
 }
-export async function uploadMedia(
+export async function putAuthorizedFile(
   file: File,
-  authorizePath: string,
+  authorization: UploadAuthorization,
   onProgress: (progress: UploadProgress) => void,
-  imagesOnly = false,
-): Promise<Media> {
-  const kind = validateFile(file, imagesOnly);
-  const authorization = await api<UploadAuthorization>(authorizePath, {
-    method: "POST",
-    body: {
-      fileName: file.name,
-      contentType: file.type,
-      bytes: file.size,
-      kind,
-    },
-  });
+) {
   const destination = new URL(authorization.uploadUrl, window.location.origin);
   if (
     destination.protocol !== "https:" &&
@@ -84,6 +73,24 @@ export async function uploadMedia(
     onProgress({ phase: "uploading", percent: 0 });
     request.send(file);
   });
+}
+export async function uploadMedia(
+  file: File,
+  authorizePath: string,
+  onProgress: (progress: UploadProgress) => void,
+  imagesOnly = false,
+): Promise<Media> {
+  const kind = validateFile(file, imagesOnly);
+  const authorization = await api<UploadAuthorization>(authorizePath, {
+    method: "POST",
+    body: {
+      fileName: file.name,
+      contentType: file.type,
+      bytes: file.size,
+      kind,
+    },
+  });
+  await putAuthorizedFile(file, authorization, onProgress);
   onProgress({ phase: "validating", percent: 100 });
   const finalize = () =>
     api<{ media: Media }>(`/uploads/${authorization.uploadId}/finalize`, {

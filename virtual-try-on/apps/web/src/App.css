@@ -96,7 +96,7 @@ button {
   font-size: 10px;
   letter-spacing: 2.2px;
   font-weight: 600;
-  color: #896447;
+  color: #77573e;
 }
 .hero h1 {
   font-size: clamp(40px, 4.5vw, 67px);
@@ -109,7 +109,7 @@ button {
   max-width: 430px;
   font-size: 14px;
   line-height: 1.9;
-  color: #786d75;
+  color: #645a61;
 }
 .primary-button {
   display: inline-flex;
@@ -131,14 +131,14 @@ button {
 }
 .hero-note {
   font-size: 11px;
-  color: #83777b;
+  color: #645a5d;
   display: flex;
   gap: 8px;
   align-items: center;
 }
 .hero-note span {
   font-size: 18px;
-  color: #b68664;
+  color: #765741;
 }
 .hero-art {
   height: 485px;
@@ -267,7 +267,7 @@ button {
 }
 .section-heading > p:last-child {
   font-size: 12px;
-  color: #86767b;
+  color: #665a5d;
 }
 .steps {
   max-width: 1120px;
@@ -283,7 +283,7 @@ button {
 .steps article > span {
   font-size: 9px;
   letter-spacing: 1.8px;
-  color: #966e4f;
+  color: #76573e;
 }
 .steps h3 {
   font-size: 22px;
@@ -293,7 +293,7 @@ button {
 .steps p {
   font-size: 12px;
   line-height: 1.9;
-  color: #7b7078;
+  color: #645b61;
   max-width: 260px;
 }
 .development-note {
@@ -307,7 +307,7 @@ button {
 }
 .development-note p {
   font-size: 11px;
-  color: #817279;
+  color: #665a60;
   line-height: 1.8;
   max-width: 490px;
   margin-top: 8px;
@@ -319,14 +319,14 @@ button {
   padding: 6px 9px;
   border-radius: 2px;
   display: inline-block;
-  color: #796453;
+  color: #6d5a4b;
 }
 .status {
   display: inline-flex;
   gap: 7px;
   align-items: center;
   font-size: 10px;
-  color: #85777f;
+  color: #655a61;
   white-space: nowrap;
 }
 .status i {
@@ -351,7 +351,7 @@ footer {
 footer p,
 footer > span {
   font-size: 10px;
-  color: #92848a;
+  color: #655b5f;
 }
 .workspace {
   display: flex;
@@ -404,7 +404,7 @@ footer > span {
 }
 .deferred small {
   font-size: 9px;
-  color: #8d7b8a;
+  color: #c2afbd;
 }
 .back-link {
   font-size: 10px;
@@ -437,7 +437,7 @@ footer > span {
 .workspace-welcome > p:last-child {
   font-size: 12px;
   line-height: 1.9;
-  color: #8c7e83;
+  color: #655b5e;
   max-width: 500px;
 }
 .workspace-card {
@@ -451,7 +451,7 @@ footer > span {
 }
 .foundation-icon {
   background: #eee4d6;
-  color: #927254;
+  color: #725942;
   font-family: "Playfair Display", serif;
   display: grid;
   place-items: center;
@@ -467,7 +467,7 @@ footer > span {
 .workspace-card p:not(.eyebrow) {
   font-size: 12px;
   line-height: 1.9;
-  color: #8b7e81;
+  color: #645b5d;
   max-width: 470px;
   margin-bottom: 17px;
 }
@@ -480,7 +480,7 @@ footer > span {
 .setup-grid article > span {
   font-family: "Playfair Display", serif;
   font-size: 28px;
-  color: #bc9979;
+  color: #6f5a47;
 }
 .setup-grid h3 {
   font-size: 19px;
@@ -489,7 +489,7 @@ footer > span {
 .setup-grid p {
   font-size: 11px;
   line-height: 1.8;
-  color: #8c7e83;
+  color: #655b5e;
 }
 @media (max-width: 850px) {
   .hero {

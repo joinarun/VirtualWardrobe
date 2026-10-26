@@ -3,6 +3,8 @@ package com.virtualwardrobe.media;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ImpersonatedCredentials;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.cloud.http.HttpTransportOptions;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -54,12 +56,30 @@ public final class GcpMediaStorage implements MediaStorage {
             throw new IllegalArgumentException("Cloud media project and signing identity must be configured");
         }
         GoogleCredentials source = GoogleCredentials.getApplicationDefault().createScoped(List.of(CLOUD_SCOPE));
-        this.storage = StorageOptions.newBuilder().setProjectId(project).setCredentials(source).build().getService();
+        this.storage = cloudOptions(project, source).getService();
         // Use source ADC for object operations. This credential is ONLY a signer:
         // ImpersonatedCredentials.sign calls IAM signBlob with source credentials.
         // It never refreshes/mints an impersonated target access token here.
         this.signer = ImpersonatedCredentials.create(source, signerAccount, List.of(), List.of(CLOUD_SCOPE), 300);
         this.clock = Clock.systemUTC();
+    }
+
+    static StorageOptions cloudOptions(String project, GoogleCredentials credentials) {
+        // Each metadata/download/write call gets a small explicit retry budget.
+        // A generation-pinned read uses two calls, and a save then writes once;
+        // these budgets stay comfortably below the five-minute SAVING lease.
+        RetrySettings retries = RetrySettings.newBuilder()
+                .setMaxAttempts(2)
+                .setInitialRetryDelayDuration(Duration.ofMillis(500))
+                .setRetryDelayMultiplier(2.0)
+                .setMaxRetryDelayDuration(Duration.ofSeconds(1))
+                .setInitialRpcTimeoutDuration(Duration.ofSeconds(20))
+                .setRpcTimeoutMultiplier(1.0)
+                .setMaxRpcTimeoutDuration(Duration.ofSeconds(20))
+                .setTotalTimeoutDuration(Duration.ofSeconds(30)).build();
+        return StorageOptions.newBuilder().setProjectId(project).setCredentials(credentials)
+                .setRetrySettings(retries).setTransportOptions(HttpTransportOptions.newBuilder()
+                        .setConnectTimeout(5_000).setReadTimeout(10_000).build()).build();
     }
 
     GcpMediaStorage(Storage storage, String bucket, ServiceAccountSigner signer, Clock clock) {

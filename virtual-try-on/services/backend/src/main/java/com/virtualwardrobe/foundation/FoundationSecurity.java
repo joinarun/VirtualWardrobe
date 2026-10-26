@@ -1,6 +1,7 @@
 package com.virtualwardrobe.foundation;
 
 import com.virtualwardrobe.identity.*;
+import com.virtualwardrobe.worker.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,15 +24,18 @@ public class FoundationSecurity {
         var cookie=new DefaultCookieSerializer();cookie.setCookieName("__session");cookie.setCookiePath("/");
         cookie.setUseHttpOnlyCookie(true);cookie.setSameSite("Lax");cookie.setUseSecureCookie(secure);return cookie;
     }
-    @Bean SecurityFilterChain foundationFilterChain(HttpSecurity http, FoundationProperties properties,IdentityService identity) throws Exception {
+    @Bean SecurityFilterChain foundationFilterChain(HttpSecurity http, FoundationProperties properties,IdentityService identity,WorkerTokenVerifier workerTokens) throws Exception {
         var csrfRepository=new HttpSessionCsrfTokenRepository();csrfRepository.setHeaderName("X-CSRF-TOKEN");
-        http.csrf(csrf->csrf.csrfTokenRepository(csrfRepository).csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()).ignoringRequestMatchers("/api/v1/uploads/*/content"));
+        if(properties.mode().equals("worker")){http.csrf(csrf->csrf.disable());http.sessionManagement(s->s.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS));}
+        else http.csrf(csrf->csrf.csrfTokenRepository(csrfRepository).csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()).ignoringRequestMatchers("/api/v1/uploads/*/content","/api/v1/private-uploads/*/content"));
         http.authorizeHttpRequests(auth -> {
             auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
             if ("api".equals(properties.mode())) auth.requestMatchers("/api/v1/**").permitAll();
+            else auth.requestMatchers("/internal/**").hasRole("WORKER");
             auth.anyRequest().denyAll();
         });
         http.addFilterBefore(new AccountAccessFilter(identity,properties.mode()),CsrfFilter.class);
+        http.addFilterBefore(new WorkerAccessFilter(workerTokens,properties.mode()),AccountAccessFilter.class);
         http.exceptionHandling(errors -> errors.authenticationEntryPoint((request,response,failure)->{
             response.setStatus(401);response.setContentType("application/problem+json");response.getWriter().write("{\"status\":401,\"code\":\"LOGIN_REQUIRED\",\"detail\":\"Please sign in\"}");
         }).accessDeniedHandler((request,response,failure)->{

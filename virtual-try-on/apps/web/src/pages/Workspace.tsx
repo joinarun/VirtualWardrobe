@@ -1,3 +1,4 @@
+import { UiIcon } from "../components/UiIcon";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { api, errorMessage } from "../api";
@@ -123,7 +124,10 @@ export function Workspace() {
             className={tab === "overview" ? "nav-active" : ""}
             onClick={() => chooseTab("overview")}
           >
-            Overview <span>↗</span>
+            Overview{" "}
+            <span>
+              <UiIcon kind="up-right" />
+            </span>
           </button>
           {canManage && (
             <>
@@ -187,7 +191,7 @@ export function Workspace() {
           <a href="/account/password">Change password</a>
           <LogoutButton />
           <a className="back-link" href="/">
-            ← Customer storefront
+            <UiIcon kind="left" /> Customer storefront
           </a>
         </div>
       </aside>
@@ -199,7 +203,7 @@ export function Workspace() {
               : "YOUR STORE WORKSPACE"}
           </span>
           <a className="text-button" href="/">
-            View storefront ↗
+            View storefront <UiIcon kind="up-right" />
           </a>
         </header>
         {auth.error && <Notice>{auth.error}</Notice>}
@@ -422,7 +426,7 @@ function WorkspaceOverview({
                 Edit store profile
               </button>
               <button className="text-button" type="button" onClick={onTeam}>
-                Manage team →
+                Manage team <UiIcon kind="right" />
               </button>
             </div>
           )}
@@ -532,7 +536,9 @@ function CreateStore({
         </label>
         <button className="primary-button" type="submit" disabled={busy}>
           {busy ? "Creating store…" : "Create pending store"}
-          <span aria-hidden="true">→</span>
+          <span aria-hidden="true">
+            <UiIcon kind="right" />
+          </span>
         </button>
       </form>
     </section>
@@ -652,7 +658,9 @@ function StoreProfile({
         </Notice>
         <button className="primary-button" type="submit" disabled={busy}>
           {busy ? "Saving profile…" : "Save store profile"}
-          <span aria-hidden="true">→</span>
+          <span aria-hidden="true">
+            <UiIcon kind="right" />
+          </span>
         </button>
       </form>
     </section>
@@ -993,7 +1001,9 @@ function StoreTeam({
             type="submit"
           >
             {busy === "add" ? "Adding team member…" : "Add team member"}
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true">
+              <UiIcon kind="right" />
+            </span>
           </button>
         </form>
       </section>
@@ -1338,7 +1348,9 @@ function WorkforceAdmin({ onChanged }: { onChanged: () => Promise<void> }) {
             {busy === "create"
               ? "Creating account…"
               : "Create workforce account"}
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true">
+              <UiIcon kind="right" />
+            </span>
           </button>
         </form>
       </section>
