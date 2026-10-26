@@ -33,6 +33,24 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn(str(DEPLOY.ROOT / "infra/backend.gcloudignore"), args)
         self.assertIn("projects/virtualtryon-511016/serviceAccounts/virtualwardrobe-demo-build@virtualtryon-511016.iam.gserviceaccount.com", args)
 
+    def test_installed_cli_exact_owned_service_absence_diagnostic_is_recognized(self):
+        for name in (self.deployment.api, self.deployment.worker):
+            missing = f"ERROR: (gcloud.run.services.describe) Cannot find service [{name}]\n".encode()
+            with patch.object(self.deployment, "gc", return_value=Mock(returncode=1, stderr=missing)):
+                self.assertFalse(self.deployment.exists("run", "services", "describe", name, "--region", self.deployment.region))
+
+    def test_permission_network_foreign_and_unrecognized_diagnostics_still_fail_closed(self):
+        expected = f"ERROR: (gcloud.run.services.describe) Cannot find service [{self.deployment.api}]"
+        cases = [(self.deployment.api, "Permission denied"), (self.deployment.api, "Connection timed out"),
+                 (self.deployment.api, "ERROR: Cannot find anything"),
+                 (self.deployment.api, "ERROR: (gcloud.run.services.describe) Cannot find service [stylereel]"),
+                 ("stylereel", "ERROR: (gcloud.run.services.describe) Cannot find service [stylereel]"),
+                 (self.deployment.api, expected + "\nPermission denied")]
+        for name, error in cases:
+            with patch.object(self.deployment, "gc", return_value=Mock(returncode=1, stderr=error.encode())):
+                with self.assertRaisesRegex(RuntimeError, "Resource lookup failed"):
+                    self.deployment.exists("run", "services", "describe", name, "--region", self.deployment.region)
+
     def test_hosting_uses_only_dedicated_site_and_pins_api_revision(self):
         responses = [
             {"sites": [{"name": "projects/virtualtryon-511016/sites/virtualtryon-511016"}], "nextPageToken": "next token"},

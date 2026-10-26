@@ -109,6 +109,10 @@ class Deployment:
             return True
         # Never treat a permission/auth/network error as permission to create.
         error = result.stderr.decode(errors="replace")
+        if (len(args) >= 4 and args[:3] == ("run", "services", "describe") and
+                args[3] in (self.api, self.worker) and error.strip() ==
+                f"ERROR: (gcloud.run.services.describe) Cannot find service [{args[3]}]"):
+            return False
         if any(marker in error for marker in
                ("NOT_FOUND", "not found", "does not exist", "404")):
             return False
