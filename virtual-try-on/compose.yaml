@@ -16,6 +16,7 @@ services:
       timeout: 3s
       retries: 20
   api:
+    mem_limit: 1g
     build:
       context: services/backend
       target: development
@@ -24,6 +25,7 @@ services:
     environment: &backend-env
       PORT: 8080
       APP_MODE: api
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
       APP_ADAPTER_MODE: local
       APP_IMAGE_PROVIDER: mock
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-virtualwardrobe}
@@ -39,6 +41,7 @@ services:
       db:
         condition: service_healthy
   worker:
+    mem_limit: 1g
     image: virtualwardrobe-backend-dev
     command: ["java", "-jar", "target/backend-0.0.1-SNAPSHOT.jar"]
     environment:
@@ -69,6 +72,7 @@ services:
       api:
         condition: service_started
   backend-tests:
+    mem_limit: 1g
     profiles: [tools]
     image: virtualwardrobe-backend-dev
     command: ["./mvnw", "-B", "test"]

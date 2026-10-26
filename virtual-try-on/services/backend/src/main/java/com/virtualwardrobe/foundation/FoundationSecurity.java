@@ -25,7 +25,7 @@ public class FoundationSecurity {
     }
     @Bean SecurityFilterChain foundationFilterChain(HttpSecurity http, FoundationProperties properties,IdentityService identity) throws Exception {
         var csrfRepository=new HttpSessionCsrfTokenRepository();csrfRepository.setHeaderName("X-CSRF-TOKEN");
-        http.csrf(csrf->csrf.csrfTokenRepository(csrfRepository).csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()));
+        http.csrf(csrf->csrf.csrfTokenRepository(csrfRepository).csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()).ignoringRequestMatchers("/api/v1/uploads/*/content"));
         http.authorizeHttpRequests(auth -> {
             auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
             if ("api".equals(properties.mode())) auth.requestMatchers("/api/v1/**").permitAll();

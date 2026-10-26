@@ -96,6 +96,8 @@ public class IdentityService {
         return Map.of("membershipId",r.getObject(1),"storeId",r.getObject(2),"storeName",r.getString(3),"role",r.getString(4),"state",r.getString(5));
     }
     public void requireStore(Account a,UUID storeId,boolean admin) {
+        // Callers may have waited for the administration/store lock since reading the account.
+        a=find(a.id());if(!a.enabled())throw ApiProblem.forbidden();
         if(!a.kind().equals("WORKFORCE"))throw ApiProblem.forbidden();businessReady(a);
         if(a.superAdmin()){if(jdbc.queryForObject("SELECT count(*) FROM vw_store WHERE id=?",Integer.class,storeId)==0)throw ApiProblem.missing();return;}
         int found=jdbc.queryForObject("SELECT count(*) FROM vw_membership WHERE store_id=? AND account_id=? AND state='ACTIVE'"+(admin?" AND role='STORE_ADMIN'":""),Integer.class,storeId,a.id());

@@ -79,5 +79,25 @@
     "people": "Synthetic adult model",
     "usage": "Fictional store hero and synthetic API connectivity smoke only",
     "createdAt": "2026-10-26"
+  },
+  {
+    "file": "saree-ruby-detail.png",
+    "prompt": "Use case: precise-object-edit. Create one additional ecommerce catalog detail photo of the SAME ruby red Kanchipuram silk saree from the reference. Preserve the exact ruby fabric, antique gold temple zari border and woven motifs; do not redesign them. Tight editorial close-up of the pallu and border draped in soft folds over the same model's forearm, showing authentic silk weave and gold thread texture; no face needed. Same warm beige studio background, soft light. Original synthetic garment/model reference. No text, logos, UI, collage or watermark. Portrait 2:3 photograph.",
+    "reference": "saree-ruby.png",
+    "source": "AI-generated additional catalog view of the original fictional saree",
+    "generator": "Built-in image_gen edit mode",
+    "people": "Synthetic adult model; no intended real-person likeness",
+    "usage": "Fictional product gallery demo, not evidence of real garment fidelity",
+    "createdAt": "2026-10-27"
+  },
+  {
+    "file": "saree-ruby-back.png",
+    "prompt": "Use case: identity-preserve. Create one additional ecommerce catalog photograph of the SAME fictional adult model wearing the exact SAME ruby red and antique gold Kanchipuram saree from the reference. Preserve her identity and the garment's ruby colour, gold temple border, woven motifs and pallu design. Show a full-body rear three-quarter pose with the pallu draped naturally and visible, looking slightly to her side; elegant, modest and realistic. Same warm beige seamless studio and soft light. No new garment design, no text, logos, watermark or collage. Portrait 2:3 photo.",
+    "reference": "saree-ruby.png",
+    "source": "AI-generated additional catalog view of the original fictional saree",
+    "generator": "Built-in image_gen edit mode",
+    "people": "Synthetic adult model; no intended real-person likeness",
+    "usage": "Fictional product gallery demo, not evidence of real garment fidelity",
+    "createdAt": "2026-10-27"
   }
 ]

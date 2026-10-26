@@ -29,13 +29,13 @@ public class StoreService {
         map.put("logoUrl",Objects.toString(r.getString("logo_url"),""));map.put("contactPhone",Objects.toString(r.getString("contact_phone"),""));map.put("status",r.getString("status"));return map;
     }
     @Transactional public Map<String,Object> create(Map<String,Object> body) {
-        var actor=identity.superAdmin();identity.lockAdministration();UUID id=UUID.randomUUID();
+        identity.lockAdministration();var actor=identity.superAdmin();UUID id=UUID.randomUUID();
         jdbc.update("INSERT INTO vw_store(id,name,description,contact_phone) VALUES(?,?,?,?)",id,Inputs.text(body,"name",120),Inputs.optional(body,"description",4000),Inputs.optional(body,"contactPhone",30));
         identity.audit(actor.id(),id,"STORE_CREATED",id);return detailForAdmin(id);
     }
     private Map<String,Object> detailForAdmin(UUID id){return jdbc.query("SELECT * FROM vw_store WHERE id=?",(r,n)->store(r),id).stream().findFirst().orElseThrow(ApiProblem::missing);}
     @Transactional public Map<String,Object> patch(UUID id,Map<String,Object> body) {
-        var actor=identity.workforce();identity.lockAdministration();identity.lockStore(id);identity.requireStore(actor,id,true);
+        identity.lockAdministration();var actor=identity.workforce();identity.lockStore(id);identity.requireStore(actor,id,true);
         var old=detailForAdmin(id);String name=body.containsKey("name")?Inputs.text(body,"name",120):(String)old.get("name");
         String description=body.containsKey("description")?Inputs.optional(body,"description",4000):(String)old.get("description");
         String phone=body.containsKey("contactPhone")?Inputs.optional(body,"contactPhone",30):(String)old.get("contactPhone");
@@ -56,7 +56,7 @@ public class StoreService {
         return Map.of("items",jdbc.query("SELECT a.id,a.name,m.role FROM vw_membership m JOIN vw_account a ON a.id=m.account_id WHERE m.store_id=? AND m.state='ACTIVE' AND a.enabled=TRUE ORDER BY a.name",(r,n)->Map.of("userId",r.getObject(1),"name",r.getString(2),"role",r.getString(3)),storeId));
     }
     @Transactional public Map<String,Object> provision(UUID storeId,Map<String,Object> body) {
-        var actor=identity.workforce();identity.lockAdministration();identity.lockStore(storeId);identity.requireStore(actor,storeId,true);
+        identity.lockAdministration();var actor=identity.workforce();identity.lockStore(storeId);identity.requireStore(actor,storeId,true);
         String email=Inputs.email(Inputs.text(body,"email",254)),name=Inputs.text(body,"name",120),role=Inputs.text(body,"role",20);
         checkRole(role);var users=jdbc.queryForList("SELECT id FROM vw_account WHERE kind='WORKFORCE' AND normalized_identifier=?",UUID.class,email);
         UUID userId;String temporary=null;
@@ -77,7 +77,7 @@ public class StoreService {
     private void checkRole(String role){if(!Set.of("STORE_ADMIN","STAFF").contains(role))throw ApiProblem.bad("Invalid store role");}
     private Map<String,Object> membership(UUID id) {return jdbc.query("SELECT id,account_id,store_id,role,state FROM vw_membership WHERE id=?",(r,n)->Map.<String,Object>of("id",r.getObject(1),"userId",r.getObject(2),"storeId",r.getObject(3),"role",r.getString(4),"state",r.getString(5)),id).stream().findFirst().orElseThrow(ApiProblem::missing);}
     @Transactional public Map<String,Object> changeMember(UUID storeId,UUID membershipId,Map<String,Object> body,boolean remove) {
-        var actor=identity.workforce();identity.lockAdministration();identity.lockStore(storeId);identity.requireStore(actor,storeId,true);
+        identity.lockAdministration();var actor=identity.workforce();identity.lockStore(storeId);identity.requireStore(actor,storeId,true);
         var member=membership(membershipId);if(!storeId.equals(member.get("storeId")))throw ApiProblem.missing();
         String role=body.containsKey("role")?Inputs.text(body,"role",20):(String)member.get("role");checkRole(role);
         String state=remove?"REMOVED":body.containsKey("state")?Inputs.text(body,"state",20):(String)member.get("state");
@@ -88,7 +88,7 @@ public class StoreService {
         identity.audit(actor.id(),storeId,remove?"MEMBERSHIP_REMOVED":"MEMBERSHIP_UPDATED",membershipId);return membership(membershipId);
     }
     @Transactional public void accept(UUID membershipId) {
-        var actor=identity.workforce();identity.lockAdministration();var member=membership(membershipId);UUID store=(UUID)member.get("storeId");identity.lockStore(store);
+        identity.lockAdministration();var actor=identity.workforce();var member=membership(membershipId);UUID store=(UUID)member.get("storeId");identity.lockStore(store);
         if(!actor.id().equals(member.get("userId")))throw ApiProblem.missing();if(!member.get("state").equals("INVITED"))throw new ApiProblem(409,"INVITATION_UNAVAILABLE","This invitation is no longer pending");
         jdbc.update("UPDATE vw_membership SET state='ACTIVE',accepted_at=CURRENT_TIMESTAMP WHERE id=?",membershipId);identity.audit(actor.id(),store,"INVITATION_ACCEPTED",membershipId);
     }
@@ -106,12 +106,12 @@ public class StoreService {
         return Map.of("items",users.stream().map(id->identity.user(identity.find(id))).toList(),"page",p,"size",s,"total",jdbc.queryForObject("SELECT count(*) FROM vw_account WHERE kind='WORKFORCE'",Integer.class));
     }
     @Transactional public Map<String,Object> createWorkforce(Map<String,Object> body) {
-        var actor=identity.superAdmin();identity.lockAdministration();UUID id=UUID.randomUUID();String temporary=Inputs.secret();
+        identity.lockAdministration();var actor=identity.superAdmin();UUID id=UUID.randomUUID();String temporary=Inputs.secret();
         insertWorkforce(id,Inputs.text(body,"name",120),Inputs.email(Inputs.text(body,"email",254)),Boolean.TRUE.equals(body.get("superAdmin")),temporary);
         identity.audit(actor.id(),null,"WORKFORCE_CREATED",id);return Map.of("user",identity.user(identity.find(id)),"temporaryPassword",temporary);
     }
     @Transactional public Map<String,Object> patchWorkforce(UUID id,Map<String,Object> body) {
-        var actor=identity.superAdmin();identity.lockAdministration();var target=identity.find(id);if(!target.kind().equals("WORKFORCE"))throw ApiProblem.missing();
+        identity.lockAdministration();var actor=identity.superAdmin();var target=identity.find(id);if(!target.kind().equals("WORKFORCE"))throw ApiProblem.missing();
         List<UUID> stores=jdbc.queryForList("SELECT store_id FROM vw_membership WHERE account_id=? ORDER BY store_id",UUID.class,id);stores.forEach(identity::lockStore);
         boolean enabled=body.containsKey("enabled")?Boolean.TRUE.equals(body.get("enabled")):target.enabled();
         boolean superAdmin=body.containsKey("superAdmin")?Boolean.TRUE.equals(body.get("superAdmin")):target.superAdmin();
@@ -123,7 +123,7 @@ public class StoreService {
         identity.audit(actor.id(),null,"WORKFORCE_UPDATED",id);return identity.user(identity.find(id));
     }
     @Transactional public Map<String,Object> resetWorkforce(UUID id) {
-        var actor=identity.superAdmin();identity.lockAdministration();var target=identity.find(id);if(!target.kind().equals("WORKFORCE"))throw ApiProblem.missing();
+        identity.lockAdministration();var actor=identity.superAdmin();var target=identity.find(id);if(!target.kind().equals("WORKFORCE"))throw ApiProblem.missing();
         if(actor.id().equals(id))throw new ApiProblem(409,"SELF_RESET_UNAVAILABLE","Use Change password to update your own password");
         String temporary=Inputs.secret();jdbc.update("UPDATE vw_account SET password_hash=?,password_change_required=TRUE,temp_password_expires_at=CURRENT_TIMESTAMP+INTERVAL '24 hours',credential_version=credential_version+1 WHERE id=?",identity.encoder().encode(temporary),id);
         identity.revokeSessions(id);identity.audit(actor.id(),null,"WORKFORCE_PASSWORD_RESET",id);return Map.of("user",identity.user(identity.find(id)),"temporaryPassword",temporary);

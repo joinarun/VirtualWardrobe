@@ -10,12 +10,13 @@
   "database_storage_max_gb": 20,
   "api_max_instances": 2,
   "worker_max_instances": 1,
-  "image_provider": "mock",
+  "image_provider": "google",
   "google_image_model": "gemini-nano-banana-2.1",
   "google_image_location": "global",
   "daily_customer_limit": 5,
   "daily_global_limit": 100,
   "daily_provider_budget_usd": "5.00",
+  "monthly_alert_budget": {"amount": "2500", "currency": "INR"},
   "bootstrap_email": "superadmin_1@gmail.com",
   "firebase_tools_version": "15.34.1"
 }

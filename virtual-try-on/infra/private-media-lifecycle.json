@@ -2,7 +2,7 @@
   "rule": [
     {
       "action": {"type": "Delete"},
-      "condition": {"age": 2, "matchesPrefix": ["source/", "unsaved/", "uploads/"]}
+      "condition": {"age": 1, "matchesPrefix": ["quarantine/", "temp/", "source/", "unsaved/", "uploads/"]}
     }
   ]
 }

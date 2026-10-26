@@ -6,8 +6,10 @@ import { Loading, Notice, SiteFooter, SiteHeader } from "./components/Common";
 import { AccountPage } from "./pages/AccountPage";
 import { AuthPage, PasswordChangePage } from "./pages/AuthPage";
 import { Workspace } from "./pages/Workspace";
+import { CatalogHome, ProductDetail } from "./pages/Catalog";
 import "./App.css";
 import "./identity.css";
+import "./catalog.css";
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -42,121 +44,6 @@ class ErrorBoundary extends Component<
       this.props.children
     );
   }
-}
-function Home() {
-  const auth = useAuth();
-  return (
-    <>
-      <main>
-        <section className="hero">
-          <div className="hero-copy">
-            <p className="eyebrow">YOUR STYLE. YOUR PERSPECTIVE.</p>
-            <h1>A new way to find your favourite drape.</h1>
-            <p className="hero-description">
-              Discover beautiful sarees from independent stores. Soon, see an AI
-              preview on your own photo and connect with the people behind the
-              collection.
-            </p>
-            <a
-              href={
-                auth.user?.kind === "CUSTOMER" ? "/account" : "/account/signup"
-              }
-              className="primary-button"
-            >
-              {auth.user?.kind === "CUSTOMER"
-                ? "Open my wardrobe"
-                : "Make room for your next favourite"}{" "}
-              <span aria-hidden="true">→</span>
-            </a>
-            <div className="hero-note">
-              <span>✧</span> Thoughtfully built around your privacy.
-            </div>
-          </div>
-          <div className="hero-art hero-photograph">
-            <img
-              src="/demo/hero-emerald.png"
-              alt="AI-created editorial image of a woman in an emerald saree with a gold border"
-            />
-            <div className="photo-caption">
-              <span>THE ART OF</span>
-              <em>finding your drape.</em>
-            </div>
-          </div>
-        </section>
-        {auth.error && (
-          <div className="home-notice">
-            <Notice>
-              {auth.error}{" "}
-              <button
-                className="inline-button"
-                onClick={() => void auth.reload()}
-                type="button"
-              >
-                Retry connection
-              </button>
-            </Notice>
-          </div>
-        )}
-        {new URLSearchParams(window.location.search).get("notice") ===
-          "account-deleted" && (
-          <div className="home-notice">
-            <Notice tone="success">
-              Your account deletion request was accepted and your session has
-              ended.
-            </Notice>
-          </div>
-        )}
-        <section id="how-it-works" className="how-section">
-          <div className="section-heading">
-            <p className="eyebrow">FROM DISCOVERY TO CONVERSATION</p>
-            <h2>See it. Picture it. Make it yours.</h2>
-            <p>
-              Shopping that starts with inspiration and ends with a human
-              connection.
-            </p>
-          </div>
-          <div className="steps">
-            <article>
-              <span>01 / DISCOVER</span>
-              <h3>Find a piece you love.</h3>
-              <p>
-                Explore collections with the fabric, colour and detail that feel
-                like you.
-              </p>
-            </article>
-            <article>
-              <span>02 / PREVIEW</span>
-              <h3>A little imagination, made visible.</h3>
-              <p>
-                Get an illustrative AI preview. Garment details and fit may
-                differ.
-              </p>
-            </article>
-            <article>
-              <span>03 / CONNECT</span>
-              <h3>Talk to the store.</h3>
-              <p>
-                Request a callback and let a salesperson help with the next
-                step.
-              </p>
-            </article>
-          </div>
-        </section>
-        <section className="development-note">
-          <div>
-            <span className="tag">Accounts & store access are ready</span>
-            <p>
-              Product browsing and try-on tools are the next chapter. Create
-              your personal account, or sign in to manage your store team.
-            </p>
-          </div>
-          <a className="secondary-button" href="/staff">
-            For store teams ↗
-          </a>
-        </section>
-      </main>
-    </>
-  );
 }
 function Routes() {
   const auth = useAuth();
@@ -195,7 +82,9 @@ function Routes() {
   else if (path === "/account/login") page = <AuthPage />;
   else if (path === "/account/password") page = <PasswordChangePage />;
   else if (path === "/account") page = <AccountPage />;
-  else if (path === "/") page = <Home />;
+  else if (path.startsWith("/products/"))
+    page = <ProductDetail id={path.slice("/products/".length)} />;
+  else if (path === "/") page = <CatalogHome />;
   else
     page = (
       <div className="account-page">

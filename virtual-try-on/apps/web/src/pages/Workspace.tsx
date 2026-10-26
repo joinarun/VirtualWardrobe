@@ -20,8 +20,18 @@ import type {
   User,
 } from "../types";
 import { AuthPage } from "./AuthPage";
+import { ProductAdmin } from "./ProductAdmin";
+import { BrandManager, PlatformCatalog } from "./CatalogDefinitions";
+import { LogoUploader } from "../components/LogoUploader";
 
-type Tab = "overview" | "profile" | "team" | "workforce";
+type Tab =
+  | "overview"
+  | "profile"
+  | "team"
+  | "workforce"
+  | "catalog"
+  | "brands"
+  | "platformCatalog";
 export function Workspace() {
   const auth = useAuth();
   const [revision, setRevision] = useState(0);
@@ -50,6 +60,14 @@ export function Workspace() {
         (membership) =>
           membership.storeId === selectedStore?.id &&
           membership.role === "STORE_ADMIN" &&
+          membership.state === "ACTIVE",
+      ),
+  );
+  const canOperate = Boolean(
+    auth.user?.superAdmin ||
+      auth.user?.memberships.some(
+        (membership) =>
+          membership.storeId === selectedStore?.id &&
           membership.state === "ACTIVE",
       ),
   );
@@ -134,9 +152,33 @@ export function Workspace() {
               Platform workforce
             </button>
           )}
-          <span className="deferred">
-            Catalog <small>Coming next</small>
-          </span>
+          {canOperate && (
+            <>
+              <button
+                type="button"
+                className={tab === "catalog" ? "nav-active" : ""}
+                onClick={() => chooseTab("catalog")}
+              >
+                Products
+              </button>
+              <button
+                type="button"
+                className={tab === "brands" ? "nav-active" : ""}
+                onClick={() => chooseTab("brands")}
+              >
+                Store brands
+              </button>
+            </>
+          )}
+          {auth.user.superAdmin && (
+            <button
+              type="button"
+              className={tab === "platformCatalog" ? "nav-active" : ""}
+              onClick={() => chooseTab("platformCatalog")}
+            >
+              Platform catalog
+            </button>
+          )}
           <span className="deferred">
             Enquiries <small>Coming next</small>
           </span>
@@ -265,6 +307,8 @@ export function Workspace() {
               await auth.refreshUser();
             }}
           />
+        ) : tab === "platformCatalog" && auth.user.superAdmin ? (
+          <PlatformCatalog />
         ) : !selectedStore ? (
           <EmptyState
             title={
@@ -279,6 +323,14 @@ export function Workspace() {
                 ? "Accept a store invitation above to access its workspace."
                 : "Ask your store administrator to invite you. Access appears here only after you accept."}
           </EmptyState>
+        ) : tab === "catalog" && canOperate ? (
+          <ProductAdmin key={selectedStore.id} store={selectedStore} />
+        ) : tab === "brands" && canOperate ? (
+          <BrandManager
+            key={selectedStore.id}
+            storeId={selectedStore.id}
+            storeName={selectedStore.name}
+          />
         ) : tab === "team" && canManage ? (
           <StoreTeam
             key={selectedStore.id}
@@ -380,12 +432,18 @@ function WorkspaceOverview({
         <article>
           <span>01</span>
           <h3>A collection with a point of view.</h3>
-          <p>Catalog tools will arrive in the next feature.</p>
+          <p>
+            Add product details, validated images and the pieces your customers
+            will discover.
+          </p>
         </article>
         <article>
           <span>02</span>
           <h3>Help customers picture it.</h3>
-          <p>Personal AI previews will clearly explain their visual limits.</p>
+          <p>
+            Choose a clear garment reference now. Personal previews are being
+            prepared.
+          </p>
         </article>
         <article>
           <span>03</span>
@@ -510,7 +568,6 @@ function StoreProfile({
           name: name.trim(),
           description: description.trim(),
           contactPhone: contact.trim(),
-          logoUrl: logo.trim(),
           status,
         },
       });
@@ -582,22 +639,12 @@ function StoreProfile({
             </select>
           </label>
         </div>
-        <label className="field" htmlFor="store-logo">
-          <span>
-            Logo URL <small>Optional</small>
-          </span>
-          <input
-            id="store-logo"
-            value={logo}
-            onChange={(event) => setLogo(event.target.value)}
-            placeholder="https://… or /demo/…"
-            maxLength={2000}
-          />
-          <small className="form-hint">
-            Use an owned HTTPS image or an application image path. Direct logo
-            uploads arrive with media tools.
-          </small>
-        </label>
+        <LogoUploader
+          label="Upload store logo"
+          url={logo}
+          authorizePath={`/stores/${store.id}/logo/uploads`}
+          onUploaded={(url) => setLogo(url)}
+        />
         <Notice tone="info">
           Activation requires an active admin who has accepted store access.
           Archiving hides the store from discovery and stops new customer

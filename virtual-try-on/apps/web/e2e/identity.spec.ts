@@ -259,6 +259,28 @@ test("workforce rotation, invitations, final-admin errors and staff boundaries u
   await expect(
     page.getByRole("button", { name: "Platform workforce", exact: true }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Platform catalog", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Products", exact: true }).click();
+  await page
+    .getByRole("button", { name: "+ Add product", exact: true })
+    .click();
+  await page
+    .getByLabel("Product title", { exact: true })
+    .fill(`Staff draft ${suffix}`);
+  await page
+    .getByLabel("SKU / reference", { exact: true })
+    .fill(`STAFF-${suffix}`);
+  await page.getByRole("button", { name: "Create draft", exact: true }).click();
+  await expect(
+    page.getByText("Product details saved.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close editor", exact: true }).click();
+  await page.getByRole("button", { name: "Store brands", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Store brands.", exact: true }),
+  ).toBeVisible();
   await page.setViewportSize({ width: 360, height: 800 });
   expect(
     await page.evaluate(

@@ -8,6 +8,7 @@ Secrets are passed through stdin or HTTPS JSON bodies, never command arguments.
 from __future__ import annotations
 
 import argparse
+from decimal import Decimal
 import json
 import os
 from pathlib import Path
@@ -145,9 +146,131 @@ class Deployment:
             "ai": {"provider": self.cfg["image_provider"],
                    "model": self.cfg["google_image_model"],
                    "location": self.cfg["google_image_location"],
+                   "release_mode": "evaluation demo using fictional stores and owned synthetic fixtures; not production promotion",
                    "quality_gate": "40-pair human saree evaluation remains separate"},
             "cost": "Cloud SQL/storage accrue charges while idle. Cloud Run minimum=0 permits cold starts. Review current regional pricing; no fixed total is guaranteed.",
+            "monthly_alert_budget": {
+                **self.cfg["monthly_alert_budget"],
+                "type": "alerts-only, not a hard cap or currency-conversion guarantee",
+                "scope": "All virtualtryon-511016 project charges, including existing StyleReel usage",
+                "recipients": "Existing default billing-account IAM recipients only",
+                "thresholds": "50%, 90%, 100% actual spend and 100% forecast spend",
+            },
         }
+
+    def ensure_budget(self) -> dict:
+        """Create only this new project-filtered alert budget; never edit one.
+
+        Budget permission/API/currency failures are reported separately so they
+        do not hide otherwise useful application-build or deployment evidence.
+        No recipient/channel/IAM changes or manual messages are performed.
+        """
+        amount = self.cfg["monthly_alert_budget"]["amount"]
+        currency = self.cfg["monthly_alert_budget"]["currency"]
+        display = "VirtualWardrobe project monthly demo alerts"
+        result = {
+            "status": "not-configured", "amount": amount, "currency": currency,
+            "scope": f"All {self.project} charges, including existing StyleReel",
+            "alerts_only": True, "hard_cap": False,
+            "recipients": "Default billing-account IAM recipients only",
+            "existing_budgets_modified": False,
+        }
+        try:
+            billing = json.loads(self.value("billing", "projects", "describe", self.project,
+                                            "--format=json"))
+            account = billing.get("billingAccountName", "")
+            if not billing.get("billingEnabled") or not account:
+                raise RuntimeError("The intended project has no enabled billing account")
+            info = json.loads(self.value("billing", "accounts", "describe", account,
+                                        "--format=json"))
+            project_number = self.value("projects", "describe", self.project,
+                                        "--format=value(projectNumber)")
+            filters = f"projects/{project_number}"
+            create = ["gcloud", "billing", "budgets", "create", "--billing-account", account,
+                      "--display-name", display, "--budget-amount", amount + currency,
+                      "--calendar-period", "month", "--filter-projects", filters,
+                      "--credit-types-treatment", "exclude-all-credits",
+                      "--threshold-rule", "percent=0.50",
+                      "--threshold-rule", "percent=0.90",
+                      "--threshold-rule", "percent=1.00",
+                      "--threshold-rule", "percent=1.00,basis=forecasted-spend",
+                      "--project", self.project, "--quiet", "--format=json"]
+            result["remaining_commands"] = [
+                f"gcloud services enable billingbudgets.googleapis.com --project {self.project}",
+                shlex.join(create),
+            ]
+            if info.get("currencyCode") != currency:
+                result.update(status="currency-mismatch", reason=(
+                    f'Billing account currency is {info.get("currencyCode", "unknown")}; '
+                    f'reviewed budget currency is {currency}. No conversion or creation attempted.'))
+                result["remaining_commands"] = result["remaining_commands"][:1]
+                result["remaining_configuration"] = "Review an alert amount in the account's current native currency before creating a budget."
+                return result
+            enabled = self.gc("services", "enable", "billingbudgets.googleapis.com",
+                              capture=True, check=False)
+            if enabled.returncode:
+                result.update(status="api-enable-unavailable",
+                              reason=enabled.stderr.decode(errors="replace")[-4000:])
+                return result
+            listing = self.gc("billing", "budgets", "list", "--billing-account", account,
+                              "--format=json", capture=True, check=False)
+            if listing.returncode:
+                result.update(status="permission-unavailable",
+                              reason=listing.stderr.decode(errors="replace")[-4000:])
+                return result
+            budgets = json.loads(listing.stdout)
+            matches = [budget for budget in budgets if budget.get("displayName") == display]
+            if matches:
+                if len(matches) != 1:
+                    result.update(status="existing-name-conflict",
+                                  reason="Several budgets have the intended display name; none were changed")
+                    return result
+                budget = matches[0]
+                money = budget.get("amount", {}).get("specifiedAmount", {})
+                existing_amount = Decimal(str(money.get("units", "0"))) + Decimal(
+                    str(money.get("nanos", 0))) / Decimal("1000000000")
+                rules = budget.get("allUpdatesRule", {})
+                budget_filter = budget.get("budgetFilter", {})
+                exact_scope = (budget_filter.get("projects", []) == [filters] and
+                               not any(budget_filter.get(key) for key in
+                                       ("services", "labels", "subaccounts", "resourceAncestors", "creditTypes")))
+                thresholds = {
+                    (Decimal(str(rule.get("thresholdPercent", "0"))),
+                     rule.get("spendBasis", "CURRENT_SPEND"))
+                    for rule in budget.get("thresholdRules", [])
+                }
+                required_thresholds = {
+                    (Decimal("0.50"), "CURRENT_SPEND"),
+                    (Decimal("0.90"), "CURRENT_SPEND"),
+                    (Decimal("1.00"), "CURRENT_SPEND"),
+                    (Decimal("1.00"), "FORECASTED_SPEND"),
+                }
+                expected = (exact_scope and money.get("currencyCode") == currency and
+                            existing_amount == Decimal(amount) and
+                            budget_filter.get("calendarPeriod", "MONTH") == "MONTH" and
+                            budget_filter.get("creditTypesTreatment") == "EXCLUDE_ALL_CREDITS" and
+                            required_thresholds.issubset(thresholds) and
+                            not rules.get("disableDefaultIamRecipients", False) and
+                            not rules.get("monitoringNotificationChannels") and
+                            not rules.get("pubsubTopic"))
+                result.update(status="already-present" if expected else "existing-config-mismatch",
+                              name=budget.get("name"),
+                              reason="Existing budget preserved without modification")
+                if expected:
+                    result.pop("remaining_commands", None)
+                return result
+            created = command(create, capture=True, check=False)
+            if created.returncode:
+                result.update(status="creation-unavailable",
+                              reason=created.stderr.decode(errors="replace")[-4000:])
+                return result
+            budget = json.loads(created.stdout)
+            result.update(status="created", name=budget.get("name"))
+            result.pop("remaining_commands", None)
+            return result
+        except (RuntimeError, subprocess.CalledProcessError, ValueError) as error:
+            result["reason"] = str(error)
+            return result
 
     def ensure_account(self, role: str):
         account = self.accounts[role]
@@ -186,6 +309,18 @@ class Deployment:
         lifecycle = ROOT / "infra" / ("private-media-lifecycle.json" if private else "build-lifecycle.json")
         self.gc("storage", "buckets", "update", f"gs://{bucket}",
                 "--lifecycle-file", str(lifecycle))
+        if private:
+            cors = [{
+                "origin": [f'https://{self.cfg["firebase_site"]}.web.app',
+                           f'https://{self.cfg["firebase_site"]}.firebaseapp.com'],
+                "method": ["GET", "HEAD", "PUT"],
+                "responseHeader": ["Content-Type", "Cache-Control", "Content-Length", "ETag", "x-goog-generation", "x-goog-if-generation-match"],
+                "maxAgeSeconds": 300,
+            }]
+            cors_path = self.work / "private-media-cors.json"
+            cors_path.write_text(json.dumps(cors, indent=2) + "\n")
+            self.gc("storage", "buckets", "update", f"gs://{bucket}",
+                    "--cors-file", str(cors_path))
         # Keep the default 7-day soft-delete recovery window. The privacy notice
         # distinguishes application access removal from physical backup erasure.
 
@@ -289,14 +424,18 @@ class Deployment:
     def environment(self, mode: str, captcha_key: str, worker_url: str) -> dict[str, str]:
         return {
             "APP_ENVIRONMENT": "demo", "APP_MODE": mode,
+            "JAVA_TOOL_OPTIONS": "-XX:MaxRAMPercentage=70",
             "APP_ADAPTER_MODE": "gcp", "APP_IMAGE_PROVIDER": self.cfg["image_provider"],
             "GOOGLE_CLOUD_PROJECT": self.project, "APP_GCP_PROJECT": self.project,
             "APP_STORAGE_BUCKET": self.private_bucket,
+            "APP_STORAGE_SIGNER_SERVICE_ACCOUNT": self.accounts["api"],
             "APP_TASKS_LOCATION": self.region, "APP_TASKS_QUEUE": self.queue,
             "APP_TASKS_SERVICE_ACCOUNT": self.accounts["dispatch"],
             "APP_WORKER_URL": worker_url,
-            "APP_GOOGLE_IMAGE_MODEL": self.cfg["google_image_model"],
-            "APP_GOOGLE_IMAGE_LOCATION": self.cfg["google_image_location"],
+            "APP_AI_PROJECT": self.project,
+            "APP_AI_MODEL": self.cfg["google_image_model"],
+            "APP_AI_LOCATION": self.cfg["google_image_location"],
+            "APP_AI_TIMEOUT_SECONDS": "120",
             "APP_RECAPTCHA_SITE_KEY": captcha_key,
             "APP_RECAPTCHA_EXPECTED_ACTION": "signup",
             "APP_RECAPTCHA_ALLOWED_HOSTNAMES": f'{self.cfg["firebase_site"]}.web.app,{self.cfg["firebase_site"]}.firebaseapp.com',
@@ -310,7 +449,7 @@ class Deployment:
             "SPRING_DATASOURCE_USERNAME": self.dbuser,
             "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5" if mode == "api" else "3",
             "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "0",
-            "SERVER_SERVLET_SESSION_COOKIE_SECURE": "true",
+            "SESSION_COOKIE_SECURE": "true",
             "APP_BOOTSTRAP_SUPERADMIN_EMAIL": self.cfg["bootstrap_email"],
         }
 
@@ -399,13 +538,27 @@ class Deployment:
                  "deploy", "--only", "hosting", "--project", self.project,
                  "--config", str(config_path), "--non-interactive"])
 
+    def prepare(self):
+        """Prepare the reviewed cloud base without publishing application code."""
+        budget = self.ensure_budget()
+        (self.work / "budget-result.json").write_text(json.dumps(budget, indent=2) + "\n")
+        print(f'Billing alert budget: {budget["status"]} (alerts only, no hard cap).', flush=True)
+        self.provision()
+        captcha_key = self.ensure_captcha()
+        inventory = dict(self.plan(), captcha_site_key=captcha_key,
+                         billing_alert_budget=budget, status="PROVISIONED_NOT_DEPLOYED",
+                         provisioned_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+        path = self.work / "provisioning.json"
+        path.write_text(json.dumps(inventory, indent=2) + "\n")
+        print(f"Cloud base prepared; application not published. Inventory: {path}", flush=True)
+        return budget, captcha_key
+
     def apply(self, image: str | None):
         if not (ROOT / "services/backend/Dockerfile").is_file():
             raise RuntimeError("Backend Dockerfile is missing; finish application implementation first.")
         if not (ROOT / "apps/web/package-lock.json").is_file():
             raise RuntimeError("Web lockfile is missing; finish application implementation first.")
-        self.provision()
-        captcha_key = self.ensure_captcha()
+        budget, captcha_key = self.prepare()
         if image is None:
             revision = command(["git", "rev-parse", "--short=12", "HEAD"], capture=True).stdout.decode().strip()
             image = f"{self.region}-docker.pkg.dev/{self.project}/{self.repo}/backend:{revision}"
@@ -419,7 +572,7 @@ class Deployment:
         inventory = dict(self.plan(), image=image, api_url=api_url,
                          worker_url=worker_url,
                          web_url=f'https://{self.cfg["firebase_site"]}.web.app',
-                         captcha_site_key=captcha_key,
+                         captcha_site_key=captcha_key, billing_alert_budget=budget,
                          deployed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
         path = self.work / "deployment.json"
         path.write_text(json.dumps(inventory, indent=2) + "\n")
@@ -434,8 +587,12 @@ def main():
                         help="Explicit intended project; must match the config")
     parser.add_argument("--region", help="Override application region")
     parser.add_argument("--apply", action="store_true", help="Provision and deploy billable resources")
+    parser.add_argument("--provision-only", action="store_true",
+                        help="With --apply, prepare the cloud base without building or publishing the app")
     parser.add_argument("--image", help="Use a previously built image rather than building")
     args = parser.parse_args()
+    if args.provision_only and args.image:
+        parser.error("--provision-only does not build or deploy an image")
     cfg = json.loads(args.config.read_text())
     if args.project != EXPECTED_PROJECT or cfg.get("project_id") != EXPECTED_PROJECT:
         parser.error(f"This reviewed deployment is restricted to {EXPECTED_PROJECT}; no other project is allowed")
@@ -445,6 +602,8 @@ def main():
         parser.error("Resource prefix and Hosting site must remain the reviewed VirtualWardrobe names")
     if cfg["environment"] != "demo":
         parser.error("This script is restricted to the demo environment")
+    if cfg.get("image_provider") not in ("mock", "google"):
+        parser.error("The reviewed demo image provider must be mock or google")
     if not re.fullmatch(r"[a-z][a-z0-9-]{4,28}[a-z0-9]", args.project):
         parser.error("Invalid GCP project ID")
     if args.region:
@@ -458,7 +617,10 @@ def main():
             parser.error("--image must be an image from this project's VirtualWardrobe backend repository")
     deploy = Deployment(cfg)
     if args.apply:
-        deploy.apply(args.image)
+        if args.provision_only:
+            deploy.prepare()
+        else:
+            deploy.apply(args.image)
     else:
         print(json.dumps(deploy.plan(), indent=2))
 
