@@ -32,8 +32,8 @@ public class MediaService {
             byte[] bytes=input.readNBytes(Math.toIntExact(media.declaredBytes()+1));
             if(bytes.length!=media.declaredBytes())throw ApiProblem.bad("File byte count does not match its authorization");
             storage.put(media.objectKey(),bytes,media.declaredMime());transactions.uploaded(id);
-        }catch(ApiProblem p){if(media!=null){transactions.reject(id);deleteQuietly(media.objectKey());}throw p;}
-        catch(IOException e){if(media!=null){transactions.reject(id);deleteQuietly(media.objectKey());}throw new ApiProblem(503,"STORAGE_UNAVAILABLE","Upload could not be stored");}
+        }catch(ApiProblem p){if(media!=null){fail(media,null,null);}throw p;}
+        catch(IOException e){if(media!=null){fail(media,null,null);}throw new ApiProblem(503,"STORAGE_UNAVAILABLE","Upload could not be stored");}
         catch(InterruptedException e){Thread.currentThread().interrupt();throw new ApiProblem(429,"UPLOAD_BUSY","Upload was interrupted; retry shortly");}
         finally{if(acquired)receiving.release();}
     }
@@ -49,14 +49,14 @@ public class MediaService {
             else{var processed=images.process(raw,media.declaredMime());width=processed.width();height=processed.height();content=prefix+"content.jpg";thumbnail=prefix+"thumb.jpg";mime="image/jpeg";storage.put(content,processed.image(),mime);storage.put(thumbnail,processed.thumbnail(),mime);}
             var completed=transactions.complete(id,content,thumbnail,mime,width,height,duration);deleteQuietly(media.objectKey());return Map.of("media",completed.dto());
         }catch(ApiProblem p){
-            if(media!=null&&!media.state().equals("VALIDATED")){if(p.status==429)transactions.retry(id,cloud);else{transactions.reject(id);deleteQuietly(media.objectKey());}deleteQuietly(content);deleteQuietly(thumbnail);}throw p;
-        }catch(IOException e){if(media!=null){transactions.reject(id);deleteQuietly(media.objectKey());deleteQuietly(content);deleteQuietly(thumbnail);}throw new ApiProblem(503,"STORAGE_UNAVAILABLE","Media could not be processed or stored");}
+            if(media!=null&&!media.state().equals("VALIDATED")){if(p.status==429)transactions.retry(id,cloud);else fail(media,content,thumbnail);}throw p;
+        }catch(IOException e){if(media!=null)fail(media,content,thumbnail);throw new ApiProblem(503,"STORAGE_UNAVAILABLE","Media could not be processed or stored");}
         catch(InterruptedException e){Thread.currentThread().interrupt();throw new ApiProblem(429,"MEDIA_BUSY","Media processing was interrupted; retry shortly");}
         finally{if(acquired)processing.release();}
     }
     public ResponseEntity<?> read(UUID id,boolean thumbnail){
         var media=transactions.find(id);transactions.readable(media);String key=thumbnail?media.thumbnailKey():media.objectKey();if(key==null)throw ApiProblem.missing();
-        CacheControl cache=transactions.publiclyReadable(media)?CacheControl.maxAge(Duration.ofMinutes(5)).cachePublic():CacheControl.noStore();
+        CacheControl cache=transactions.publiclyReadable(media)?CacheControl.maxAge(Duration.ofSeconds(240)).cachePublic():CacheControl.noStore();
         try{
             var signed=storage.signRead(key,Duration.ofMinutes(5));if(signed.isPresent())return ResponseEntity.status(302).location(signed.get()).cacheControl(cache).build();
             return ResponseEntity.ok().cacheControl(cache).contentType(MediaType.parseMediaType(thumbnail?"image/jpeg":media.normalizedMime())).header("X-Content-Type-Options","nosniff").body(storage.read(key));
@@ -64,6 +64,7 @@ public class MediaService {
     }
     /** Trusted validated garment bytes for future worker calls; never fetch arbitrary URLs. */
     public byte[] referenceBytes(UUID mediaId)throws IOException{var media=transactions.find(mediaId);if(!media.state().equals("VALIDATED")||!media.purpose().equals("PRODUCT_IMAGE")||media.productId()==null)throw ApiProblem.bad("A validated product image is required");return storage.read(media.objectKey());}
-    public void remove(UUID store,UUID product,UUID id){var media=transactions.remove(store,product,id);deleteQuietly(media.objectKey());deleteQuietly(media.thumbnailKey());}
-    private void deleteQuietly(String key){if(key==null)return;try{storage.delete(key);}catch(IOException ignored){/* Tombstoned objects remain eligible for maintenance; never restore access. */}}
+    public void remove(UUID store,UUID product,UUID id){transactions.remove(store,product,id);}
+    private void fail(MediaRecord media,String content,String thumbnail){for(String key:transactions.failed(media.id(),content,thumbnail))deleteQuietly(key);}
+    private void deleteQuietly(String key){if(key==null)return;try{storage.delete(key);}catch(IOException ignored){/* Durable queue rows retain retries and a final late-write verification. */}}
 }

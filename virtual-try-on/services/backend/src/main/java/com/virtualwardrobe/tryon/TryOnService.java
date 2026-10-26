@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 public class TryOnService {
     private final TryOnTransactions tx;private final TryOnSettings settings;private final MediaStorage storage;private final ImageProcessor images;private final TaskDispatcher dispatcher;private final RateLimits rates;private final boolean cloud;
     private final Semaphore uploads=new Semaphore(2,true),processing=new Semaphore(2,true);
+    private final Semaphore deletionDrain=new Semaphore(1);
+    private static final long DELETE_START_BUDGET_NANOS=TimeUnit.SECONDS.toNanos(2);
     public TryOnService(TryOnTransactions tx,TryOnSettings settings,MediaStorage storage,ImageProcessor images,TaskDispatcher dispatcher,RateLimits rates,FoundationProperties foundation){this.tx=tx;this.settings=settings;this.storage=storage;this.images=images;this.dispatcher=dispatcher;this.rates=rates;this.cloud=foundation.adapterMode().equals("gcp");}
     public Map<String,Object> authorize(Map<String,Object> body){
         rates.check("photo-upload:"+tx.customer().id(),10);var upload=tx.authorizeSource(body);var m=upload.media();
@@ -47,6 +49,20 @@ public class TryOnService {
     public void discardSource(UUID id){tx.discardSource(id);drainDeletes();}
     public void deleteGallery(UUID id){tx.deleteGallery(id);drainDeletes();}
     public Map<String,Object> maintenance(){for(UUID id:tx.expiredJobs())tx.expireJob(id);for(UUID id:tx.expiredMedia())tx.expireMedia(id);for(UUID id:tx.staleSaves())tx.recoverSave(id);reconcileDispatch();int deleted=drainDeletes();return Map.of("status","OK","deletionAttempts",deleted);}
-    public int drainDeletes(){int count=0;for(var row:tx.deletionBatch()){String key=row.get("object_key").toString();boolean success=false;try{storage.delete(key);success=true;}catch(IOException ignored){/* The durable deletion row remains retryable. */}tx.deletionFinished(key,success);count++;}return count;}
+    public int drainDeletes(){
+        if(!deletionDrain.tryAcquire())return 0;
+        long started=System.nanoTime();int count=0;
+        try{
+            for(var row:tx.deletionBatch()){
+                // Finish an in-flight bounded SDK call, but do not multiply its retry budget by100.
+                if(System.nanoTime()-started>=DELETE_START_BUDGET_NANOS)break;
+                String key=row.get("object_key").toString();boolean success=false;
+                try{storage.delete(key);success=true;}
+                catch(IOException ignored){SafeFailures.record(SafeFailures.Code.DEPENDENCY_UNAVAILABLE);}
+                tx.deletionFinished(key,success);count++;
+            }
+            return count;
+        }finally{deletionDrain.release();}
+    }
     private void deleteQuietly(String key){if(key==null)return;try{storage.delete(key);}catch(IOException ignored){/* Tracked deletion retries remain durable. */}}
 }

@@ -8,8 +8,10 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "tsc -b",
-    "e2e": "playwright test"
+    "test": "tsc -b && node --test hosted/*.test.mjs",
+    "e2e": "playwright test",
+    "hosted:verify": "node hosted/verify.mjs",
+    "hosted:test": "node --test hosted/*.test.mjs"
   },
   "dependencies": {
     "react": "19.3.1",

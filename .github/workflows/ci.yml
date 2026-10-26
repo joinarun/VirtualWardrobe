@@ -9,6 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: make bootstrap
+      - run: python3 -m unittest discover -s scripts/gcp -p 'test*.py'
       - run: make dev
       - run: make test lint build e2e
       - if: always()

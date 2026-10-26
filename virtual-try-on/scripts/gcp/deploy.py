@@ -20,6 +20,7 @@ import sys
 import time
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+from urllib.parse import urlencode
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_PROJECT = "virtualtryon-511016"
@@ -132,6 +133,7 @@ class Deployment:
                 return json.loads(body) if body else {}
         except HTTPError as error:
             detail = error.read().decode(errors="replace")
+            error.close()
             # Do not assume a provider error will avoid echoing input fields.
             # Passwords submitted through an HTTPS body must stay out of logs.
             if payload:
@@ -253,7 +255,7 @@ class Deployment:
                 money = budget.get("amount", {}).get("specifiedAmount", {})
                 existing_amount = Decimal(str(money.get("units", "0"))) + Decimal(
                     str(money.get("nanos", 0))) / Decimal("1000000000")
-                rules = budget.get("allUpdatesRule", {})
+                rules = budget.get("allUpdatesRule") or {}
                 budget_filter = budget.get("budgetFilter", {})
                 exact_scope = (budget_filter.get("projects", []) == [filters] and
                                not any(budget_filter.get(key) for key in
@@ -332,6 +334,7 @@ class Deployment:
                     "--public-access-prevention")
         lifecycle = ROOT / "infra" / ("private-media-lifecycle.json" if private else "build-lifecycle.json")
         self.gc("storage", "buckets", "update", f"gs://{bucket}",
+                "--uniform-bucket-level-access", "--public-access-prevention",
                 "--lifecycle-file", str(lifecycle))
         if private:
             cors = [{
@@ -374,16 +377,18 @@ class Deployment:
             self.bucket_role(self.private_bucket, "roles/storage.objectUser",
                              self.accounts[role])
         self.secret_access(self.bootstrap_secret, "api")
-        self.project_role("roles/cloudtasks.enqueuer",
-                          f'serviceAccount:{self.accounts["api"]}')
+        for role in ("api", "worker"):
+            self.project_role("roles/cloudtasks.enqueuer",
+                              f'serviceAccount:{self.accounts[role]}')
         self.project_role("roles/recaptchaenterprise.agent",
                           f'serviceAccount:{self.accounts["api"]}')
         self.project_role("roles/aiplatform.user",
                           f'serviceAccount:{self.accounts["worker"]}')
-        self.gc("iam", "service-accounts", "add-iam-policy-binding",
-                self.accounts["dispatch"], "--member",
-                f'serviceAccount:{self.accounts["api"]}',
-                "--role", "roles/iam.serviceAccountUser", capture=True)
+        for role in ("api", "worker"):
+            self.gc("iam", "service-accounts", "add-iam-policy-binding",
+                    self.accounts["dispatch"], "--member",
+                    f'serviceAccount:{self.accounts[role]}',
+                    "--role", "roles/iam.serviceAccountUser", capture=True)
 
         signer_role = "virtualWardrobeUrlSigner"
         if not self.exists("iam", "roles", "describe", signer_role):
@@ -413,7 +418,19 @@ class Deployment:
                     "--storage-auto-increase-limit", str(self.cfg["database_storage_max_gb"]),
                     "--backup-start-time", "19:00", "--retained-backups-count", "3",
                     "--ssl-mode", "ENCRYPTED_ONLY", "--assign-ip",
-                    "--deletion-protection", "--labels", "app=virtualwardrobe,environment=demo")
+                    "--deletion-protection")
+        # The installed GA gcloud SQL track does not expose label flags.
+        # Patch only this owned instance through the supported SQL Admin API,
+        # retaining unrelated labels and using settingsVersion for concurrency.
+        instance = json.loads(self.value("sql", "instances", "describe", self.db, "--format=json"))
+        settings = instance["settings"]
+        labels = dict(settings.get("userLabels", {}))
+        desired_labels = dict(labels, app="virtualwardrobe", environment="demo")
+        if labels != desired_labels:
+            operation = self.api_request("PATCH",
+                f"https://sqladmin.googleapis.com/sql/v1beta4/projects/{self.project}/instances/{self.db}",
+                {"settings": {"settingsVersion": settings["settingsVersion"], "userLabels": desired_labels}})
+            self.gc("sql", "operations", "wait", operation["name"], "--timeout", "300")
         if not self.exists("sql", "databases", "describe", self.dbname,
                            "--instance", self.db):
             self.gc("sql", "databases", "create", self.dbname, "--instance", self.db)
@@ -425,22 +442,24 @@ class Deployment:
                 {"name": self.dbuser, "password": db_password})
             self.gc("sql", "operations", "wait", operation["name"], "--timeout", "300")
 
-        if not self.exists("tasks", "queues", "describe", self.queue,
-                           "--location", self.region):
-            self.gc("tasks", "queues", "create", self.queue,
-                    "--location", self.region, "--max-concurrent-dispatches", "2",
-                    "--max-dispatches-per-second", "1", "--max-attempts", "2",
-                    "--min-backoff", "10s", "--max-backoff", "60s")
+        queue_exists = self.exists("tasks", "queues", "describe", self.queue,
+                                   "--location", self.region)
+        self.gc("tasks", "queues", "update" if queue_exists else "create", self.queue,
+                "--location", self.region, "--max-concurrent-dispatches", "2",
+                "--max-dispatches-per-second", "1", "--max-attempts", "2",
+                "--min-backoff", "10s", "--max-backoff", "60s")
 
     def build(self, image: str):
         build_config = {
             "steps": [{"name": "gcr.io/cloud-builders/docker",
-                       "args": ["build", "-t", image, "."]}],
+                       "args": ["build", "--platform", "linux/amd64", "--target", "runtime", "-t", image, "."]}],
             "images": [image], "options": {"logging": "CLOUD_LOGGING_ONLY"},
+            "timeout": "1200s",
         }
         config_path = self.work / "cloudbuild.json"
         config_path.write_text(json.dumps(build_config, indent=2) + "\n")
         self.gc("builds", "submit", "services/backend", "--config", str(config_path),
+                "--ignore-file", str(ROOT / "infra/backend.gcloudignore"),
                 "--region", self.region, "--service-account",
                 f'projects/{self.project}/serviceAccounts/{self.accounts["build"]}',
                 "--gcs-source-staging-dir", f"gs://{self.build_bucket}/source")
@@ -449,6 +468,9 @@ class Deployment:
         return {
             "APP_ENVIRONMENT": "demo", "APP_MODE": mode,
             "JAVA_TOOL_OPTIONS": "-XX:MaxRAMPercentage=70",
+            "LOGGING_STRUCTURED_FORMAT_CONSOLE": "logstash",
+            "LOGGING_STRUCTURED_JSON_RENAME_LEVEL": "severity",
+            "LOGGING_STRUCTURED_JSON_EXCLUDE": "stack_trace",
             "APP_ADAPTER_MODE": "gcp", "APP_IMAGE_PROVIDER": self.cfg["image_provider"],
             "GOOGLE_CLOUD_PROJECT": self.project, "APP_GCP_PROJECT": self.project,
             "APP_STORAGE_BUCKET": self.private_bucket,
@@ -467,6 +489,9 @@ class Deployment:
             "APP_GENERATION_CUSTOMER_DAILY_LIMIT": str(self.cfg["daily_customer_limit"]),
             "APP_GENERATION_GLOBAL_DAILY_LIMIT": str(self.cfg["daily_global_limit"]),
             "APP_GENERATION_DAILY_BUDGET_USD": self.cfg["daily_provider_budget_usd"],
+            "APP_GENERATION_ENABLED": str(self.cfg["generation_enabled"]).lower(),
+            "APP_GENERATION_ATTEMPT_RESERVATION_USD": self.cfg["attempt_reservation_usd"],
+            "APP_GENERATION_SAVED_LIMIT": str(self.cfg["saved_preview_limit"]),
             "SPRING_DATASOURCE_URL":
                 f"jdbc:postgresql:///{self.dbname}?cloudSqlInstance={self.project}:{self.region}:{self.db}"
                 "&socketFactory=com.google.cloud.sql.postgres.SocketFactory&cloudSqlRefreshStrategy=lazy",
@@ -493,7 +518,7 @@ class Deployment:
                 "--concurrency", "20" if mode == "api" else "2",
                 "--timeout", "60" if mode == "api" else "180",
                 "--env-vars-file", str(env_path), "--set-secrets", bindings,
-                "--startup-probe", "tcpSocket.port=8080,timeoutSeconds=5,periodSeconds=5,failureThreshold=36",
+                "--startup-probe", "httpGet.path=/actuator/health/readiness,httpGet.port=8080,timeoutSeconds=5,periodSeconds=5,failureThreshold=36",
                 "--allow-unauthenticated" if mode == "api" else "--no-allow-unauthenticated",
                 "--labels", "app=virtualwardrobe,environment=demo")
         return self.value("run", "services", "describe", service,
@@ -502,9 +527,14 @@ class Deployment:
     def ensure_captcha(self) -> str:
         listing = json.loads(self.value("recaptcha", "keys", "list", "--format=json"))
         display = f"{self.base}-signup"
-        existing = next((key for key in listing if key.get("displayName") == display), None)
+        existing = [key for key in listing if key.get("displayName") == display]
         if existing:
-            return existing["name"].split("/")[-1]
+            settings = existing[0].get("webSettings", {})
+            expected_domains = {f'{self.cfg["firebase_site"]}.web.app', f'{self.cfg["firebase_site"]}.firebaseapp.com'}
+            if (len(existing) != 1 or settings.get("integrationType") != "SCORE" or
+                    settings.get("allowAllDomains", False) or set(settings.get("allowedDomains", [])) != expected_domains):
+                raise RuntimeError("Existing VirtualWardrobe CAPTCHA configuration conflicts with the reviewed site domains")
+            return existing[0]["name"].split("/")[-1]
         key = json.loads(self.value("recaptcha", "keys", "create", "--display-name", display,
             "--web", "--domains", f'{self.cfg["firebase_site"]}.web.app,{self.cfg["firebase_site"]}.firebaseapp.com',
             "--integration-type", "score", "--format=json"))
@@ -519,7 +549,7 @@ class Deployment:
                              "--location", self.region)
         self.gc("scheduler", "jobs", "update" if exists else "create", "http",
                 self.scheduler, "--location", self.region,
-                "--schedule", "*/15 * * * *", "--time-zone", "UTC",
+                "--schedule", "* * * * *", "--time-zone", "UTC",
                 "--uri", worker_url + "/internal/maintenance", "--http-method", "POST",
                 "--headers", "Content-Type=application/json", "--message-body", "{}",
                 "--oidc-service-account-email", self.accounts["dispatch"],
@@ -527,10 +557,20 @@ class Deployment:
 
     def hosting(self, captcha_key: str):
         # Avoid the existing default Hosting site and StyleReel's URLs.
-        sites = self.api_request("GET",
-            f"https://firebasehosting.googleapis.com/v1beta1/projects/{self.project}/sites")
         site = self.cfg["firebase_site"]
-        if not any(item["name"].endswith("/" + site) for item in sites.get("sites", [])):
+        page_token = ""
+        found = False
+        while True:
+            query = urlencode(dict(pageSize=100, **({"pageToken": page_token} if page_token else {})))
+            sites = self.api_request("GET",
+                f"https://firebasehosting.googleapis.com/v1beta1/projects/{self.project}/sites?{query}")
+            if any(item.get("name") == f"projects/{self.project}/sites/{site}" for item in sites.get("sites", [])):
+                found = True
+                break
+            page_token = sites.get("nextPageToken", "")
+            if not page_token:
+                break
+        if not found:
             self.api_request("POST",
                 f"https://firebasehosting.googleapis.com/v1beta1/projects/{self.project}/sites?siteId={site}", {})
         web_env = dict(os.environ, VITE_RECAPTCHA_SITE_KEY=captcha_key,
@@ -541,7 +581,7 @@ class Deployment:
             "site": site, "public": str(ROOT / "apps/web/dist"),
             "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
             "rewrites": [
-                {"source": "/api/**", "run": {"serviceId": self.api, "region": self.region}},
+                {"source": "/api/**", "run": {"serviceId": self.api, "region": self.region, "pinTag": True}},
                 {"source": "**", "destination": "/index.html"},
             ],
             "headers": [
@@ -552,6 +592,8 @@ class Deployment:
                 ]},
                 {"source": "/assets/**", "headers": [
                     {"key": "Cache-Control", "value": "public,max-age=31536000,immutable"}]},
+                {"source": "/fonts/*.woff2", "headers": [
+                    {"key": "Cache-Control", "value": "public,max-age=31536000,immutable"}]},
                 {"source": "/index.html", "headers": [
                     {"key": "Cache-Control", "value": "no-cache"}]},
             ],
@@ -561,6 +603,60 @@ class Deployment:
         command(["npx", "--yes", f'firebase-tools@{self.cfg["firebase_tools_version"]}',
                  "deploy", "--only", "hosting", "--project", self.project,
                  "--config", str(config_path), "--non-interactive"])
+
+    def release_state(self, *, required: bool = False) -> dict:
+        """Read only nonsecret revision/release fields for this app's rollback."""
+        services = {}
+        for mode, name in (("api", self.api), ("worker", self.worker)):
+            if not self.exists("run", "services", "describe", name, "--region", self.region):
+                if required:
+                    raise RuntimeError("A deployed application service was not found")
+                services[mode] = None
+                continue
+            service = json.loads(self.value("run", "services", "describe", name,
+                                             "--region", self.region, "--format=json"))
+            ready = service.get("status", {}).get("latestReadyRevisionName", "")
+            if not re.fullmatch(re.escape(name) + r"-[a-z0-9-]{1,40}", ready):
+                raise RuntimeError("The owned service has no valid ready revision")
+            revision = json.loads(self.value("run", "revisions", "describe", ready,
+                                              "--region", self.region, "--format=json"))
+            digest = revision.get("status", {}).get("imageDigest", "")
+            if not re.search(r"(?:^|@)sha256:[0-9a-f]{64}$", digest):
+                raise RuntimeError("The deployed revision's immutable image digest is unavailable")
+            services[mode] = {"service": name, "ready_revision": ready, "image_digest": digest,
+                "url": service.get("status", {}).get("url"),
+                "traffic": [{key: item[key] for key in ("revisionName", "percent", "tag") if key in item}
+                            for item in service.get("status", {}).get("traffic", [])]}
+        # Query only the dedicated site's live channel. Do not assume release
+        # ordering or include user/email fields from the Hosting response.
+        releases, token, found = [], "", False
+        while True:
+            query = urlencode(dict(pageSize=100, **({"pageToken": token} if token else {})))
+            page = self.api_request("GET", f"https://firebasehosting.googleapis.com/v1beta1/projects/{self.project}/sites?{query}")
+            found = found or any(item.get("name") == f'projects/{self.project}/sites/{self.cfg["firebase_site"]}' for item in page.get("sites", []))
+            token = page.get("nextPageToken", "")
+            if not token:
+                break
+        hosting = None
+        if found:
+            token = ""
+            while True:
+                query = urlencode(dict(pageSize=100, **({"pageToken": token} if token else {})))
+                page = self.api_request("GET", f'https://firebasehosting.googleapis.com/v1beta1/sites/{self.cfg["firebase_site"]}/channels/live/releases?{query}')
+                for item in page.get("releases", []):
+                    version = item.get("version", {}).get("name", "")
+                    if re.fullmatch(r"sites/" + re.escape(self.cfg["firebase_site"]) + r"/versions/[A-Za-z0-9_-]+", version):
+                        releases.append({"name": item.get("name"), "version": version, "release_time": item.get("releaseTime", "")})
+                token = page.get("nextPageToken", "")
+                if not token:
+                    break
+            if releases:
+                hosting = max(releases, key=lambda item: item["release_time"])
+        if required and (hosting is None or services["api"]["image_digest"] != services["worker"]["image_digest"]):
+            raise RuntimeError("Hosting release and equal API/worker immutable images must be verified")
+        return {"project_id": self.project, "region": self.region, "services": services,
+                "hosting_site": self.cfg["firebase_site"], "hosting_release": hosting,
+                "observed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
 
     def prepare(self):
         """Prepare the reviewed cloud base without publishing application code."""
@@ -582,10 +678,21 @@ class Deployment:
             raise RuntimeError("Backend Dockerfile is missing; finish application implementation first.")
         if not (ROOT / "apps/web/package-lock.json").is_file():
             raise RuntimeError("Web lockfile is missing; finish application implementation first.")
+        dirty = command(["git", "status", "--porcelain=v1", "--untracked-files=all"], capture=True).stdout.decode().strip()
+        if dirty:
+            raise RuntimeError("Commit tracked and non-ignored source changes before building or publishing this release")
+        source_revision = command(["git", "rev-parse", "HEAD"], capture=True).stdout.decode().strip()
+        expected_image = f"{self.region}-docker.pkg.dev/{self.project}/{self.repo}/backend:{source_revision[:12]}"
+        if image is not None and image != expected_image:
+            raise RuntimeError("--image may reuse only this clean HEAD's exact backend:HEAD12 tag; rollback uses the recorded previous release")
+        previous = self.release_state()
+        release_directory = self.work / "releases"
+        release_directory.mkdir(exist_ok=True, mode=0o700)
+        prior_path = release_directory / f"before-{time.time_ns()}-{source_revision[:12]}.json"
+        prior_path.write_text(json.dumps(previous, indent=2) + "\n")
         budget, captcha_key = self.prepare()
         if image is None:
-            revision = command(["git", "rev-parse", "--short=12", "HEAD"], capture=True).stdout.decode().strip()
-            image = f"{self.region}-docker.pkg.dev/{self.project}/{self.repo}/backend:{revision}"
+            image = expected_image
             self.build(image)
         worker_url = self.deploy_service("worker", image, captcha_key, "")
         # Give maintenance/dispatch code its canonical URL after first creation.
@@ -593,13 +700,17 @@ class Deployment:
         api_url = self.deploy_service("api", image, captcha_key, worker_url)
         self.schedule(worker_url)
         self.hosting(captcha_key)
-        inventory = dict(self.plan(), image=image, api_url=api_url,
+        deployed_state = self.release_state(required=True)
+        inventory = dict(self.plan(), image=image, source_revision=source_revision, api_url=api_url,
                          worker_url=worker_url,
+                         runtime=deployed_state["services"], hosting_release=deployed_state["hosting_release"],
+                         previous_release_inventory=str(prior_path),
                          web_url=f'https://{self.cfg["firebase_site"]}.web.app',
                          captcha_site_key=captcha_key, billing_alert_budget=budget,
                          deployed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
         path = self.work / "deployment.json"
         path.write_text(json.dumps(inventory, indent=2) + "\n")
+        (release_directory / f"deployed-{time.time_ns()}-{source_revision[:12]}.json").write_text(json.dumps(inventory, indent=2) + "\n")
         print(json.dumps({"web_url": inventory["web_url"], "api_url": api_url,
                           "inventory": str(path), "image_provider": self.cfg["image_provider"]}, indent=2))
 
@@ -630,14 +741,13 @@ def main():
         parser.error("The reviewed demo image provider must be mock or google")
     if not re.fullmatch(r"[a-z][a-z0-9-]{4,28}[a-z0-9]", args.project):
         parser.error("Invalid GCP project ID")
-    if args.region:
-        cfg["region"] = args.region
-    if not re.fullmatch(r"[a-z]+-[a-z]+[0-9]", cfg["region"]):
-        parser.error("Invalid application region")
+    if cfg.get("region") != EXPECTED_REGION or (args.region and args.region != EXPECTED_REGION):
+        parser.error(f"This reviewed demo is restricted to {EXPECTED_REGION}; changing regions requires a separate resource review")
+    if not reviewed_limits(cfg):
+        parser.error("The reviewed database, scaling and application-spend bounds must remain within the demo limits")
     if args.image:
         expected_image = f'{cfg["region"]}-docker.pkg.dev/{EXPECTED_PROJECT}/{EXPECTED_PREFIX}/backend'
-        if not (args.image.startswith(expected_image + ":") or
-                args.image.startswith(expected_image + "@sha256:")):
+        if not re.fullmatch(re.escape(expected_image) + r"(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}|@sha256:[0-9a-f]{64})", args.image):
             parser.error("--image must be an image from this project's VirtualWardrobe backend repository")
     deploy = Deployment(cfg)
     if args.apply:

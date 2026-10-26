@@ -1,0 +1,45 @@
+# Implementation Plan: Hosted evaluation demo
+
+**Branch**: `feat/08-gcp-release` · **Date**: 2026-10-27 · **Spec**: [spec.md](spec.md)
+
+## Summary and technical context
+
+Publish the completed modular application using the reviewed GCP base and project-specific Python operator scripts. Reuse Java21/Spring Boot4.1.2, PostgreSQL17/Flyway, CloudSQL connector1.30.2, Storage2.75, Tasks2.99, React/TypeScript/Vite and pinned containers/locks. No additional service, framework or application data store is introduced. Python is an operator tool, not a new backend. Target Linux amd64 Cloud Run from one backend image, distinct API/worker runtime modes and identities, private GCS and dedicated Firebase Hosting.
+
+Runtime bounds remain API max2/concurrency20/pool5 and worker max1/concurrency2/pool3, min0,1CPU/1GiB each, heap70% leaving native headroom, API timeout60s/worker180s/provider120s. SQL is Enterprise PG17 f1-micro,10GiB SSD growth cap20, zonal/no IP allowlist/encrypted connector, three daily backups/deletion protection. All commands pin project virtualtryon-511016, region asia-south1 and owned virtualwardrobe names; keep existing StyleReel/default Hosting intact. Declare persistent SQL/storage cost and scale-to-zero cold starts.
+
+## Constitution check
+
+Pre-research and post-design checks pass for the existing architecture, privacy/authorization, durable bounded jobs, transactional ownership and honest evidence. All cloud mutations await clean committed source and root dispatch. Existing 20 base checks are configuration evidence only. Real generation is explicitly a non-production evaluation demonstration; A7 human quality and statistically meaningful A9 p95 remain unmet. Do not enable/fabricate quality approval or present the demo as a production launch. No constitutional default or production gate is changed. The final acceptance matrix must preserve these outstanding criteria.
+
+## Source and execution order
+
+`infra/` contains pinned config, source-ignore/lifecycle policies and the isolated database-check helper. `scripts/gcp/` owns deployment, plan/read-only smoke, private dataset wrapper, performance, safe monitoring and backup rehearsal. `services/backend/.../media`, `.../worker` and `db/migration/V10*` contain the remaining durable catalog cleanup fix; root owns safe failure boundaries/events. `apps/web` retains existing user journeys; required hosted tests and final CI/docs remain root/frontend responsibilities. Design contracts live in this feature's `contracts/release.md`.
+
+1. Finish source-only backend fixes and operator preparation, required PG/backend/browser/operator regressions, source/secret review, then commit all release source. Deployment rejects any tracked or nonignored uncommitted file before cloud work and records HEAD; a source fix requires a new commit/image.
+2. Revalidate target inventory/model docs. Cloud Build uploads filtered backend source with explicit linux/amd64 runtime target, owned build SA, artifact repository and Cloud Logging output. Deploy IAM-private worker with blank self URL, obtain canonical URL, redeploy configured worker, then API; HTTP readiness includes DB/migrations. Configure dispatch-SA-only Invoker and once/minute authenticated maintenance before Hosting. Firebase dedicated site discovery is paginated; `/api/**` rewrite uses `__session`, CSRF and pinTag. CLI uses existing ADC without keys.
+3. Root signs in to the independent bootstrap account, rotates its temporary password and stores any necessary local credentials only0600. Only then run standalone seed wrapper, seed twice and compare receipts. Standard showroom30 and independent load1000 remain distinct. No Spring/server/provider starts in seed CLI.
+4. Execute actual hosted security/customer/store/CAPTCHA/signed-upload/worker integration; root authorizes one full async Google synthetic generation under existing quotas. No additional standalone provider smoke. Preserve secret-free aggregate evidence, then actual load/performance/cold-start, scoped cleanup and backup/restore/monitoring checks.
+5. Root reviews source/result matrix, publishes GitHub/CI and final addresses. Leave A7/A9 statistical approval explicitly pending rather than claiming full production release convergence.
+
+## Durable catalog cleanup and migration
+
+V10 adds nullable `cleanup_enqueued_at` and `raw_cleanup_enqueued_at` markers with eligible-candidate indexes as needed; it is additive to V1–V9. A metadata-only catalog maintenance service identifies deleted/replaced media, rejected/abandoned/expired upload raw objects and inactive partial derivatives after the existing processing lease. It inserts idempotent tasks into the existing storage-delete queue and marks enqueue progress transactionally. It does not enumerate or broadly erase buckets.
+
+Skip validated retained media (including archived products), live key references, and dataset PREPARING/DELETING ownership. Use row locks/conditional state changes and reference checks; object I/O runs outside DB transactions. Worker maintenance enqueues catalog candidates before draining the existing deletion queue; failures remain durable. Media finalization and late/partial-write handling ensure a delayed write cannot escape future deletion after an earlier task completed. Queue state/markers can be rearmed safely for known late writes; never infer deletion eligibility from a key prefix alone. Domain owns exact implementation and PG tests for retries, replacement, late writes, lease expiry, references, datasets and repeated maintenance. Public catalog redirect caching becomes240s below signed URL300s; private/auth remain no-store.
+
+## Safe errors and observability
+
+Root adds a shared allowlisted failure event helper and generic problem boundary, plus safe job/maintenance failure events. Stable codes and random aggregate IDs/counts only; no raw exception/cause, request paths containing secrets, contact data, photos, signed URLs, SQL/provider response or credentials. Boot logstash JSON renames level to Cloud Logging severity and excludes stack traces; message sanitization remains the application's responsibility. The application-scoped log metric counts `severity>=ERROR OR jsonPayload.vw_failure=true` for only the two new services. The incident policy has no new channels/recipients. Root selected authenticated Cloud Logging Entries.Write through existing user ADC for the synthetic operator probe: exact actual deployed API revision resource, fixed RELEASE_PROBE/vw_failure=true/synthetic_probe=true and explicit --probe after default planning. No public endpoint/runtime flag is added; actual metric/incident ingestion remains separately observed.
+
+## Acceptance and recovery
+
+Hosted browser checks exercise actual enterprise CAPTCHA action/hostname/score, session/CSRF across Hosting/direct API, membership revocation and owner media; no cloud test-mode override. Signed Blob upload must prove exact size/type/cache header/precondition/CORS, including replay412, then actual validation/download/deletion. The real queue job verifies OIDC standard Authorization (not signature-stripped X-Serverless-Authorization), expected dispatch email/audience, DB connector and generation accounting. Keep local adversarial/concurrency tests as separate actual PG evidence for A4–A6; do not manufacture live failures that spend uncontrolled money.
+
+Performance requires live total≥1000,20 concurrent users,60 warm-up/400 measured reads, per-endpoint+aggregate p95≤750ms with zero unexpected errors. Mobile five fresh390×844 Chromium contexts,4×CPU,9Mbps down/1.6Mbps up/150msRTT/cache disabled; search enabled/title/price/first image usable≤3s each. Cold starts need matching startup log evidence and a quiet first-request window, otherwise label cold-start measurement unrun. No silent minimum-instance increase. Generation smoke records its single latency without inferring p95.
+
+The DB helper uses the final tested Boot JAR dependencies/SQL resources and existing ADC, with password only child env. Backup rehearsal creates one named on-demand backup and a new random virtualwardrobe-restore-* PG17 f1 copy, restores there only, validates/migrates/checks core counts and JAR fingerprint, then deletes it in finally. Pending cleanup is an explicit blocking release action with exact name; no second copy until resolved. Retain source backup for rollback. Roll back Hosting/pinned API together and worker image compatibly; never undo additive data migrations by blindly restoring over the source. Stop generation via config if operational checks fail.
+
+## Ownership and complexity
+
+GCP agent: this Spec Kit feature and infra/operator scripts/docs; later actual apply only on root dispatch. Domain: V10/catalog GC/wiring/cache and PG tests. Root: safe errors/logging, bootstrap rotation, final required regression/hosted customer/store/Google journey, GitHub/CI and delivery; frontend can own UI/hosted browser fixes after handoff. Each owner edits isolated files and coordinates shared builds. No extra architectural component or constitutional exception is required.

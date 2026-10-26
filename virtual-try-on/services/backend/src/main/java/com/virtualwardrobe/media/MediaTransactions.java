@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MediaTransactions {
     public record Reservation(MediaRecord media,String token) { }
-    private final JdbcTemplate jdbc;private final IdentityService identity;private final CatalogService catalog;private final MediaLimits limits;
-    public MediaTransactions(JdbcTemplate jdbc,IdentityService identity,CatalogService catalog,MediaLimits limits){this.jdbc=jdbc;this.identity=identity;this.catalog=catalog;this.limits=limits;}
+    private final JdbcTemplate jdbc;private final IdentityService identity;private final CatalogService catalog;private final MediaLimits limits;private final CatalogCleanupTransactions cleanup;
+    public MediaTransactions(JdbcTemplate jdbc,IdentityService identity,CatalogService catalog,MediaLimits limits,CatalogCleanupTransactions cleanup){this.jdbc=jdbc;this.identity=identity;this.catalog=catalog;this.limits=limits;this.cleanup=cleanup;}
     public MediaRecord find(UUID id){return jdbc.query("SELECT * FROM vw_media_upload WHERE id=?",MediaRecord.MAPPER,id).stream().findFirst().orElseThrow(ApiProblem::missing);}
     private void scope(IdentityService.Account actor,MediaRecord media){
         identity.lockAdministration();actor=identity.workforce();
@@ -56,15 +56,17 @@ public class MediaTransactions {
         if(jdbc.update("UPDATE vw_media_upload SET state='VALIDATED',object_key=?,thumbnail_key=?,normalized_mime=?,width=?,height=?,duration_seconds=? WHERE id=? AND state='PROCESSING'",contentKey,thumbnailKey,mime,width,height,duration,id)!=1)throw new ApiProblem(409,"UPLOAD_CHANGED","Upload state changed before attachment");
         if(media.productId()!=null&&!media.video())jdbc.update("UPDATE vw_product SET cover_media_id=COALESCE(cover_media_id,?),reference_media_id=COALESCE(reference_media_id,?),updated_at=CURRENT_TIMESTAMP WHERE id=?",id,id,media.productId());
         if(media.purpose().equals("STORE_LOGO")){
-            jdbc.update("UPDATE vw_media_upload SET state='DELETED' WHERE id=(SELECT logo_media_id FROM vw_store WHERE id=?)",media.storeId());
+            UUID previous=jdbc.queryForObject("SELECT logo_media_id FROM vw_store WHERE id=?",UUID.class,media.storeId());
+            if(previous!=null&&!previous.equals(id)){jdbc.update("UPDATE vw_media_upload SET state='DELETED' WHERE id=?",previous);cleanup.retired(previous);}
             jdbc.update("UPDATE vw_store SET logo_media_id=?,logo_url=? WHERE id=?",id,"/api/v1/media/"+id+"/thumbnail",media.storeId());
         }
         if(media.purpose().equals("BRAND_LOGO")){
-            jdbc.update("UPDATE vw_media_upload SET state='DELETED' WHERE id=(SELECT logo_media_id FROM vw_brand WHERE id=?)",media.brandId());jdbc.update("UPDATE vw_brand SET logo_media_id=? WHERE id=?",id,media.brandId());
+            UUID previous=jdbc.queryForObject("SELECT logo_media_id FROM vw_brand WHERE id=?",UUID.class,media.brandId());if(previous!=null&&!previous.equals(id)){jdbc.update("UPDATE vw_media_upload SET state='DELETED' WHERE id=?",previous);cleanup.retired(previous);}jdbc.update("UPDATE vw_brand SET logo_media_id=? WHERE id=?",id,media.brandId());
         }
-        identity.audit(actor.id(),media.storeId(),"MEDIA_VALIDATED",id);return find(id);
+        cleanup.completed(id);identity.audit(actor.id(),media.storeId(),"MEDIA_VALIDATED",id);return find(id);
     }
-    @Transactional public void reject(UUID id){jdbc.update("UPDATE vw_media_upload SET state='REJECTED' WHERE id=? AND state NOT IN('VALIDATED','DELETED')",id);}
+    @Transactional public void reject(UUID id){cleanup.failed(id);}
+    @Transactional public List<String> failed(UUID id,String content,String thumbnail){return cleanup.failed(id,content,thumbnail);}
     @Transactional public void retry(UUID id,boolean cloud){jdbc.update("UPDATE vw_media_upload SET state=? WHERE id=? AND state='PROCESSING'",cloud?"AUTHORIZED":"UPLOADED",id);}
     @Transactional public MediaRecord remove(UUID store,UUID product,UUID id){
         var actor=identity.workforce();identity.lockAdministration();identity.lockStore(store);identity.requireStore(actor,store,false);catalog.lockProduct(store,product);
@@ -74,7 +76,7 @@ public class MediaTransactions {
         jdbc.update("UPDATE vw_media_upload SET state='DELETED' WHERE id=?",id);
         var images=jdbc.queryForList("SELECT id FROM vw_media_upload WHERE product_id=? AND purpose='PRODUCT_IMAGE' AND state='VALIDATED' ORDER BY position,created_at",UUID.class,product);UUID replacement=images.isEmpty()?null:images.getFirst();
         jdbc.update("UPDATE vw_product SET cover_media_id=CASE WHEN cover_media_id=? THEN ? ELSE cover_media_id END,reference_media_id=CASE WHEN reference_media_id=? THEN ? ELSE reference_media_id END,updated_at=CURRENT_TIMESTAMP WHERE id=?",id,replacement,id,replacement,product);
-        identity.audit(actor.id(),store,"MEDIA_REMOVED",id);return media;
+        cleanup.retired(id);identity.audit(actor.id(),store,"MEDIA_REMOVED",id);return media;
     }
     public boolean publiclyReadable(MediaRecord media){
         if(!media.state().equals("VALIDATED"))return false;

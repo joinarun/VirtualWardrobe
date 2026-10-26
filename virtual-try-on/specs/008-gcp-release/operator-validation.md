@@ -1,0 +1,9 @@
+# Operator source verification
+
+Verified2026-10-27 before any feature008 cloud execution. `python3 -m unittest discover -s scripts/gcp -p 'test_*.py' -v`:28/28 passed, zero failures. This comprises9 private seed-wrapper checks,12 deployment-contract checks and7 release smoke/probe checks. Subprocess/control-plane/HTTP responses are controlled; no test authenticates, builds an app image, deploys, seeds cloud data, calls Google generation or writes a monitoring event.
+
+Coverage includes exact project/region/resource/cost guards, clean-source-before-mutation, HEAD12-only prebuilt image reuse, explicit amd64 build identity/source filtering, DB readiness/private worker, CAPTCHA domains, dedicated paginated Hosting/pinTag, prior release inventory before mutations, immutable runtime revision/digest receipts, fixed synthetic probe payload, journal-before-write/unknown-outcome duplicate refusal, exact deployed target and secret-free failure output. Probe verification explicitly leaves actual incident inspection pending.
+
+All Python scripts compile; mobile performance JavaScript passes `node --check`; plan-only deployment/probe outputs and `git diff --check` pass. Earlier local source-filter test excludes demo/bootstrap credential filename patterns; the operator-only DatabaseCheck.java compiled against the packaged JDBC/Flyway/Gson dependencies without application startup. Performance/restore scripts remain plan-only by default. Actual API/mobile measurements, cold start, CloudBuild/CloudRun/Hosting, worker/signed browser upload, private seed, backup/restore/deletion and log/metric/incident evidence are still unrun in008 and require root's clean-source release dispatch.
+
+Model/hosting/CloudSQL official sources were rechecked in planning; see research.md. Existing20 base checks and earlier provider connectivity are separate evidence. These source checks do not satisfy A7 human fidelity or establish A9 generation p95.

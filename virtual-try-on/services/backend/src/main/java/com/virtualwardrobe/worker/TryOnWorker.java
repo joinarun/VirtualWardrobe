@@ -1,6 +1,7 @@
 package com.virtualwardrobe.worker;
 
 import com.virtualwardrobe.ai.*;
+import com.virtualwardrobe.foundation.SafeFailures;
 import com.virtualwardrobe.media.*;
 import com.virtualwardrobe.tryon.*;
 import java.io.IOException;
@@ -22,8 +23,23 @@ public class TryOnWorker {
             if(!result.provider().equals(settings.provider())||!result.model().equals(settings.model())||result.demo()!=settings.mock())throw new ProviderFailure(ProviderFailure.Kind.INVALID_RESPONSE,"Provider metadata did not match the recorded request");
             var normalized=images.process(result.image(),result.mimeType());storage.put(claim.outputKey(),normalized.image(),"image/jpeg");
             if(!tx.succeeded(claim,normalized.image().length,normalized.width(),normalized.height(),result))deleteQuietly(claim.outputKey());return true;
-        }catch(ProviderFailure failure){if(claim!=null){if(tx.failed(claim,failure.kind(),invoked))service.dispatch(id);}return true;}
-        catch(IOException|RuntimeException failure){if(claim==null)return failure instanceof com.virtualwardrobe.identity.ApiProblem problem&&problem.status==404;if(result!=null)tx.failedAfterResult(claim,result);else tx.failed(claim,invoked?ProviderFailure.Kind.UNKNOWN_OUTCOME:ProviderFailure.Kind.CONFIGURATION,invoked);return true;}
+        }catch(ProviderFailure failure){
+            SafeFailures.record(switch(failure.kind()) {
+                case RETRYABLE -> SafeFailures.Code.PROVIDER_TEMPORARY_FAILURE;
+                case UNKNOWN_OUTCOME -> SafeFailures.Code.PROVIDER_UNKNOWN_OUTCOME;
+                case REJECTED -> SafeFailures.Code.PROVIDER_REJECTED;
+                case INVALID_RESPONSE -> SafeFailures.Code.PROVIDER_RESPONSE_INVALID;
+                case CONFIGURATION -> SafeFailures.Code.PROVIDER_CONFIGURATION;
+            }, id);
+            if(claim!=null){if(tx.failed(claim,failure.kind(),invoked))service.dispatch(id);}return true;
+        }catch(IOException|RuntimeException failure){
+            if(claim==null){
+                if(failure instanceof com.virtualwardrobe.identity.ApiProblem problem&&problem.status==404)return true;
+                SafeFailures.record(SafeFailures.Code.WORKER_EXECUTION_FAILURE,id);return false;
+            }
+            SafeFailures.record(result!=null?SafeFailures.Code.WORKER_RESULT_STORAGE_FAILURE:SafeFailures.Code.WORKER_EXECUTION_FAILURE,id);
+            if(result!=null)tx.failedAfterResult(claim,result);else tx.failed(claim,invoked?ProviderFailure.Kind.UNKNOWN_OUTCOME:ProviderFailure.Kind.CONFIGURATION,invoked);return true;
+        }
         finally{try{service.drainDeletes();}finally{capacity.release();}}
     }
     private void deleteQuietly(String key){try{storage.delete(key);}catch(IOException ignored){/* Conditional completion already tombstoned and scheduled this key. */}}
