@@ -24,6 +24,9 @@ import { AuthPage } from "./AuthPage";
 import { ProductAdmin } from "./ProductAdmin";
 import { BrandManager, PlatformCatalog } from "./CatalogDefinitions";
 import { LogoUploader } from "../components/LogoUploader";
+import { StoreEnquiries } from "./StoreEnquiries";
+import type { EnquiryCounts } from "../enquiry-types";
+import { useVisibleResource } from "../use-visible-resource";
 
 type Tab =
   | "overview"
@@ -32,20 +35,26 @@ type Tab =
   | "workforce"
   | "catalog"
   | "brands"
-  | "platformCatalog";
+  | "platformCatalog"
+  | "enquiries";
 export function Workspace() {
   const auth = useAuth();
   const [revision, setRevision] = useState(0);
-  const [selected, setSelected] = useState("");
-  const [tab, setTab] = useState<Tab>("overview");
+  const [selected, setSelected] = useState(
+    () => new URLSearchParams(window.location.search).get("store") || "",
+  );
+  const [tab, setTab] = useState<Tab>(() =>
+    new URLSearchParams(window.location.search).get("tab") === "enquiries" ||
+    new URLSearchParams(window.location.search).has("enquiry")
+      ? "enquiries"
+      : "overview",
+  );
+  const [enquiryRevision, setEnquiryRevision] = useState(0);
   const [creatingStore, setCreatingStore] = useState(false);
   const [inviteBusy, setInviteBusy] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [workspaceMessage, setWorkspaceMessage] = useState<string | null>(null);
-  const chooseTab = (next: Tab) => {
-    setTab(next);
-    setWorkspaceMessage(null);
-  };
+
   const storesRequest = useRemote<{ items: Store[] }>(
     auth.user?.kind === "WORKFORCE" && !auth.user.passwordChangeRequired
       ? "/stores?managed=true"
@@ -72,6 +81,22 @@ export function Workspace() {
           membership.state === "ACTIVE",
       ),
   );
+  const enquiryCounts = useVisibleResource<EnquiryCounts>(
+    canOperate && selectedStore
+      ? `/stores/${selectedStore.id}/enquiries/counts`
+      : null,
+    {},
+    enquiryRevision,
+  );
+  const chooseTab = (next: Tab) => {
+    setTab(next);
+    setWorkspaceMessage(null);
+    if (next === "enquiries") {
+      const params = new URLSearchParams({ tab: "enquiries" });
+      if (selectedStore) params.set("store", selectedStore.id);
+      window.history.replaceState(null, "", `/staff?${params}`);
+    } else window.history.replaceState(null, "", "/staff");
+  };
   const invitations =
     auth.user?.memberships.filter(
       (membership) => membership.state === "INVITED",
@@ -172,6 +197,25 @@ export function Workspace() {
               >
                 Store brands
               </button>
+              <button
+                type="button"
+                aria-label="Enquiries"
+                className={tab === "enquiries" ? "nav-active" : ""}
+                onClick={() => chooseTab("enquiries")}
+              >
+                Enquiries{" "}
+                <span
+                  className="sidebar-enquiry-count"
+                  role="status"
+                  aria-label="New unassigned enquiries"
+                >
+                  {enquiryCounts.data
+                    ? enquiryCounts.data.unassignedNew
+                    : enquiryCounts.error
+                      ? "?"
+                      : "…"}
+                </span>
+              </button>
             </>
           )}
           {auth.user.superAdmin && (
@@ -183,9 +227,6 @@ export function Workspace() {
               Platform catalog
             </button>
           )}
-          <span className="deferred">
-            Enquiries <small>Coming next</small>
-          </span>
         </nav>
         <div className="sidebar-bottom">
           <a href="/account/password">Change password</a>
@@ -327,6 +368,14 @@ export function Workspace() {
                 ? "Accept a store invitation above to access its workspace."
                 : "Ask your store administrator to invite you. Access appears here only after you accept."}
           </EmptyState>
+        ) : tab === "enquiries" && canOperate ? (
+          <StoreEnquiries
+            key={selectedStore.id}
+            store={selectedStore}
+            counts={enquiryCounts.data}
+            countsError={enquiryCounts.error}
+            onChanged={() => setEnquiryRevision((value) => value + 1)}
+          />
         ) : tab === "catalog" && canOperate ? (
           <ProductAdmin key={selectedStore.id} store={selectedStore} />
         ) : tab === "brands" && canOperate ? (
@@ -445,15 +494,16 @@ function WorkspaceOverview({
           <span>02</span>
           <h3>Help customers picture it.</h3>
           <p>
-            Choose a clear garment reference now. Personal previews are being
-            prepared.
+            Choose a clear garment reference for personal previews. Customer
+            photos remain private to their own accounts.
           </p>
         </article>
         <article>
           <span>03</span>
           <h3>Start a conversation.</h3>
           <p>
-            Store enquiry tools will keep contact and follow-up in one place.
+            Follow up on callback requests, assign teammates and keep customer
+            replies separate from internal notes.
           </p>
         </article>
       </section>

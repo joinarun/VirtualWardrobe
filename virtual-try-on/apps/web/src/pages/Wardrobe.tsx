@@ -17,6 +17,7 @@ function WardrobeNav({ gallery }: { gallery: boolean }) {
       <a href="/account/gallery" aria-current={gallery ? "page" : undefined}>
         Saved gallery
       </a>
+      <a href="/account/enquiries">My enquiries</a>
       <a href="/">
         Explore collection <UiIcon kind="up-right" />
       </a>

@@ -1,0 +1,5 @@
+# Enquiry acceptance
+
+Run the local application, sign in as a customer and request a callback from an available product without generating a preview. Confirm separate sharing consent. Repeat the request and verify one active case. In its store workspace, inspect counts/list/detail without a read-only GET changing assignment, then explicitly claim. Send a public reply and an internal note; the customer sees only the reply and can respond. Awaiting-response state becomes CUSTOMER_REPLIED. Close with an outcome; customer replies reject. Reopen with reason/eligible assignee, unless another active case or contact redaction blocks it.
+
+Run real PostgreSQL tests for creation/claim/revocation/retention races and actual HTTP authorization/CSRF. Delete a customer account and verify contact plus every free-text history body is removed. Verify an unrelated customer's records and earlier try-on privacy remain intact. Existing worker maintenance performs closed180-day contact scrubbing. No cloud calls or external messages are needed.

@@ -123,6 +123,9 @@ export function AccountPage() {
             <a className="secondary-button" href="/account/gallery">
               Saved gallery
             </a>
+            <a className="secondary-button" href="/account/enquiries">
+              My enquiries
+            </a>
           </div>
           <a className="text-button" href="/">
             Explore the storefront <UiIcon kind="right" />

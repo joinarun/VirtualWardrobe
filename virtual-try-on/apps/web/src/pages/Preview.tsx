@@ -6,6 +6,8 @@ import { Loading, Notice } from "../components/Common";
 import type { TryOnJob } from "../tryon-types";
 import { dateTime, privatePath } from "../tryon-types";
 import { useJob } from "../use-job";
+import { useRemote } from "../remote";
+import type { Product } from "../catalog-types";
 
 const stateLabels = {
   QUEUED: "Queued",
@@ -62,6 +64,9 @@ export function PreviewPage({ id }: { id: string }) {
   const [confirm, setConfirm] = useState<"cancel" | "discard" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const job = request.job;
+  const currentProduct = useRemote<Product>(
+    job ? `/products/${job.productId}` : null,
+  );
   const act = async (action: "cancel" | "save" | "discard") => {
     if (!job) return;
     setBusy(action);
@@ -391,6 +396,24 @@ export function PreviewPage({ id }: { id: string }) {
               </span>
             </a>
           )}
+          {currentProduct.data?.status === "PUBLISHED" &&
+          currentProduct.data.availability === "AVAILABLE" ? (
+            <a
+              className="secondary-button full-width"
+              href={`/callback?product=${job.productId}`}
+            >
+              Request a store callback <UiIcon />
+            </a>
+          ) : (
+            <p className="form-hint">
+              {currentProduct.loading
+                ? "Checking current product availability…"
+                : "A new callback is unavailable for this listing. Existing enquiries remain in your account."}
+            </p>
+          )}
+          <a className="text-button" href="/account/enquiries">
+            My enquiries <UiIcon />
+          </a>
           <a className="text-button" href={`/products/${job.productId}`}>
             View current product details <UiIcon kind="up-right" />
           </a>

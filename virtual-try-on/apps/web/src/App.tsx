@@ -12,6 +12,12 @@ import { CustomerOnly } from "./components/CustomerOnly";
 import { TryOnPage } from "./pages/TryOn";
 import { PreviewPage } from "./pages/Preview";
 import { WardrobePage } from "./pages/Wardrobe";
+import {
+  CallbackPage,
+  CustomerEnquiriesPage,
+  CustomerEnquiryDetail,
+} from "./pages/CustomerEnquiries";
+import "./enquiries.css";
 import "./tryon.css";
 import "./App.css";
 import "./identity.css";
@@ -87,6 +93,24 @@ function Routes() {
   else if (path === "/account/recover") page = <AuthPage mode="recover" />;
   else if (path === "/account/login") page = <AuthPage />;
   else if (path === "/account/password") page = <PasswordChangePage />;
+  else if (path === "/callback")
+    page = (
+      <CustomerOnly>
+        <CallbackPage />
+      </CustomerOnly>
+    );
+  else if (path === "/account/enquiries")
+    page = (
+      <CustomerOnly>
+        <CustomerEnquiriesPage />
+      </CustomerOnly>
+    );
+  else if (path.startsWith("/account/enquiries/"))
+    page = (
+      <CustomerOnly>
+        <CustomerEnquiryDetail id={path.slice("/account/enquiries/".length)} />
+      </CustomerOnly>
+    );
   else if (path === "/try-on")
     page = (
       <CustomerOnly>

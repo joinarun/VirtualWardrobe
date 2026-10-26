@@ -30,6 +30,7 @@ make down
 - `/api/v1` is the public API prefix. API mode denies all `/internal/**` paths; worker mode has no public business API. Customer and workforce credentials are separate, with store-scoped workforce memberships.
 - `APP_ADAPTER_MODE=local` and `APP_IMAGE_PROVIDER=mock` are the safe local defaults. Mock outputs are explicitly `Demo preview`. The provider evaluator supports an opt-in live Google mode with bounded spending and separate human scoring.
 - Database configuration uses standard `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`. Web sessions persist in PostgreSQL and use the `__session` HttpOnly cookie, CSRF headers and credential-version checks.
+- API control request bodies are capped at 128 KiB before parsing. Raw image/video uploads use their separate file limits and bounded processing. Provider calls enforce a deadline through completion of their size-capped response body.
 - Local media objects are ignored under `work/`. PostgreSQL stores durable local task deliveries, generation attempts, customer allowances and provider spend reservations. GCP uses private Cloud Storage and Cloud Tasks behind the same service interfaces.
 
 Do not commit `.env`, credentials, photos, `work/`, build artifacts or browser reports. The private worker also requires Cloud Run IAM when deployed; application route selection is not a substitute for infrastructure authorization.
@@ -49,3 +50,11 @@ Customers open an available product, select **Try it on me**, and consent before
 Local development uses deterministic previews with no paid model calls. The hosted demo uses Google in an explicitly labelled evaluation mode. Production live generation fails closed until an operator supplies a matching human quality review. The 40-pair saree benchmark remains a human review gate; neither fixture tests nor a successful provider call establish garment fidelity.
 
 Source photos are removed after terminal processing and within 24 hours. Unsaved outputs expire within 24 hours. Saved outputs persist until deletion. Removal prevents new application access immediately; previously issued private URLs expire within five minutes, and cloud backup/soft-delete retention is separate. Daily customer, global-request and provider-spend limits are configurable and checked transactionally.
+
+## Store enquiries
+
+Customers can request a callback from an available product without generating a preview. They separately confirm sharing their name, unverified phone number and optional note with that store. Repeated submissions return the same active enquiry. Personal try-on images are never attached.
+
+Store teams see counts and scoped queues, atomically claim unassigned work, send customer-visible replies or internal notes, reassign enquiries, and close or reopen them with recorded history. Customers see only their own public conversation. Removing an employee's store access returns their active assignments to the unassigned queue.
+
+Account deletion removes stored contact and all free-text enquiry content. Closed contact retention defaults to 180 days; increasing configuration cannot extend an earlier consent promise. Contact search uses a request body to keep names and phone numbers out of request URLs.

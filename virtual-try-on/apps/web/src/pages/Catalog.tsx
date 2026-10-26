@@ -504,8 +504,8 @@ export function CatalogHome() {
             <span>03 / CONNECT</span>
             <h3>Meet the people behind it.</h3>
             <p>
-              Each piece belongs to an independent store. Callback enquiries are
-              coming soon.
+              Request a callback from the store, share contact details with
+              consent, and keep the conversation in your account.
             </p>
           </article>
         </div>
@@ -696,13 +696,23 @@ export function ProductDetail({ id }: { id: string }) {
                 : "Create a private preview using your own full-body photo. Provider and retention details are shown before upload. AI appearance, garment details and drape can differ; there is no size or fit guarantee."}
             </p>
           </div>
-          <button
-            className="secondary-button full-width"
-            disabled
-            type="button"
-          >
-            Request a callback · available soon
-          </button>
+          {product.status === "PUBLISHED" &&
+          product.availability === "AVAILABLE" ? (
+            <a
+              className="secondary-button full-width"
+              href={`/callback?product=${product.id}`}
+            >
+              Request a callback <UiIcon />
+            </a>
+          ) : (
+            <button
+              className="secondary-button full-width"
+              disabled
+              type="button"
+            >
+              Request a callback
+            </button>
+          )}
           <section className="product-description">
             <h2>A closer look.</h2>
             <p>

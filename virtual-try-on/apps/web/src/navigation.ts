@@ -7,11 +7,15 @@ export function customerReturnPath(value: string | null | undefined) {
       url.origin !== window.location.origin ||
       (![
         "/try-on",
+        "/callback",
+        "/account/enquiries",
         "/account",
         "/account/gallery",
         "/account/previews",
       ].includes(url.pathname) &&
-        !/^\/account\/previews\/[a-f0-9-]{36}$/.test(url.pathname))
+        !/^\/account\/(?:previews|enquiries)\/[a-f0-9-]{36}$/.test(
+          url.pathname,
+        ))
     )
       return "/account";
     return url.pathname + url.search;

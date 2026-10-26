@@ -53,7 +53,7 @@ public class StoreService {
     }
     public Map<String,Object> assignees(UUID storeId) {
         identity.requireStore(identity.workforce(),storeId,false);
-        return Map.of("items",jdbc.query("SELECT a.id,a.name,m.role FROM vw_membership m JOIN vw_account a ON a.id=m.account_id WHERE m.store_id=? AND m.state='ACTIVE' AND a.enabled=TRUE ORDER BY a.name",(r,n)->Map.of("userId",r.getObject(1),"name",r.getString(2),"role",r.getString(3)),storeId));
+        return Map.of("items",jdbc.query("SELECT a.id,a.name,m.role FROM vw_membership m JOIN vw_account a ON a.id=m.account_id WHERE m.store_id=? AND m.state='ACTIVE' AND m.accepted_at IS NOT NULL AND a.kind='WORKFORCE' AND a.enabled=TRUE ORDER BY a.name",(r,n)->Map.of("userId",r.getObject(1),"name",r.getString(2),"role",r.getString(3)),storeId));
     }
     @Transactional public Map<String,Object> provision(UUID storeId,Map<String,Object> body) {
         identity.lockAdministration();var actor=identity.workforce();identity.lockStore(storeId);identity.requireStore(actor,storeId,true);
