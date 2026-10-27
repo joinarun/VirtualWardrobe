@@ -63,6 +63,18 @@ async function signIn(page, actor) {
   await page.locator(customer ? ".customer-account" : ".workspace-main").waitFor();
   requireCheck((await read(page, "/auth/session")).user?.id === actor.id, "WRONG_SESSION");
 }
+export async function signOut(page) {
+  // A click dispatches the async handler; await the genuine server result before
+  // checking the session so verification cannot race the CSRF/logout requests.
+  const completed = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/api/v1/auth/logout" &&
+    response.request().method() === "POST" && response.status() !== 403);
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  const response = await completed;
+  requireCheck(response.status() === 204, "LOGOUT_RESPONSE_FAILED");
+  await response.finished();
+  await page.waitForURL((url) => url.pathname === "/");
+}
 export async function main(args = process.argv.slice(2), environment = process.env) {
   const { values } = parseArgs({ args, options: {
     run: { type: "boolean", default: false },
@@ -192,7 +204,7 @@ export async function main(args = process.argv.slice(2), environment = process.e
     report.checks.push("foreground_reload_keeps_login", "jobs_and_gallery_unchanged", "old_paid_journal_unchanged", "zero_new_uploads_or_jobs");
     phase = "LOGOUT";
     await page.goto("/account");
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await signOut(page);
     requireCheck((await read(page, "/auth/session")).user === null, "LOGOUT_FAILED");
     report.checks.push("explicit_logout_revokes_session");
     phase = "WORKFORCE_RESTART_THEME";
@@ -215,7 +227,7 @@ export async function main(args = process.argv.slice(2), environment = process.e
       await screenshot(page, output, `390-workspace-${theme}`);
       report.screenshots.push(`390-workspace-${theme}.png`);
     }
-    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await signOut(page);
     requireCheck((await read(page, "/auth/session")).user === null, "WORKFORCE_LOGOUT_FAILED");
     report.checks.push("workforce_browser_restart", "three_workforce_theme_accessibility_scans");
     requireCheck(report.blockedMutations === 0 && report.javascriptErrors === 0, "FINAL_BROWSER_GUARD_FAILED");
