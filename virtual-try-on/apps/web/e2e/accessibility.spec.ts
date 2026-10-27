@@ -26,19 +26,11 @@ test("customer catalog and sign-in meet automated WCAG A/AA checks", async ({
     }),
   );
   await page.goto("/");
-  await expect(page.getByLabel("Fictional demo disclosure")).toContainText(
-    "Evaluation demo from service",
-  );
-  await expect(page.getByLabel("Fictional demo disclosure")).toContainText(
-    "Provider evaluation notice from the current server configuration.",
-  );
+  await expect(page.getByLabel("Fictional demo disclosure")).toHaveCount(0);
+  await expect(page.getByText("Provider evaluation notice from the current server configuration.")).toHaveCount(0);
   await assertWcagAA(page);
   mode = "LIVE";
-  const liveConfig = page.waitForResponse((response) =>
-    response.url().endsWith("/api/v1/try-on/config"),
-  );
   await page.reload();
-  await liveConfig;
   await expect(page.getByLabel("Fictional demo disclosure")).toHaveCount(0);
 });
 

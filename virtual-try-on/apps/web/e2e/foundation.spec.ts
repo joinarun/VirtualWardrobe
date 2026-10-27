@@ -6,11 +6,11 @@ test("customer and staff shells are distinct at desktop and mobile", async ({
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "A new way to find your favourite drape.",
+      name: "Sarees, your way.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Store workspace" }),
+    page.getByRole("link", { name: "For stores" }),
   ).toBeVisible();
   await page.goto("/staff");
   await expect(

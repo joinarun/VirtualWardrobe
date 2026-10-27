@@ -20,9 +20,9 @@ import org.springframework.beans.factory.annotation.Value;
 public class FoundationSecurity {
     @Bean UserDetailsService noDefaultUser() { return new InMemoryUserDetailsManager(); }
     @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(12); }
-    @Bean CookieSerializer cookieSerializer(@Value("${server.servlet.session.cookie.secure:false}")boolean secure) {
+    @Bean CookieSerializer cookieSerializer(@Value("${server.servlet.session.cookie.secure:false}")boolean secure,SessionPolicy sessions) {
         var cookie=new DefaultCookieSerializer();cookie.setCookieName("__session");cookie.setCookiePath("/");
-        cookie.setUseHttpOnlyCookie(true);cookie.setSameSite("Lax");cookie.setUseSecureCookie(secure);return cookie;
+        cookie.setUseHttpOnlyCookie(true);cookie.setSameSite("Lax");cookie.setUseSecureCookie(secure);cookie.setCookieMaxAge(sessions.cookieSeconds());return cookie;
     }
     @Bean SecurityFilterChain foundationFilterChain(HttpSecurity http, FoundationProperties properties,IdentityService identity,WorkerTokenVerifier workerTokens) throws Exception {
         var csrfRepository=new HttpSessionCsrfTokenRepository();csrfRepository.setHeaderName("X-CSRF-TOKEN");

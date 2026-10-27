@@ -20,7 +20,7 @@ import sys
 import time
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_PROJECT = "virtualtryon-511016"
@@ -54,11 +54,15 @@ def reviewed_limits(config: dict) -> bool:
     integer_bounds = {"api_max_instances": 2, "worker_max_instances": 1,
                       "daily_customer_limit": 5, "daily_global_limit": 100,
                       "saved_preview_limit": 100}
+    session_bounds = {"session_customer_seconds": 2592000,
+                      "session_workforce_seconds": 28800,
+                      "session_anonymous_seconds": 1800}
     try:
         return (config.get("database_version") == "POSTGRES_17" and
                 config.get("database_tier") == "db-f1-micro" and
                 config.get("database_storage_gb") == 10 and config.get("database_storage_max_gb") == 20 and
                 all(type(config.get(key)) is int and 1 <= config[key] <= bound for key, bound in integer_bounds.items()) and
+                all(type(config.get(key)) is int and 60 <= config[key] <= bound for key, bound in session_bounds.items()) and
                 Decimal("0") < Decimal(config.get("daily_provider_budget_usd", "0")) <= Decimal("5.00") and
                 Decimal("0.25") <= Decimal(config.get("attempt_reservation_usd", "0")) <= Decimal("5.00") and
                 isinstance(config.get("generation_enabled"), bool))
@@ -172,6 +176,13 @@ class Deployment:
                 "daily_customer_limit": self.cfg["daily_customer_limit"],
                 "daily_global_limit": self.cfg["daily_global_limit"],
                 "daily_provider_budget_usd": self.cfg["daily_provider_budget_usd"],
+            },
+            "sessions": {
+                "customer_idle_seconds": self.cfg["session_customer_seconds"],
+                "workforce_idle_seconds": self.cfg["session_workforce_seconds"],
+                "anonymous_idle_seconds": self.cfg["session_anonymous_seconds"],
+                "cookie_max_age_seconds": max(self.cfg["session_customer_seconds"], self.cfg["session_workforce_seconds"]),
+                "legacy_sessions": "Existing browser-session cookies require a new sign-in for persistence",
             },
             "ai": {"provider": self.cfg["image_provider"],
                    "model": self.cfg["google_image_model"],
@@ -503,8 +514,36 @@ class Deployment:
             "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5" if mode == "api" else "3",
             "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "0",
             "SESSION_COOKIE_SECURE": "true",
+            "APP_SESSION_CUSTOMER_SECONDS": str(self.cfg["session_customer_seconds"]),
+            "APP_SESSION_WORKFORCE_SECONDS": str(self.cfg["session_workforce_seconds"]),
+            "APP_SESSION_ANONYMOUS_SECONDS": str(self.cfg["session_anonymous_seconds"]),
             "APP_BOOTSTRAP_SUPERADMIN_EMAIL": self.cfg["bootstrap_email"],
         }
+
+    def canonical_worker_url(self, value: object) -> str:
+        """Accept only the canonical HTTPS origin returned for this owned worker."""
+        if not isinstance(value, str):
+            raise RuntimeError("The owned worker's canonical URL is unavailable")
+        try:
+            parsed = urlsplit(value)
+        except ValueError:
+            raise RuntimeError("The owned worker's canonical URL is invalid") from None
+        if (parsed.scheme != "https" or parsed.netloc != parsed.hostname or parsed.path or
+                parsed.query or parsed.fragment or not re.fullmatch(
+                    re.escape(self.worker) + r"-[a-z0-9-]+(?:\.[a-z0-9-]+)*\.run\.app", parsed.hostname or "")):
+            raise RuntimeError("The owned worker's canonical URL is invalid")
+        return value
+
+    def previous_worker_url(self, previous: dict) -> str:
+        if (previous.get("project_id") != self.project or previous.get("region") != self.region or
+                not isinstance(previous.get("services"), dict) or "worker" not in previous["services"]):
+            raise RuntimeError("The previous release must identify the reviewed project and worker")
+        worker = previous["services"]["worker"]
+        if worker is None:
+            return ""
+        if not isinstance(worker, dict) or worker.get("service") != self.worker:
+            raise RuntimeError("The previous release must identify the owned worker")
+        return self.canonical_worker_url(worker.get("url"))
 
     def deploy_service(self, mode: str, image: str, captcha_key: str, worker_url: str):
         service = self.api if mode == "api" else self.worker
@@ -690,6 +729,7 @@ class Deployment:
         if image is not None and image != expected_image:
             raise RuntimeError("--image may reuse only this clean HEAD's exact backend:HEAD12 tag; rollback uses the recorded previous release")
         previous = self.release_state()
+        known_worker_url = self.previous_worker_url(previous)
         release_directory = self.work / "releases"
         release_directory.mkdir(exist_ok=True, mode=0o700)
         prior_path = release_directory / f"before-{time.time_ns()}-{source_revision[:12]}.json"
@@ -698,9 +738,17 @@ class Deployment:
         if image is None:
             image = expected_image
             self.build(image)
-        worker_url = self.deploy_service("worker", image, captcha_key, "")
-        # Give maintenance/dispatch code its canonical URL after first creation.
-        self.deploy_service("worker", image, captcha_key, worker_url)
+        worker_url = self.canonical_worker_url(self.deploy_service("worker", image, captcha_key, known_worker_url))
+        if known_worker_url:
+            # Existing queue/Scheduler tokens keep working on the first new
+            # revision. Never publish an empty audience during a redeployment.
+            if worker_url != known_worker_url:
+                raise RuntimeError("The owned worker's canonical URL changed; API/Hosting publication stopped")
+        else:
+            # Only first creation needs URL discovery before authenticated work.
+            confirmed = self.canonical_worker_url(self.deploy_service("worker", image, captcha_key, worker_url))
+            if confirmed != worker_url:
+                raise RuntimeError("The owned worker's canonical URL changed; API/Hosting publication stopped")
         api_url = self.deploy_service("api", image, captcha_key, worker_url)
         self.schedule(worker_url)
         self.hosting(captcha_key)

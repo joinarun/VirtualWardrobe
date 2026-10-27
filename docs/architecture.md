@@ -1,5 +1,13 @@
 # Virtual clothing try on architecture
 
+## Mobile experience amendment — approved 2026-10-27
+
+The owner's mobile follow-up and constitution2.0.0 supersede earlier clauses requiring blocking photo-consent/age/ownership checkboxes, customer provider/model/evaluation banners and dense generation warnings. The customer path is choose saree→add photo→view Virtual preview. A deliberate request is recorded as USER_ACTION with version/time and NULL legacy attestation fields; historical legacy records stay truthful. Generic photo handling/retention is available through a passive Privacy link. Provider provenance, budgets, deployment diagnostics and production quality review stay internal/operator-facing. Existing role/privacy/retention/CSRF/quota and callback-contact boundaries remain.
+
+Customer login persists for up to30days (30-day server idle); workforce stays8hours idle, anonymous30minutes and temporary credentials their absolute24hours. Persistent __session remains Secure/HttpOnly/Lax in GCP; no authentication secrets in localStorage. Existing pre-update cookies may need one new sign-in. Transient/offline refresh is reconnect state, not asserted logout; resume revalidates read-only work with stale-response protection.
+
+Customer mobile screens use compact headers, safe-area bottom navigation and reachable44px actions; Pearl/Sage/Midnight/System appearances persist without first-paint flash or image recolouring. Focused browser/background/reload/race/theme/accessibility tests and actual GCP/CI evidence are required. Feature009 contains the authoritative contract and acceptance details. Android/iOS binaries and new infrastructure remain out of scope.
+
 This is the implementation baseline for the Phase 1 PRD. Keep a single backend codebase with clear modules and one public versioned API. Use managed services where they remove operational work without obscuring their cost.
 
 ## 1 Stack decisions

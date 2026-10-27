@@ -52,16 +52,36 @@ public class TryOnTransactions {
     }
     @Transactional public Upload authorizeSource(Map<String,Object> body){
         settings.requireEnabled();UUID owner=ownerLock(),product=Inputs.id(Inputs.text(body,"productId",40));eligibleProduct(product);
-        if(!(body.get("consent") instanceof Map<?,?> consent)||!settings.version().equals(consent.get("version"))||!Boolean.TRUE.equals(consent.get("adult"))||!Boolean.TRUE.equals(consent.get("ownPhoto"))||!Boolean.TRUE.equals(consent.get("providerProcessing")))throw new ApiProblem(409,"CONSENT_UPDATED","Read and accept the current adult self-photo and provider-processing notice");
+        String basis=requestBasis(body);boolean legacy=basis.equals("LEGACY_ATTESTATION");
         String mime=Inputs.text(body,"contentType",100).toLowerCase(Locale.ROOT);if(!Set.of("image/jpeg","image/png").contains(mime))throw ApiProblem.bad("Upload one JPEG or PNG photo");long bytes;
         try{bytes=new BigDecimal(body.get("bytes").toString()).longValueExact();}catch(Exception e){throw ApiProblem.bad("A valid file size is required");}
         if(bytes<1||bytes>10*1024*1024)throw new ApiProblem(413,"FILE_TOO_LARGE","Photo must be no larger than 10 MiB");
         int pending=jdbc.queryForObject("SELECT count(*) FROM vw_private_media WHERE owner_id=? AND purpose='SOURCE' AND job_id IS NULL AND state NOT IN('DELETED','REJECTED') AND expires_at>CURRENT_TIMESTAMP AND (state='ACTIVE' OR cap_expires_at>CURRENT_TIMESTAMP)",Integer.class,owner);
         if(pending>=3)throw new ApiProblem(429,"SOURCE_UPLOAD_LIMIT","Discard unused photo uploads before starting another");
         UUID consentId=UUID.randomUUID(),id=UUID.randomUUID();String token=Inputs.secret();
-        jdbc.update("INSERT INTO vw_tryon_consent(id,owner_id,version,provider,model,location,notice,adult,own_photo,provider_processing) VALUES(?,?,?,?,?,?,?,TRUE,TRUE,TRUE)",consentId,owner,settings.version(),settings.provider(),settings.model(),settings.location(),settings.consentNotice());
+        Boolean attestation=legacy?Boolean.TRUE:null;
+        jdbc.update("INSERT INTO vw_tryon_consent(id,owner_id,version,provider,model,location,notice,request_basis,adult,own_photo,provider_processing) VALUES(?,?,?,?,?,?,?,?,?,?,?)",consentId,owner,legacy?settings.version():settings.processingVersion(),settings.provider(),settings.model(),settings.location(),legacy?settings.consentNotice():settings.processingNotice(),basis,attestation,attestation,attestation);
         jdbc.update("INSERT INTO vw_private_media(id,owner_id,product_id,consent_id,purpose,state,declared_mime,declared_bytes,token_hash,raw_key,object_key,cap_expires_at,expires_at) VALUES(?,?,?,?,'SOURCE','AUTHORIZED',?,?,?,?,?,CURRENT_TIMESTAMP+INTERVAL '5 minutes',CURRENT_TIMESTAMP+INTERVAL '24 hours')",id,owner,product,consentId,mime,bytes,Inputs.hash(token),"uploads/private/"+owner+"/"+id,"source/"+owner+"/"+id+".jpg");
         return new Upload(media(id),token);
+    }
+    private String requestBasis(Map<String,Object> body){
+        boolean action=body.containsKey("processingRequest"),legacy=body.containsKey("consent");
+        if(action==legacy||body.containsKey("adult")||body.containsKey("ownPhoto")||body.containsKey("providerProcessing"))throw requestChanged();
+        if(action){
+            if(!(body.get("processingRequest") instanceof Map<?,?> request)||!request.keySet().equals(Set.of("version","action"))||!settings.processingVersion().equals(request.get("version"))||!"TRY_ON".equals(request.get("action")))throw requestChanged();
+            return "USER_ACTION";
+        }
+        if(!(body.get("consent") instanceof Map<?,?> consent)||!settings.version().equals(consent.get("version"))||!Boolean.TRUE.equals(consent.get("adult"))||!Boolean.TRUE.equals(consent.get("ownPhoto"))||!Boolean.TRUE.equals(consent.get("providerProcessing")))throw requestChanged();
+        return "LEGACY_ATTESTATION";
+    }
+    private ApiProblem requestChanged(){return new ApiProblem(409,"CONSENT_UPDATED","Preview request settings changed; choose your photo again");}
+    private boolean validRequestSnapshot(Map<String,Object> receipt){
+        if(!settings.provider().equals(receipt.get("provider"))||!settings.model().equals(receipt.get("model"))||!settings.location().equals(receipt.get("location")))return false;
+        return switch(Objects.toString(receipt.get("request_basis"),"")){
+            case "USER_ACTION" -> settings.processingVersion().equals(receipt.get("version"))&&receipt.get("adult")==null&&receipt.get("own_photo")==null&&receipt.get("provider_processing")==null;
+            case "LEGACY_ATTESTATION" -> settings.version().equals(receipt.get("version"))&&Boolean.TRUE.equals(receipt.get("adult"))&&Boolean.TRUE.equals(receipt.get("own_photo"))&&Boolean.TRUE.equals(receipt.get("provider_processing"));
+            default -> false;
+        };
     }
     @Transactional public PrivateMedia claimRaw(UUID id,String token,String mime){
         var m=media(id);if(!m.purpose().equals("SOURCE")||token==null||!java.security.MessageDigest.isEqual(Inputs.hash(token).getBytes(java.nio.charset.StandardCharsets.US_ASCII),Objects.toString(m.tokenHash(),"").getBytes(java.nio.charset.StandardCharsets.US_ASCII)))throw ApiProblem.missing();
@@ -88,7 +108,7 @@ public class TryOnTransactions {
         settings.requireEnabled();var p=eligibleProduct(product);var m=ownedMedia(source);
         if(!m.purpose().equals("SOURCE")||!m.state().equals("ACTIVE")||!product.equals(m.product())||m.job()!=null||m.expires().isBefore(Instant.now()))throw new ApiProblem(409,"SOURCE_UNAVAILABLE","Upload a new photo for this product");
         var consent=jdbc.queryForMap("SELECT c.* FROM vw_tryon_consent c JOIN vw_private_media m ON m.consent_id=c.id WHERE m.id=?",source);
-        if(!settings.version().equals(consent.get("version")))throw new ApiProblem(409,"CONSENT_UPDATED","Provider settings changed; read the notice and upload again");
+        if(!validRequestSnapshot(consent))throw requestChanged();
         LocalDate day=LocalDate.now(ZoneOffset.UTC);lockDay(day);jdbc.update("INSERT INTO vw_customer_generation_day(owner_id,day) VALUES(?,?) ON CONFLICT DO NOTHING",owner,day);
         int used=jdbc.queryForObject("SELECT used FROM vw_customer_generation_day WHERE owner_id=? AND day=?",Integer.class,owner,day);if(used>=settings.customerDaily)throw new ApiProblem(429,"CUSTOMER_DAILY_LIMIT","Your daily preview allowance is used; try after the UTC reset");
         reserve(day,settings.attemptCost(),true);UUID job=UUID.randomUUID();jdbc.update("UPDATE vw_customer_generation_day SET used=used+1 WHERE owner_id=? AND day=?",owner,day);
@@ -114,7 +134,7 @@ public class TryOnTransactions {
         if(!identity.find(id(job,"owner_id")).enabled()||settings.disabledReason()!=null||!settings.provider().equals(job.get("provider"))||!settings.model().equals(job.get("model"))){terminal(job,"FAILED","GENERATION_UNAVAILABLE","Generation settings or account access changed",false,BigDecimal.ZERO);return null;}
         Map<String,Object> p;try{p=eligibleProduct(id(job,"product_id"));}catch(ApiProblem e){terminal(job,"FAILED","PRODUCT_UNAVAILABLE","This product is no longer available",false,BigDecimal.ZERO);return null;}
         var source=media(id(job,"source_id"));if(!source.state().equals("ACTIVE")||source.expires().isBefore(Instant.now())){terminal(job,"FAILED","SOURCE_UNAVAILABLE","The source photo expired",false,BigDecimal.ZERO);return null;}
-        String consentVersion=jdbc.queryForObject("SELECT c.version FROM vw_tryon_consent c JOIN vw_private_media m ON m.consent_id=c.id WHERE m.id=?",String.class,source.id());if(!settings.version().equals(consentVersion)){terminal(job,"FAILED","CONSENT_UPDATED","Provider or processing settings changed; upload again after reading the current notice",false,BigDecimal.ZERO);return null;}
+        var receipt=jdbc.queryForMap("SELECT c.* FROM vw_tryon_consent c JOIN vw_private_media m ON m.consent_id=c.id WHERE m.id=?",source.id());if(!validRequestSnapshot(receipt)){terminal(job,"FAILED","CONSENT_UPDATED","Preview request settings changed; choose your photo again",false,BigDecimal.ZERO);return null;}
         UUID reference=id(job,"garment_media_id");if(reference==null||jdbc.queryForObject("SELECT count(*) FROM vw_media_upload WHERE id=? AND product_id=? AND purpose='PRODUCT_IMAGE' AND state='VALIDATED'",Integer.class,reference,job.get("product_id"))!=1){terminal(job,"FAILED","PRODUCT_REFERENCE_UNAVAILABLE","The selected garment reference is no longer available",false,BigDecimal.ZERO);return null;}
         UUID token=UUID.randomUUID(),output=UUID.randomUUID();String key="unsaved/"+job.get("owner_id")+"/"+jobId+"/"+output+".jpg";
         jdbc.update("INSERT INTO vw_private_media(id,owner_id,product_id,job_id,purpose,state,declared_mime,declared_bytes,object_key,cap_expires_at,expires_at) VALUES(?,?,?,?,'OUTPUT','PROCESSING','image/jpeg',1,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP+INTERVAL '24 hours')",output,job.get("owner_id"),job.get("product_id"),jobId,key);

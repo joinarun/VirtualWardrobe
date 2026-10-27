@@ -12,8 +12,10 @@ import org.springframework.stereotype.Component;
 public class SessionSupport {
     public static final String CREDENTIAL_VERSION="VW_CREDENTIAL_VERSION";
     private final HttpSessionSecurityContextRepository repository=new HttpSessionSecurityContextRepository();
+    private final SessionPolicy policy;
+    public SessionSupport(SessionPolicy policy){this.policy=policy;}
     public void signIn(IdentityService.Account account,HttpServletRequest request,HttpServletResponse response) {
-        HttpSession old=request.getSession(false);if(old!=null)old.invalidate();request.getSession(true).setAttribute(CREDENTIAL_VERSION,account.credentialVersion());
+        HttpSession old=request.getSession(false);if(old!=null)old.invalidate();var session=request.getSession(true);session.setMaxInactiveInterval(policy.authenticatedSeconds(account));session.setAttribute(CREDENTIAL_VERSION,account.credentialVersion());
         var context=SecurityContextHolder.createEmptyContext();
         context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(account.id().toString(),null,List.of(new SimpleGrantedAuthority("ROLE_"+account.kind()))));
         SecurityContextHolder.setContext(context);repository.saveContext(context,request,response);

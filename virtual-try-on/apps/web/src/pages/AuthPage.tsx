@@ -284,7 +284,7 @@ export function AuthPage({
             Signing in here switches this browser session.
           </Notice>
         )}
-        {mode === "signup" && auth.loading ? (
+        {mode === "signup" && (auth.loading || auth.configLoading) ? (
           <Loading message="Loading signup security…" />
         ) : mode === "signup" &&
           (!auth.config || !auth.config.signupEnabled) ? (
@@ -423,7 +423,7 @@ export function AuthPage({
                     Your name and mobile number identify your customer account.
                     A store receives your contact details only when you
                     separately request its callback. Personal photo processing
-                    will require separate consent. Your recovery codes are shown
+                    starts only when you create a preview. Your recovery codes are shown
                     once and stored only as hashes.
                   </p>
                 </details>

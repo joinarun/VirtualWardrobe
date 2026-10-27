@@ -28,7 +28,7 @@ public class IdentityService {
         var auth=SecurityContextHolder.getContext().getAuthentication();
         if(auth==null||!auth.isAuthenticated()||auth.getName().equals("anonymousUser"))throw new ApiProblem(401,"LOGIN_REQUIRED","Please sign in");
         Account account=find(Inputs.id(auth.getName()));
-        if(!account.enabled())throw new ApiProblem(401,"LOGIN_REQUIRED","Please sign in");return account;
+        if(!account.enabled()||(account.temporaryExpires()!=null&&!account.temporaryExpires().isAfter(Instant.now())))throw new ApiProblem(401,"LOGIN_REQUIRED","Please sign in");return account;
     }
     public Account workforce() {Account a=current();if(!a.kind().equals("WORKFORCE"))throw ApiProblem.forbidden();businessReady(a);return a;}
     public Account customer() {Account a=current();if(!a.kind().equals("CUSTOMER"))throw ApiProblem.forbidden();return a;}

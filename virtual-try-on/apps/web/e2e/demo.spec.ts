@@ -75,14 +75,12 @@ test("generated demo credentials enable all roles and an actual private-preview 
     await expect(
       customer.getByText("Phone unverified", { exact: true }),
     ).toBeVisible();
-    await expect(
-      customer.getByLabel("Fictional demo disclosure"),
-    ).toContainText("Do not call demo numbers.");
+    await expect(customer.getByLabel("Fictional demo disclosure")).toHaveCount(0);
     await assertWcagAA(customer);
     await customer.goto("/account/gallery");
     await expect(customer.locator(".wardrobe-card").first()).toBeVisible();
     await expect(customer.locator(".wardrobe-image-label").first()).toHaveText(
-      "Demo preview",
+      "Sample",
     );
     const initialGallery = await readable<{ total: number }>(
       customer,
@@ -150,36 +148,25 @@ test("generated demo credentials enable all roles and an actual private-preview 
       .click();
     await expect(
       customer.getByRole("heading", {
-        name: "Picture this piece, your way.",
+        name: "See yourself in it.",
         exact: true,
       }),
     ).toBeVisible();
     await customer
       .getByLabel("Choose a photo", { exact: true })
       .setInputFiles(join(process.cwd(), "public/demo/hero-emerald.png"));
-    await customer
-      .getByLabel("I am an adult (18 or older).", { exact: true })
-      .check();
-    await customer
-      .getByLabel("This is my own photo, and it shows only me.", {
-        exact: true,
-      })
-      .check();
-    await customer
-      .getByLabel(/^I consent to the processing and retention/)
-      .check();
+    await expect(customer.locator('input[type="checkbox"]')).toHaveCount(0);
     await assertWcagAA(customer);
     await customer
-      .getByRole("button", { name: "Create a demo preview", exact: true })
+      .getByRole("button", { name: "Create my preview", exact: true })
       .click();
     await customer.waitForURL(/\/account\/previews\/[a-f0-9-]{36}$/);
     createdJob = new URL(customer.url()).pathname.split("/").pop()!;
     await expect(
       customer.getByRole("heading", { name: "Preview ready", exact: true }),
     ).toBeVisible({ timeout: 60000 });
-    await expect(customer.getByLabel("Preview mode")).toContainText(
-      "Demo preview",
-    );
+    await expect(customer.locator(".result-image-caption")).toContainText("Sample");
+    await expect(customer.getByLabel("Preview mode")).toHaveCount(0);
     await customer
       .getByRole("button", { name: "Save to my gallery", exact: true })
       .click();

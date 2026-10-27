@@ -28,6 +28,7 @@ import { StoreEnquiries } from "./StoreEnquiries";
 import type { EnquiryCounts } from "../enquiry-types";
 import { useVisibleResource } from "../use-visible-resource";
 import { DemoNotice } from "../components/DemoNotice";
+import { ThemeChooser } from "../components/ThemeChooser";
 
 type Tab =
   | "overview"
@@ -247,6 +248,7 @@ export function Workspace() {
               ? "PLATFORM & STORE ADMINISTRATION"
               : "YOUR STORE WORKSPACE"}
           </span>
+          <ThemeChooser />
           <a className="text-button" href="/">
             View storefront <UiIcon kind="up-right" />
           </a>

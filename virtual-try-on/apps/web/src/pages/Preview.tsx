@@ -1,10 +1,10 @@
 import { UiIcon } from "../components/UiIcon";
 import { useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
 import { rupees } from "../catalog-types";
 import { Loading, Notice } from "../components/Common";
 import type { TryOnJob } from "../tryon-types";
-import { dateTime, privatePath } from "../tryon-types";
+import { dateTime, privatePath, previewFailure } from "../tryon-types";
 import { useJob } from "../use-job";
 import { useRemote } from "../remote";
 import type { Product } from "../catalog-types";
@@ -87,16 +87,16 @@ export function PreviewPage({ id }: { id: string }) {
       setMessage(
         action === "save"
           ? updated.result?.saving
-            ? "Your gallery save is being completed. This page will check its status."
+            ? "Saving your preview…"
             : updated.result?.saved
               ? "Preview saved to your private gallery."
-              : "The request changed before saving completed. Review its current state."
+              : "This preview changed. Refresh to see its latest status."
           : updated.state === "CANCELLED"
-            ? "Request cancelled. Any processing already started at the provider cannot be undone."
-            : "The request had already completed. Review or discard the current result.",
+            ? "Request cancelled."
+            : "Your preview is ready. You can view or delete it.",
       );
     } catch (failure) {
-      setError(errorMessage(failure));
+      setError(previewFailure(failure));
     } finally {
       setBusy(null);
     }
@@ -110,8 +110,8 @@ export function PreviewPage({ id }: { id: string }) {
           <p className="eyebrow">YOUR PRIVATE SPACE</p>
           <h1>This preview is not available.</h1>
           <Notice>
-            {request.error ||
-              "It may have been removed, or it may belong to a different customer account."}
+            {request.error ? previewFailure(new Error(request.error)) :
+              "It may have been removed. Check that you're in the right account."}
           </Notice>
           <div className="button-row">
             <button
@@ -152,12 +152,12 @@ export function PreviewPage({ id }: { id: string }) {
           </p>
         </div>
         <span className={`preview-state state-${job.state.toLowerCase()}`}>
-          {job.state}
+          {stateLabels[job.state]}
         </span>
       </header>
       {request.error && (
         <Notice>
-          {request.error} The status below is the last response received.{" "}
+          We couldn't update this preview. Your last status is shown.{" "}
           <button
             className="inline-button"
             type="button"
@@ -169,16 +169,6 @@ export function PreviewPage({ id }: { id: string }) {
       )}
       {error && <Notice>{error}</Notice>}
       {message && <Notice tone="success">{message}</Notice>}
-      <section className="preview-mode-notice" aria-label="Preview mode">
-        <span className="mode-label">{job.label}</span>
-        <p>{job.notice}</p>
-        {job.demo && (
-          <p>
-            This is a local demonstration fixture, not an actual generated
-            try-on.
-          </p>
-        )}
-      </section>
       <div className="preview-layout">
         <section className="preview-result-panel">
           {result ? (
@@ -190,7 +180,7 @@ export function PreviewPage({ id }: { id: string }) {
                 onRefresh={request.refresh}
               />
               <div className="result-image-caption">
-                <span>{job.label}</span>
+                <span>{job.demo ? "Sample" : "Virtual preview"}</span>
                 <strong>
                   {result.saved
                     ? "Saved privately"
@@ -208,12 +198,12 @@ export function PreviewPage({ id }: { id: string }) {
               <h2>
                 {job.state === "QUEUED"
                   ? "Your request is in the queue."
-                  : "A little imagination is taking shape."}
+                  : "Creating your preview…"}
               </h2>
               <p>
                 {job.state === "QUEUED"
-                  ? "Your request is stored. You can leave and return to this page."
-                  : "The provider is processing your request. This page checks the real status; there is no percentage estimate."}
+                  ? "You can leave and return to this page."
+                  : "You can return here when it's ready."}
               </p>
               <span className="spinner" />
             </div>
@@ -235,9 +225,10 @@ export function PreviewPage({ id }: { id: string }) {
               </h2>
               <p>
                 {job.discarded
-                  ? "New image access is removed. The result will not be restored by late processing."
-                  : job.error?.message ||
-                    "There is no image available for this request."}
+                  ? "This preview is no longer available."
+                  : canStartAgain
+                    ? "You can try again with a new photo."
+                    : "There is no image available for this request."}
               </p>
             </div>
           )}
@@ -256,35 +247,15 @@ export function PreviewPage({ id }: { id: string }) {
               <dt>Requested</dt>
               <dd>{dateTime(job.createdAt)}</dd>
             </div>
-            <div>
-              <dt>Provider</dt>
-              <dd>{job.provider}</dd>
-            </div>
-            <div>
-              <dt>Model</dt>
-              <dd>{job.model}</dd>
-            </div>
             {result?.expiresAt && !result.saved && (
               <div>
-                <dt>Unsaved access expires</dt>
+                <dt>Available until</dt>
                 <dd>{dateTime(result.expiresAt)}</dd>
               </div>
             )}
           </dl>
-          {job.error && (
-            <Notice tone="info">
-              {job.error.message}
-              {job.error.code === "UNKNOWN_OUTCOME" && (
-                <p>
-                  The previous provider outcome is unknown and was not
-                  automatically retried. Starting again is a new, deliberate
-                  request.
-                </p>
-              )}
-            </Notice>
-          )}
           {result && (
-            <div className="result-actions">
+            <div className="result-actions mobile-preview-actions">
               {result.saved ? (
                 <a
                   className="primary-button full-width"
@@ -316,10 +287,6 @@ export function PreviewPage({ id }: { id: string }) {
                   <UiIcon kind="down" />
                 </span>
               </a>
-              <p className="form-hint">
-                Downloading saves a copy to your device. Saving to your gallery
-                is a separate action.
-              </p>
             </div>
           )}
           {result && !result.saved && !result.saving && !job.canSave && (
@@ -354,12 +321,12 @@ export function PreviewPage({ id }: { id: string }) {
               <h3>
                 {confirm === "cancel"
                   ? "Cancel this request?"
-                  : "Remove this request and its images?"}
+                  : "Delete this preview?"}
               </h3>
               <p>
                 {confirm === "cancel"
-                  ? "This stops new app access to any late result. Processing may already have started at the provider."
-                  : "This removes new image access immediately and schedules object removal within 24 hours. Previously issued links may work for up to five minutes; provider and backup retention are separate."}
+                  ? "Your preview will stop here."
+                  : "This removes the preview from your account."}
               </p>
               <div className="button-row">
                 <button
@@ -426,18 +393,10 @@ export function PreviewPage({ id }: { id: string }) {
             Refresh request status
           </button>
           <p className="preview-privacy">
-            This request stays in your personal account. Store teams cannot view
-            your photo or result. Saved previews remain yours even if the
-            product is archived.
+            Your previews stay private. <a href="/privacy">Privacy</a>
           </p>
         </aside>
       </div>
-      {!job.demo && (
-        <p className="ai-limitations">
-          AI-generated preview. Appearance, garment details and drape may
-          differ. This is not a size or fit guarantee.
-        </p>
-      )}
     </main>
   );
 }

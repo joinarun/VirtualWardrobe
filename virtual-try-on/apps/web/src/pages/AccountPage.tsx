@@ -9,6 +9,7 @@ import {
   LogoutButton,
   Notice,
   PasswordInput,
+  SessionReconnect,
 } from "../components/Common";
 import { AuthPage } from "./AuthPage";
 
@@ -20,6 +21,7 @@ export function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (auth.loading) return <Loading />;
+  if (auth.status === "unknown") return <SessionReconnect />;
   if (!auth.user) return <AuthPage />;
   if (auth.user.kind !== "CUSTOMER")
     return (

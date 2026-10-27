@@ -1,9 +1,9 @@
 import { UiIcon } from "./UiIcon";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { errorMessage } from "../api";
 import { useAuth } from "../auth-context";
-import { DemoNotice } from "./DemoNotice";
+import { ThemeChooser } from "./ThemeChooser";
 
 export function Brand({ light = false }: { light?: boolean }) {
   return (
@@ -13,43 +13,33 @@ export function Brand({ light = false }: { light?: boolean }) {
   );
 }
 export function SiteHeader() {
-  const { user, loading } = useAuth();
+  const { user, status } = useAuth();
   return (
     <>
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
-      <div className="announcement">
-        A more personal way to discover Indian style.
-      </div>
-      <DemoNotice />
       <header className="site-header">
         <Brand />
         <nav aria-label="Customer navigation">
-          <a href="/#how-it-works">How it works</a>
+          <a className="desktop-nav-link" href="/#collection">Collection</a>
+          <a className="desktop-nav-link" href="/account/previews">My previews</a>
+          <ThemeChooser />
           <a
             className="account-link"
             href={
               user?.kind === "WORKFORCE"
                 ? "/staff"
-                : user
+                : user || status === "unknown"
                   ? "/account"
                   : "/account/login"
             }
           >
-            {loading
-              ? "Account"
-              : user
+            <UiIcon kind="user" /><span>{user
                 ? user.kind === "WORKFORCE"
                   ? "My workspace"
                   : "My account"
-                : "Sign in"}
-          </a>
-          <a className="workspace-link" href="/staff">
-            Store workspace{" "}
-            <span>
-              <UiIcon kind="up-right" />
-            </span>
+                : "Account"}</span>
           </a>
         </nav>
       </header>
@@ -61,12 +51,43 @@ export function SiteFooter() {
     <footer>
       <Brand />
       <p>Style is personal. Your photos should be, too.</p>
+      <a href="/privacy">Privacy</a>
       <a href="/staff">
         For stores <UiIcon kind="up-right" />
       </a>
       <span>© 2026 Virtual Wardrobe</span>
     </footer>
   );
+}
+export function MobileNavigation() {
+  useEffect(() => {
+    const update = () => {
+      const input = document.activeElement;
+      const typing = input instanceof HTMLTextAreaElement ||
+        (input instanceof HTMLInputElement && !["file", "checkbox", "radio", "button", "submit"].includes(input.type));
+      const compressed = Boolean(window.visualViewport && window.innerHeight - window.visualViewport.height > 120);
+      document.documentElement.dataset.keyboardOpen = String(typing && compressed);
+    };
+    window.visualViewport?.addEventListener("resize", update);
+    document.addEventListener("focusin", update);
+    document.addEventListener("focusout", update);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", update);
+      document.removeEventListener("focusin", update);
+      document.removeEventListener("focusout", update);
+      delete document.documentElement.dataset.keyboardOpen;
+    };
+  }, []);
+  const path = window.location.pathname;
+  const active = path === "/account/gallery" ? "Saved"
+    : path.startsWith("/account/previews") ? "Previews"
+    : path.startsWith("/account") || path === "/callback" ? "Account" : "Collection";
+  const items = [
+    ["Collection", "/", "home"], ["Previews", "/account/previews", "sparkle"],
+    ["Saved", "/account/gallery", "heart"], ["Account", "/account", "user"],
+  ] as const;
+  return <nav className="mobile-navigation" aria-label="Mobile navigation">{items.map(([label, href, kind]) =>
+    <a key={label} href={href} aria-current={active === label ? "page" : undefined}><UiIcon kind={kind} /><span>{label}</span></a>)}</nav>;
 }
 export function Notice({
   children,
@@ -112,6 +133,16 @@ export function EmptyState({
       <p>{children}</p>
     </div>
   );
+}
+export function SessionReconnect() {
+  const auth = useAuth();
+  return <main className="account-page"><section className="form-card">
+    <p className="eyebrow">YOUR WARDROBE IS WAITING</p>
+    <h1>Reconnect to your wardrobe.</h1>
+    <p className="form-intro">We could not check your session. Try your connection again to pick up where you left off.</p>
+    <button type="button" className="primary-button" onClick={() => void auth.reload()}>Retry connection</button>
+    <a href="/" className="text-button">Browse the collection</a>
+  </section></main>;
 }
 export function PasswordInput({
   id,

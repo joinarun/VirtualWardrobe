@@ -17,10 +17,52 @@ export class ApiError extends Error {
   }
 }
 let csrf: { token: string; headerName: string } | null = null;
-let csrfRequest: Promise<{ token: string; headerName: string }> | null = null;
+let authGeneration = 0;
+let csrfGeneration = 0;
+let csrfRequest: {
+  promise: Promise<{ token: string; headerName: string }>;
+  abort: AbortController;
+} | null = null;
+
+export const sessionGeneration = () => authGeneration;
+export function advanceAuthSession() {
+  authGeneration += 1;
+  clearCsrf();
+}
+function changedSession() {
+  return new ApiError({ code: "SESSION_CHANGED", detail: "Your account changed. Please try this action again." }, 409);
+}
+
+// Bound reads, including the response body. A transport failure never means signed out.
+async function transport(path: string, options: RequestInit) {
+  const abort = new AbortController();
+  const cancel = () => abort.abort();
+  const external = options.signal;
+  let timedOut = false;
+  if (external?.aborted) throw new DOMException("Request cancelled", "AbortError");
+  external?.addEventListener("abort", cancel, { once: true });
+  const timer = setTimeout(() => { timedOut = true; abort.abort(); }, 30000);
+  try {
+    const response = await fetch(path, { ...options, signal: abort.signal });
+    return { response, text: await response.text() };
+  } catch {
+    if (external?.aborted) throw new DOMException("Request cancelled", "AbortError");
+    throw new ApiError({
+      code: timedOut ? "REQUEST_TIMEOUT" : "CONNECTION_UNAVAILABLE",
+      detail: timedOut
+        ? "The connection is taking longer than usual. Please try again."
+        : "We could not reach the service. Check your connection and try again.",
+    }, 0);
+  } finally {
+    clearTimeout(timer);
+    external?.removeEventListener("abort", cancel);
+  }
+}
 
 export function clearCsrf() {
+  csrfGeneration += 1;
   csrf = null;
+  csrfRequest?.abort.abort();
   csrfRequest = null;
 }
 export async function refreshCsrf() {
@@ -29,12 +71,17 @@ export async function refreshCsrf() {
 }
 async function getCsrf() {
   if (csrf) return csrf;
-  if (!csrfRequest)
-    csrfRequest = fetch("/api/v1/auth/csrf", {
+  if (!csrfRequest) {
+    const generation = csrfGeneration;
+    const abort = new AbortController();
+    const pending = { abort, promise: Promise.resolve({ token: "", headerName: "" }) };
+    pending.promise = transport("/api/v1/auth/csrf", {
       credentials: "include",
       cache: "no-store",
+      signal: abort.signal,
     })
-      .then(async (response) => {
+      .then(({ response, text }) => {
+        if (generation !== csrfGeneration) throw changedSession();
         if (!response.ok)
           throw new ApiError(
             {
@@ -43,35 +90,43 @@ async function getCsrf() {
             },
             response.status,
           );
-        const result = (await response.json()) as {
+        let result: {
           token: string;
           headerName: string;
         };
+        try { result = JSON.parse(text); }
+        catch { throw new ApiError({ detail: "Session security is unavailable. Please try again." }, 502); }
         if (!result.token || !result.headerName)
           throw new Error("Session security is not available. Please retry.");
         csrf = result;
         return result;
       })
+      .catch((failure) => {
+        if (generation !== csrfGeneration) throw changedSession();
+        throw failure;
+      })
       .finally(() => {
-        csrfRequest = null;
+        if (csrfRequest === pending) csrfRequest = null;
       });
-  return csrfRequest;
+    csrfRequest = pending;
+  }
+  return csrfRequest.promise;
 }
 export async function api<T>(
   path: string,
   options: { method?: string; body?: unknown; signal?: AbortSignal } = {},
   retryCsrf = true,
 ): Promise<T> {
+  const generation = authGeneration;
   const method = options.method || "GET";
   const headers: Record<string, string> = { Accept: "application/json" };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
     const security = await getCsrf();
+    if (generation !== authGeneration) throw changedSession();
     headers[security.headerName] = security.token;
   }
-  let response: Response;
-  try {
-    response = await fetch(`/api/v1${path}`, {
+  const { response, text } = await transport(`/api/v1${path}`, {
       method,
       headers,
       credentials: "include",
@@ -80,20 +135,11 @@ export async function api<T>(
       body:
         options.body === undefined ? undefined : JSON.stringify(options.body),
     });
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") throw error;
-    throw new ApiError(
-      {
-        detail:
-          "We could not reach the service. Check your connection and try again.",
-      },
-      0,
-    );
-  }
+  if (generation !== authGeneration) throw changedSession();
   if (!response.ok) {
     let problem: Problem = {};
     try {
-      problem = (await response.json()) as Problem;
+      problem = JSON.parse(text) as Problem;
     } catch {
       /* A proxy error is not JSON. Keep a safe message. */
     }
@@ -103,13 +149,14 @@ export async function api<T>(
       retryCsrf
     ) {
       await refreshCsrf();
+      if (generation !== authGeneration) throw changedSession();
       return api<T>(path, options, false);
     }
     if (
       response.status === 401 &&
-      !["/auth/login", "/auth/recover"].includes(path)
+      !["/auth/session", "/auth/login", "/auth/recover", "/auth/signup"].includes(path)
     )
-      window.dispatchEvent(new Event("vw:session-expired"));
+      window.dispatchEvent(new CustomEvent("vw:session-expired", { detail: { generation } }));
     throw new ApiError(problem, response.status);
   }
   if (
@@ -117,8 +164,9 @@ export async function api<T>(
     (response.status === 202 && response.headers.get("content-length") === "0")
   )
     return undefined as T;
-  const text = await response.text();
-  return text ? (JSON.parse(text) as T) : (undefined as T);
+  if (!text) return undefined as T;
+  try { return JSON.parse(text) as T; }
+  catch { throw new ApiError({ code: "RESPONSE_INVALID", detail: "We couldn't read the response. Please try again." }, 502); }
 }
 export function errorMessage(error: unknown) {
   return error instanceof Error

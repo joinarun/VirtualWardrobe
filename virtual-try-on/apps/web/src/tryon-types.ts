@@ -1,6 +1,8 @@
+import { ApiError, errorMessage } from "./api";
 export type TryOnMode = "FIXTURE" | "EVALUATION_DEMO" | "LIVE";
 export interface TryOnConfig {
   enabled: boolean;
+  processingRequest: { version: string; action: "TRY_ON" };
   disabledReason: string | null;
   mode: TryOnMode;
   provider: string;
@@ -116,4 +118,13 @@ export function privatePath(value: string) {
       "The private image address is unavailable. Refresh this preview.",
     );
   return destination.pathname + destination.search;
+}
+
+export function previewFailure(failure: unknown) {
+  if (failure instanceof ApiError && failure.code === "CONSENT_UPDATED")
+    return "This step was updated. Please create your preview again.";
+  const text = errorMessage(failure);
+  return /provider|google|gemini|model|budget|benchmark|quality|evaluation|configuration|region|token|authorization/i.test(text)
+    ? "We couldn't create this preview. Please try again later."
+    : text;
 }

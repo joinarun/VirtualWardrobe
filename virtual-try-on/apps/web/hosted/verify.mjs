@@ -48,7 +48,7 @@ const options = {
   "work-directory": { type: "string", default: STATE },
 };
 const mask =
-  "input, textarea, select, .recovery-codes, .credential-card, .staff-identity, .enquiry-contact, .detail-list, .customer-account h1, .event-actor, .event-transition, .enquiry-customer-context, .contact-phone";
+  "input, textarea, select, .recovery-codes, .credential-card, .staff-identity, .enquiry-contact, .detail-list, .customer-account h1, .event-actor, .event-transition, .enquiry-customer-context, .contact-phone, .private-preview-image img, .wardrobe-image-link img, .person-photo-zone img";
 export function plan() {
   return {
     schemaVersion: 1,
@@ -537,6 +537,8 @@ async function liveJourney(
       "OWNED_PERSON_FIXTURE_UNAVAILABLE",
     );
     const photo = await readFile(photoPath);
+    const processing = (await read(customer, "/try-on/config")).processingRequest;
+    requireCheck(processing?.action === "TRY_ON" && typeof processing.version === "string", "PHOTO_ACTION_PROTOCOL_UNAVAILABLE");
     let capResolve,
       capError = null,
       replayError = null,
@@ -551,6 +553,10 @@ async function liveJourney(
       ) {
         try {
           requireCheck(response.ok(), "SOURCE_AUTHORIZATION_FAILED");
+          const action = response.request().postDataJSON();
+          requireCheck(Object.keys(action).sort().join(",") === "bytes,contentType,fileName,processingRequest,productId" &&
+            action.processingRequest?.action === "TRY_ON" && action.processingRequest?.version === processing.version,
+            "PHOTO_ACTION_PROTOCOL_MISMATCH");
           capability = uploadCapability(
             await response.json(),
             photo.length,
@@ -672,35 +678,17 @@ async function liveJourney(
     progress("WAIT_TRY_ON_HEADING");
     await customer
       .getByRole("heading", {
-        name: "Picture this piece, your way.",
+        name: "See yourself in it.",
         exact: true,
       })
       .waitFor();
-    progress("WAIT_EVALUATION_DISCLOSURE");
-    await customer
-      .getByLabel("AI service disclosure")
-      .filter({ hasText: /EVALUATION DEMO/i })
-      .waitFor();
+    requireCheck(await customer.locator('input[type="checkbox"]').count() === 0, "PHOTO_CHECKBOX_INTERRUPTION");
     progress("SELECT_OWNED_PHOTO");
     await customer
       .getByLabel("Choose a photo", { exact: true })
       .setInputFiles(photoPath);
-    progress("ADULT_CONSENT");
-    await customer
-      .getByLabel("I am an adult (18 or older).", { exact: true })
-      .check();
-    progress("OWN_PHOTO_CONSENT");
-    await customer
-      .getByLabel("This is my own photo, and it shows only me.", {
-        exact: true,
-      })
-      .check();
-    progress("PROCESSING_CONSENT");
-    await customer
-      .getByLabel(/^I consent to the processing and retention/)
-      .check();
-    progress("MASKED_CONSENT_SCREENSHOT");
-    await screenshot(customer, output, "live-consent-masked.png");
+    progress("MASKED_PHOTO_SCREENSHOT");
+    await screenshot(customer, output, "live-photo-masked.png");
     progress("RESERVE_SINGLE_PAID_ACTION");
     journal = await reserveLiveAction(work, revision); // Durable BEFORE the sole paid UI action, including ambiguous outcomes.
     let creates = 0;
@@ -731,7 +719,7 @@ async function liveJourney(
         .catch(() => null);
       progress("CLICK_CREATE_ONCE");
       await customer
-        .getByRole("button", { name: "Create my AI preview", exact: true })
+        .getByRole("button", { name: "Create my preview", exact: true })
         .click();
       progress("WAIT_JOB_CREATE_RESPONSE");
       const response = await responsePromise;

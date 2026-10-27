@@ -3,7 +3,7 @@ import { Component } from "react";
 import type { ReactNode } from "react";
 import { AuthProvider } from "./auth";
 import { useAuth } from "./auth-context";
-import { Loading, Notice, SiteFooter, SiteHeader } from "./components/Common";
+import { Loading, Notice, SiteFooter, SiteHeader, SessionReconnect, MobileNavigation } from "./components/Common";
 import { AccountPage } from "./pages/AccountPage";
 import { AuthPage, PasswordChangePage } from "./pages/AuthPage";
 import { Workspace } from "./pages/Workspace";
@@ -22,6 +22,9 @@ import "./tryon.css";
 import "./App.css";
 import "./identity.css";
 import "./catalog.css";
+import { useCustomerLocation } from "./navigation";
+import { PrivacyPage } from "./pages/Privacy";
+import "./mobile.css";
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -59,7 +62,8 @@ class ErrorBoundary extends Component<
 }
 function Routes() {
   const auth = useAuth();
-  const path = window.location.pathname.replace(/\/$/, "") || "/";
+  const location = useCustomerLocation();
+  const path = new URL(location).pathname.replace(/\/$/, "") || "/";
   if (auth.user?.passwordChangeRequired)
     return (
       <>
@@ -81,6 +85,7 @@ function Routes() {
           <SiteFooter />
         </>
       );
+    if (auth.status === "unknown") return <><SiteHeader /><div id="main-content" tabIndex={-1}><SessionReconnect /></div><SiteFooter /></>;
     if (!auth.user || auth.user.kind !== "WORKFORCE")
       return (
         <>
@@ -91,10 +96,11 @@ function Routes() {
           <SiteFooter />
         </>
       );
-    return <Workspace />;
+    return <Workspace key={auth.user.id} />;
   }
   let page: ReactNode;
-  if (path === "/staff/login") page = <AuthPage kind="WORKFORCE" />;
+  if (path === "/privacy") page = <PrivacyPage />;
+  else if (path === "/staff/login") page = <AuthPage kind="WORKFORCE" />;
   else if (path === "/account/signup") page = <AuthPage mode="signup" />;
   else if (path === "/account/recover") page = <AuthPage mode="recover" />;
   else if (path === "/account/login") page = <AuthPage />;
@@ -163,10 +169,11 @@ function Routes() {
   return (
     <>
       <SiteHeader />
-      <div id="main-content" tabIndex={-1}>
+      <div id="main-content" tabIndex={-1} key={path + (["/try-on", "/callback"].includes(path) ? window.location.search : "")}>
         {page}
       </div>
       <SiteFooter />
+      {!path.startsWith("/staff") && <MobileNavigation />}
     </>
   );
 }

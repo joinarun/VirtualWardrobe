@@ -29,16 +29,20 @@ Membership revocation MUST take effect on the next authorized API request.
 
 Customer source photos, generated previews and saved images MUST use private storage and
 owner-authorized access with a short expiry. Enquiries MUST NOT expose these images to staff.
-Before upload, the customer MUST consent to the identified provider's processing and disclosed
-retention; Phase 1 accepts only adults uploading their own photos. Consent records MUST include
-version and timestamp, and generation records MUST identify provider and model. Callback
-submission MUST obtain separate agreement to share the customer's contact details with the
-selected store. Photos and enquiry text MUST NOT enter analytics.
+The customer's deliberate upload/create-preview action MUST authorize the requested image
+processing without blocking photo-consent or age/ownership-attestation checkboxes. New records
+MUST identify this basis as a user action and record its version and timestamp; absent legacy
+attestations MUST NOT be fabricated. Existing consent records MUST retain their original meaning.
+Provider/model and processing snapshots MUST remain accurate internally, but customer screens
+MUST NOT expose provider, model, generation technique, deployment mode or benchmark diagnostics.
+A concise passive Privacy page MUST explain photo handling and retention without interrupting
+try-on. Callback contact sharing remains a separate intentional action. Photos and enquiry text
+MUST NOT enter analytics.
 
 Deletion MUST prevent new application access immediately. Deletion and cancellation MUST
-prevent late provider responses from restoring removed content. Retention, provider terms and
-any processing across regions MUST be disclosed accurately. Backup and soft-delete retention
-MUST be documented separately from access removal. These rules apply throughout a job's
+prevent late provider responses from restoring removed content. Photo handling and retention MUST be described accurately in the passive Privacy page;
+provider terms and processing-region details MUST remain in operator documentation. Backup and
+soft-delete retention MUST be documented separately from access removal. These rules apply throughout a job's
 lifecycle, including failures, retries, account deletion and abandoned uploads.
 
 ### III. Durable Jobs and Bounded AI Spending
@@ -97,11 +101,12 @@ during generation and demo cleanup MUST have evidence that exercises their actua
 Transactional behavior MUST be tested against PostgreSQL; mocks or an in-memory database
 alone are insufficient.
 
-Live outputs MUST be labelled as AI-generated previews and explain that appearance, garment
-details and drape may differ and that they provide no size or fit guarantee. Saving MUST be
-explicit. Deterministic fixtures MUST be labelled **Demo preview** and MUST remain clearly
-distinguishable from real provider results. A live release MUST meet the saree benchmark;
-provider marketing and fixture output MUST NOT serve as evidence of live quality.
+Customer outputs MUST use the simple label **Virtual preview**, without technical banners,
+blocking warnings or claims of guaranteed physical fit. Saving MUST remain explicit. Seeded
+examples MUST use a small **Sample** label so they are not represented as the customer's own
+completed request. Provider provenance, evaluation status and benchmark results MUST remain
+available to operators. Production promotion MUST meet the saree benchmark; provider marketing
+and fixture output MUST NOT serve as evidence of live quality.
 
 Assets MUST have documented source, licence or consent and permitted usage. Retailer scraping
 or a demo label MUST NOT substitute for permission. Demo seeding MUST be repeatable and make
@@ -125,6 +130,12 @@ the production bootstrap account. Demo mutations MUST be refused in production.
   `__session` cookie and a session-backed CSRF bootstrap endpoint with no-store caching. Private
   and authentication responses MUST use `Cache-Control: no-store`. The direct API URL MUST
   enforce the same Spring Security rules. Session secrets MUST NOT enter browser local storage.
+  Browser cookies MUST persist for up to 30 days. Customer sessions MUST allow 30 days idle;
+  workforce sessions MUST retain an 8-hour idle limit and temporary credentials their absolute
+  24-hour expiry. Anonymous sessions MUST expire after 30 minutes idle. Revocation rules remain
+  authoritative. Background/network failures MUST NOT be presented as confirmed logout; resume
+  and reload MUST restore authenticated state without replaying generation mutations. Existing
+  pre-amendment browser-session cookies may require one new sign-in to obtain persistence.
 - Customer phones MUST be normalized, unique and marked unverified while OTP is deferred.
   CAPTCHA MUST be validated on the backend. Customer recovery MUST require an unused recovery
   code stored only as a hash and MUST revoke existing sessions; phone knowledge or workforce
@@ -155,6 +166,11 @@ the production bootstrap account. Demo mutations MUST be refused in production.
   backups and restore instructions. Health checks, structured logs, error monitoring and a
   tested migration path are required. Cloud SQL's persistent cost and Cloud Run cold starts
   MUST be included in documented deployment assumptions.
+
+- Customer mobile screens MUST provide compact navigation, safe-area-aware bottom navigation,
+  reachable primary actions, at least 44px tap targets and no horizontal overflow at 360px.
+  Theme choices MUST include three accessible palettes and System, persist only non-secret
+  preferences, apply before first paint and preserve readable customer/staff interfaces.
 
 ## Development Workflow and Quality Gates
 
@@ -220,4 +236,14 @@ version, ISO amendment date, affected rules and required follow-up. The original
 date MUST remain unchanged. Adoption of this previously unfilled scaffold establishes 1.0.0
 on 2026-10-26. The temporary Sync Impact Report MUST be removed before committing the amendment.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-26 | **Last Amended**: 2026-10-26
+### Amendment 2026-10-27 — version 2.0.0
+
+The project owner's 2026-10-27 request explicitly approves a simpler mobile customer experience,
+removal of blocking photo consent/warning/provider UI, theme choices and persistent sign-in.
+This major revision changes principles II/V and authentication/interface constraints. It keeps
+private storage, authorization, revocation, retention, spending limits and operator quality gates.
+Feature009 MUST reconcile the PRD/contracts, distinguish legacy attestations from new user-action
+requests, preserve existing data and test session/mobile/theme behavior before redeployment.
+There is no new infrastructure or provider-cost increase inherent in this amendment.
+
+**Version**: 2.0.0 | **Ratified**: 2026-10-26 | **Last Amended**: 2026-10-27

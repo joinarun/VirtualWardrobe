@@ -2,7 +2,9 @@ import { createContext, useContext } from "react";
 import type { AuthConfig, User } from "./types";
 export interface AuthState {
   user: User | null;
+  status: "unknown" | "authenticated" | "guest";
   config: AuthConfig | null;
+  configLoading: boolean;
   loading: boolean;
   error: string | null;
   configError: string | null;

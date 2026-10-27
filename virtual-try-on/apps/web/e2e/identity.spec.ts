@@ -59,6 +59,7 @@ async function rotatePassword(
 test("customer signup, one-time recovery codes, recovery, login and deletion use the real backend", async ({
   page,
   context,
+  browser,
 }) => {
   const config = await page.request.get("/api/v1/auth/config");
   const settings = await config.json();
@@ -110,6 +111,16 @@ test("customer signup, one-time recovery codes, recovery, login and deletion use
   );
   expect(cookie?.httpOnly).toBeTruthy();
   expect(cookie?.sameSite).toBe("Lax");
+  expect(cookie?.expires).toBeGreaterThan(Date.now() / 1000 + 29 * 86400);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Hello, Disposable UI Customer." })).toBeVisible();
+  // Restore cookies only in memory to model a reopened browser; no secret state is exported.
+  const reopened = await browser.newContext({ storageState: await context.storageState(), baseURL: process.env.BASE_URL || "http://localhost:5173" });
+  try {
+    const restored = await reopened.newPage();
+    await restored.goto("/account");
+    await expect(restored.getByRole("heading", { name: "Hello, Disposable UI Customer." })).toBeVisible();
+  } finally { await reopened.close(); }
   await signOut(page);
   await page.goto("/account/recover");
   await page.getByLabel("Mobile number with country code").fill(phone);

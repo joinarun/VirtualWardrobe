@@ -13,35 +13,11 @@ import type {
   TryOnConfig,
   TryOnJob,
 } from "../tryon-types";
-import { dateTime } from "../tryon-types";
+import { previewFailure } from "../tryon-types";
 import { putAuthorizedFile } from "../uploads";
 import type { UploadProgress } from "../uploads";
+import { useUnsavedChanges } from "../navigation";
 
-export function ProviderDisclosure({ config }: { config: TryOnConfig }) {
-  return (
-    <section
-      className={`provider-disclosure mode-${config.mode.toLowerCase()}`}
-      aria-label="AI service disclosure"
-    >
-      <span className="mode-label">{config.label}</span>
-      <p>{config.notice}</p>
-      <dl>
-        <div>
-          <dt>Provider</dt>
-          <dd>{config.provider}</dd>
-        </div>
-        <div>
-          <dt>Model</dt>
-          <dd>{config.model}</dd>
-        </div>
-        <div>
-          <dt>Processing location</dt>
-          <dd>{config.location}</dd>
-        </div>
-      </dl>
-    </section>
-  );
-}
 export function TryOnPage() {
   const productId =
     new URLSearchParams(window.location.search).get("product") || "";
@@ -53,11 +29,6 @@ export function TryOnPage() {
   );
   const quotaRequest = useRemote<Quota>("/me/try-on/quota", revision);
   const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null);
-  const [adult, setAdult] = useState(false);
-  const [ownPhoto, setOwnPhoto] = useState(false);
-  const [processingVersion, setProcessingVersion] = useState<string | null>(
-    null,
-  );
   const [busy, setBusy] = useState<
     "uploading" | "validating" | "creating" | "discarding" | null
   >(null);
@@ -67,17 +38,23 @@ export function TryOnPage() {
   const [pendingFinalize, setPendingFinalize] = useState<string | null>(null);
   const [retainedUploadId, setRetainedUploadId] = useState<string | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState(() => newIntentKey());
+  const allowLeave = useUnsavedChanges(Boolean(photo));
   useEffect(
     () => () => {
       if (photo) URL.revokeObjectURL(photo.url);
     },
     [photo],
   );
+  useEffect(() => {
+    if (!photo || !window.matchMedia("(max-width: 767px)").matches) return;
+    const frame = requestAnimationFrame(() => document.querySelector(".person-photo-zone")?.scrollIntoView({
+      block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+    }));
+    return () => cancelAnimationFrame(frame);
+  }, [photo]);
   const config = configRequest.data,
     product = productRequest.data,
     quota = quotaRequest.data;
-  const processing =
-    Boolean(config) && processingVersion === config?.consent.version;
   const discardUnused = async () => {
     const uploadId = source?.id || pendingFinalize || retainedUploadId;
     if (uploadId)
@@ -111,8 +88,6 @@ export function TryOnPage() {
       }
     }
     setPhoto({ file, url: URL.createObjectURL(file) });
-    setOwnPhoto(false);
-    setProcessingVersion(null);
     setSource(null);
     setPendingFinalize(null);
     setIdempotencyKey(newIntentKey());
@@ -120,14 +95,14 @@ export function TryOnPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
-    if (!config || !product || !photo || !adult || !ownPhoto || !processing) {
+    if (!config || !product || !photo || config.processingRequest?.action !== "TRY_ON") {
       setError(
-        "Choose your photo and complete all three consent confirmations before uploading.",
+        "Choose a photo to create your preview.",
       );
       return;
     }
     if (!config.enabled) {
-      setError(config.disabledReason || "Generation is currently unavailable.");
+      setError("Previews are temporarily unavailable. Please try again later.");
       return;
     }
     try {
@@ -146,12 +121,7 @@ export function TryOnPage() {
                 fileName: photo.file.name,
                 contentType: photo.file.type,
                 bytes: photo.file.size,
-                consent: {
-                  version: config.consent.version,
-                  adult: true,
-                  ownPhoto: true,
-                  providerProcessing: true,
-                },
+                processingRequest: config.processingRequest,
               },
             },
           );
@@ -190,9 +160,16 @@ export function TryOnPage() {
           idempotencyKey,
         },
       });
+      allowLeave();
       window.location.assign(`/account/previews/${job.id}`);
     } catch (failure) {
-      setError(errorMessage(failure));
+      setError(previewFailure(failure));
+      if (failure instanceof ApiError && failure.code === "CONSENT_UPDATED") {
+        setSource(null);
+        setPendingFinalize(null);
+        setIdempotencyKey(newIntentKey());
+        setRevision((value) => value + 1);
+      }
       setBusy(null);
       setProgress(null);
     }
@@ -243,316 +220,46 @@ export function TryOnPage() {
     product.status === "PUBLISHED" &&
     product.availability === "AVAILABLE" &&
     product.tryOnEnabled;
-  const consented = adult && ownPhoto && processing;
   return (
-    <main className="tryon-page">
-      <nav className="preview-breadcrumbs">
-        <a href={`/products/${product.id}`}>
-          <UiIcon kind="left" /> Product details
-        </a>
-        <a href="/account/previews">
-          My previews <UiIcon kind="up-right" />
-        </a>
-      </nav>
-      <header className="tryon-title">
-        <p className="eyebrow">A LITTLE MORE PERSONAL</p>
-        <h1>Picture this piece, your way.</h1>
-        <p>
-          A private space to upload your own full-body photo and explore a
-          visual preview.
-        </p>
-      </header>
+    <main className="tryon-page mobile-photo-page">
+      <nav className="preview-breadcrumbs"><a href={`/products/${product.id}`}><UiIcon kind="left" />Back to saree</a><a href="/account/previews">My previews</a></nav>
+      <ol className="preview-steps" aria-label="Preview steps">
+        <li className="done"><span>1</span>Choose a saree</li>
+        <li aria-current="step"><span>2</span>Add your photo</li>
+        <li><span>3</span>View your preview</li>
+      </ol>
+      <header className="tryon-title"><p className="eyebrow">MAKE IT YOURS</p><h1>See yourself in it.</h1><p>Add a full-length photo. We'll take it from here.</p></header>
       <div className="tryon-layout">
         <aside className="tryon-product-card">
-          {product.coverUrl && (
-            <img
-              src={product.coverUrl}
-              alt={product.title}
-              width={320}
-              height={480}
-            />
-          )}
-          <p className="eyebrow">{product.brandName || product.storeName}</p>
-          <h2>{product.title}</h2>
-          <strong>{rupees(product.price)}</strong>
-          <p>{[product.fabric, product.colour].filter(Boolean).join(" · ")}</p>
-          <a href={`/products/${product.id}`} className="text-button">
-            Explore this piece <UiIcon kind="up-right" />
-          </a>
-          <div className="private-note">
-            <span aria-hidden="true">
-              <UiIcon kind="lock" />
-            </span>
-            <p>
-              Your source photo and previews are private to your customer
-              account. Store teams cannot view them.
-            </p>
-          </div>
+          {product.coverUrl && <img src={product.coverUrl} alt={product.title} width={320} height={480} />}
+          <div><p className="eyebrow">{product.brandName || product.storeName}</p><h2>{product.title}</h2><strong>{rupees(product.price)}</strong><p>{[product.fabric, product.colour].filter(Boolean).join(" · ")}</p></div>
         </aside>
         <div className="tryon-form-column">
-          <ProviderDisclosure config={config} />
-          {!available && (
-            <Notice tone="info">
-              {!config.enabled
-                ? config.disabledReason || "Generation is currently paused."
-                : "Try-on is unavailable for this product. Choose another available, try-on-enabled piece."}
-            </Notice>
-          )}
-          <section className="quota-note" aria-label="Your daily allowance">
-            <span>
-              <strong>{quota.remaining}</strong> / {quota.limit} previews
-              remaining today
-            </span>
-            <small>Resets {dateTime(quota.resetsAt)} (UTC daily reset)</small>
-            <a href="/account/previews">View recent requests</a>
-          </section>
-          {quota.remaining === 0 && (
-            <Notice tone="info">
-              Your daily allowance is used. You can still view, download and
-              manage existing previews.
-            </Notice>
-          )}
+          {!available && <Notice tone="info">Previews are currently unavailable for this saree. Choose another from the collection.</Notice>}
+          {quota.remaining === 0 && <Notice tone="info">You've used today's previews. Your saved and recent previews are still here.</Notice>}
           <form onSubmit={(event) => void submit(event)}>
-            <fieldset
-              className="tryon-fields"
-              disabled={busy !== null || !available}
-            >
+            <fieldset className="tryon-fields" disabled={busy !== null || !available}>
               <section className="panel photo-step">
-                <p className="eyebrow">01 / YOUR PHOTO</p>
-                <h2>A clear view makes a difference.</h2>
-                <ul className="photo-guidance">
-                  <li>
-                    One adult, front-facing, with your full body in the frame.
-                  </li>
-                  <li>
-                    Good lighting, a simple background and an unobstructed
-                    outfit.
-                  </li>
-                  <li>
-                    Your own photo only. No children's or third-party photos.
-                  </li>
-                </ul>
-                <div
-                  className={`person-photo-zone ${photo ? "has-photo" : ""}`}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    choose(event.dataTransfer.files[0]);
-                  }}
-                >
-                  {photo ? (
-                    <img
-                      src={photo.url}
-                      alt="Your selected photo, shown locally before upload"
-                    />
-                  ) : (
-                    <div className="photo-silhouette" aria-hidden="true">
-                      <svg viewBox="0 0 140 220">
-                        <circle cx="70" cy="34" r="17" />
-                        <path d="M50 60Q70 52 90 60L105 123 91 127 81 91 84 146 89 202 73 202 69 154 65 202 49 202 55 146 58 91 47 127 34 123Z" />
-                        <path
-                          className="frame-guide"
-                          d="M20 40V12H48M92 12H120V40M120 180V212H92M48 212H20V180"
-                        />
-                      </svg>
-                      <p>Your full-body photo goes here</p>
-                    </div>
-                  )}
-                </div>
+                <h2>Your photo</h2><p className="photo-intro">A clear, full-length photo works best.</p>
                 <div className="photo-choose-row">
-                  <label className="upload-file-label">
-                    {photo ? "Choose another photo" : "Choose a photo"}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png"
-                      onChange={(event) => {
-                        choose(event.target.files?.[0]);
-                        event.target.value = "";
-                      }}
-                    />
-                  </label>
-                  <label className="upload-file-label">
-                    Take a photo
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png"
-                      capture="environment"
-                      onChange={(event) => {
-                        choose(event.target.files?.[0]);
-                        event.target.value = "";
-                      }}
-                    />
-                  </label>
+                  <label className="upload-file-label"><UiIcon kind="image" />{photo ? "Choose another photo" : "Choose a photo"}<input type="file" accept="image/jpeg,image/png" onChange={(event) => { void choose(event.target.files?.[0]); event.target.value = ""; }} /></label>
+                  <label className="upload-file-label"><UiIcon kind="camera" />Take a photo<input type="file" accept="image/jpeg,image/png" capture="environment" onChange={(event) => { void choose(event.target.files?.[0]); event.target.value = ""; }} /></label>
                 </div>
-                <p className="form-hint">
-                  JPEG or PNG · up to 10 MB and 20 megapixels. Camera capture
-                  depends on your browser. Choosing a file shows it locally;
-                  upload begins only after your consent and submission.
-                </p>
-                {photo && (
-                  <p className="selected-photo-name">
-                    {photo.file.name} ·{" "}
-                    {(photo.file.size / 1024 / 1024).toFixed(1)} MB
-                  </p>
-                )}
-              </section>
-              <section className="panel consent-step">
-                <p className="eyebrow">02 / YOUR CHOICE</p>
-                <h2>Read this before uploading.</h2>
-                <p className="consent-notice">{config.consent.notice}</p>
-                {config.consent.providerPolicyUrl && (
-                  <a
-                    href={config.consent.providerPolicyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-button"
-                  >
-                    Read the provider's data policy <UiIcon kind="up-right" />
-                  </a>
-                )}
-                <div className="retention-facts">
-                  <span>
-                    Source photos: up to {config.consent.sourceRetentionHours}{" "}
-                    hours, removed after processing.
-                  </span>
-                  <span>
-                    Unsaved previews: up to{" "}
-                    {config.consent.unsavedRetentionHours} hours.
-                  </span>
-                  <span>
-                    Saved previews: until you delete them, up to{" "}
-                    {config.consent.savedLimit}.
-                  </span>
+                <div className={`person-photo-zone ${photo ? "has-photo" : ""}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void choose(event.dataTransfer.files[0]); }}>
+                  {photo ? <img src={photo.url} alt="Your selected photo, shown locally before upload" /> : <div className="photo-silhouette" aria-hidden="true"><svg viewBox="0 0 140 220"><circle cx="70" cy="34" r="17" /><path d="M50 60Q70 52 90 60L105 123 91 127 81 91 84 146 89 202 73 202 69 154 65 202 49 202 55 146 58 91 47 127 34 123Z" /><path className="frame-guide" d="M20 40V12H48M92 12H120V40M120 180V212H92M48 212H20V180" /></svg><p>A little space for you</p></div>}
                 </div>
-                <label className="checkbox-field">
-                  <input
-                    type="checkbox"
-                    checked={adult}
-                    onChange={(event) => setAdult(event.target.checked)}
-                    required
-                  />
-                  <span>I am an adult (18 or older).</span>
-                </label>
-                <label className="checkbox-field">
-                  <input
-                    type="checkbox"
-                    checked={ownPhoto}
-                    onChange={(event) => setOwnPhoto(event.target.checked)}
-                    required
-                  />
-                  <span>This is my own photo, and it shows only me.</span>
-                </label>
-                <label className="checkbox-field">
-                  <input
-                    type="checkbox"
-                    checked={processing}
-                    onChange={(event) =>
-                      setProcessingVersion(
-                        event.target.checked ? config.consent.version : null,
-                      )
-                    }
-                    required
-                  />
-                  <span>
-                    I consent to the processing and retention described above by{" "}
-                    {config.provider} using {config.model}.
-                  </span>
-                </label>
-                <p className="consent-version">
-                  Disclosure version: {config.consent.version}
-                </p>
+                <p className="form-hint">JPG or PNG, up to 10 MB.</p>
               </section>
             </fieldset>
-            {(retainedUploadId || source || pendingFinalize) && (
-              <button
-                className="text-button danger-text service-refresh"
-                type="button"
-                disabled={busy !== null}
-                onClick={async () => {
-                  setBusy("discarding");
-                  setError(null);
-                  try {
-                    await discardUnused();
-                    setPhoto(null);
-                    setOwnPhoto(false);
-                    setProcessingVersion(null);
-                    setIdempotencyKey(newIntentKey());
-                  } catch (failure) {
-                    setError(errorMessage(failure));
-                  } finally {
-                    setBusy(null);
-                  }
-                }}
-              >
-                Discard uploaded photo
+            {(retainedUploadId || source || pendingFinalize) && <button className="text-button danger-text service-refresh" type="button" disabled={busy !== null} onClick={async () => { setBusy("discarding"); setError(null); try { await discardUnused(); setPhoto(null); setIdempotencyKey(newIntentKey()); } catch (failure) { setError(previewFailure(failure)); } finally { setBusy(null); } }}>Remove uploaded photo</button>}
+            {error && <Notice>{error}</Notice>}
+            {progress && <div className="private-upload-progress" role="status"><span>{progress.phase === "validating" ? "Preparing your photo…" : `Uploading your photo · ${progress.percent}%`}</span>{progress.phase === "uploading" && <progress max={100} value={progress.percent} />}</div>}
+            <div className={`photo-submit mobile-action-bar ${photo ? "has-photo" : ""}`}>
+              <button className="primary-button full-width" type="submit" disabled={busy !== null || !available || quota.remaining <= 0 || !photo}>
+                {busy === "uploading" ? "Uploading your photo…" : busy === "validating" ? "Preparing your photo…" : busy === "discarding" ? "Removing photo…" : busy === "creating" ? "Creating your preview…" : source ? "Retry creating preview" : "Create my preview"}<UiIcon kind="sparkle" />
               </button>
-            )}
-            <button
-              className="text-button service-refresh"
-              type="button"
-              disabled={busy !== null}
-              onClick={() => setRevision((value) => value + 1)}
-            >
-              Refresh service details and allowance
-            </button>
-            {error && (
-              <Notice>
-                {error}
-                {source && (
-                  <p>
-                    Your validated upload is ready. Retrying this submission
-                    keeps the same request key; it does not deliberately request
-                    a second generation.
-                  </p>
-                )}
-              </Notice>
-            )}
-            {progress && (
-              <div className="private-upload-progress" role="status">
-                <span>
-                  {progress.phase === "validating"
-                    ? "Checking and preparing your photo…"
-                    : `Uploading your photo · ${progress.percent}%`}
-                </span>
-                {progress.phase === "uploading" && (
-                  <progress max={100} value={progress.percent} />
-                )}
-              </div>
-            )}
-            <button
-              className="primary-button full-width"
-              type="submit"
-              disabled={
-                busy !== null ||
-                !available ||
-                quota.remaining <= 0 ||
-                !photo ||
-                !consented
-              }
-            >
-              {busy === "uploading"
-                ? "Uploading your photo…"
-                : busy === "validating"
-                  ? "Checking your photo…"
-                  : busy === "discarding"
-                    ? "Removing unused photo…"
-                    : busy === "creating"
-                      ? "Creating your request…"
-                      : source
-                        ? "Retry creating preview"
-                        : config.mode === "FIXTURE"
-                          ? "Create a demo preview"
-                          : "Create my AI preview"}
-              <span aria-hidden="true">
-                <UiIcon kind="sparkle" />
-              </span>
-            </button>
-            <p className="generation-note">
-              {config.mode === "FIXTURE"
-                ? "This local fixture is a demonstration, not an actual generated try-on."
-                : "AI-generated preview. Appearance, garment details and drape may differ. This is not a size or fit guarantee."}{" "}
-              You can leave and return to the request after it is created.
-            </p>
+              <a href="/privacy" className="privacy-link">Privacy</a>
+            </div>
           </form>
         </div>
       </div>

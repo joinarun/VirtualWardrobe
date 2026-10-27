@@ -28,8 +28,8 @@ a.secondary-button {
   justify-content: center;
   gap: 8px;
   background: transparent;
-  border: 1px solid #cfc1b6;
-  color: #4b3246;
+  border: 1px solid var(--line);
+  color: var(--ink);
   border-radius: 3px;
   padding: 12px 17px;
   font-size: 12px;
@@ -37,14 +37,14 @@ a.secondary-button {
   cursor: pointer;
 }
 .secondary-button:hover {
-  background: #efe8df;
+  background: var(--surface-soft);
 }
 .text-button,
 .inline-button {
   background: none;
   border: 0;
   padding: 0;
-  color: #5e3e55;
+  color: var(--muted);
   cursor: pointer;
   text-align: left;
   font-size: 12px;
@@ -58,15 +58,15 @@ a.secondary-button {
 }
 .text-button:hover,
 .inline-button:hover {
-  color: #80533a;
+  color: var(--muted);
 }
 .danger-text {
-  color: #9d403b;
+  color: var(--danger);
 }
 .danger-button {
-  background: #9a443e;
-  border: 1px solid #9a443e;
-  color: #fff;
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: var(--on-accent);
   padding: 12px 18px;
   font-size: 12px;
   border-radius: 3px;
@@ -77,8 +77,8 @@ a.secondary-button {
   justify-content: space-between;
 }
 .form-card {
-  background: #fffdf9;
-  border: 1px solid #e5dcd1;
+  background: var(--surface);
+  border: 1px solid var(--line);
   padding: 40px;
   border-radius: 5px;
   width: 100%;
@@ -92,7 +92,7 @@ a.secondary-button {
 }
 .form-intro {
   font-size: 12px;
-  color: #655a5f;
+  color: var(--muted);
   line-height: 1.9;
   margin: 0 0 25px;
 }
@@ -103,7 +103,7 @@ a.secondary-button {
   margin: 0 0 19px;
   font-size: 12px;
   font-weight: 600;
-  color: #5a424f;
+  color: var(--muted);
   min-width: 0;
 }
 .field > span:first-child {
@@ -120,23 +120,23 @@ a.secondary-button {
 .field textarea {
   width: 100%;
   min-width: 0;
-  border: 1px solid #d9cdc1;
-  background: #fffefa;
+  border: 1px solid var(--line);
+  background: var(--surface);
   border-radius: 3px;
   padding: 12px 13px;
   font-size: 16px;
-  color: #3f2f3d;
+  color: var(--ink);
   outline: none;
   line-height: 1.4;
 }
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  border-color: #9f765f;
-  box-shadow: 0 0 0 3px #b9917320;
+  border-color: var(--line);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--overlay) 13%, transparent);
 }
 .field input::placeholder {
-  color: #635a5e;
+  color: var(--muted);
 }
 .field textarea {
   resize: vertical;
@@ -156,12 +156,12 @@ a.secondary-button {
   background: transparent;
   padding: 0 13px;
   font-size: 12px;
-  color: #715846;
+  color: var(--muted);
 }
 .form-hint {
   font-size: 12px;
   line-height: 1.8;
-  color: #675b5e;
+  color: var(--muted);
   font-weight: 400;
 }
 .password-hint {
@@ -173,22 +173,22 @@ a.secondary-button {
   align-items: flex-start;
   font-size: 12px;
   line-height: 1.7;
-  color: #6b5863;
+  color: var(--muted);
   margin: 19px 0;
   font-weight: 400;
 }
 .checkbox-field input {
   margin: 3px 0 0;
-  accent-color: #5d3b55;
+  accent-color: var(--muted);
   width: 15px;
   height: 15px;
   flex-shrink: 0;
 }
 .notice {
-  border: 1px solid #dec5bc;
-  background: #fff2ed;
+  border: 1px solid var(--line);
+  background: var(--surface);
   border-radius: 3px;
-  color: #874b42;
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.8;
   padding: 13px 15px;
@@ -196,14 +196,14 @@ a.secondary-button {
   overflow-wrap: anywhere;
 }
 .notice-success {
-  background: #edf2e9;
-  border-color: #cbd7c2;
-  color: #486547;
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--success);
 }
 .notice-info {
-  background: #f4efe6;
-  border-color: #e1d5c2;
-  color: #6f5a42;
+  background: var(--surface-soft);
+  border-color: var(--line);
+  color: var(--muted);
 }
 .auth-page {
   max-width: 1120px;
@@ -235,7 +235,7 @@ a.secondary-button {
 .auth-story p:not(.eyebrow) {
   font-size: 12px;
   line-height: 1.9;
-  color: #685a61;
+  color: var(--muted);
 }
 .auth-page .form-card {
   max-width: none;
@@ -245,20 +245,20 @@ a.secondary-button {
   flex-direction: column;
   gap: 16px;
   margin-top: 26px;
-  border-top: 1px solid #e8ddd2;
+  border-top: 1px solid var(--line);
   padding-top: 22px;
   font-size: 12px;
   line-height: 1.9;
-  color: #695a61;
+  color: var(--muted);
 }
 .auth-links a {
-  color: #6f485e;
+  color: var(--muted);
   text-decoration: underline;
   text-underline-offset: 4px;
 }
 .auth-links .muted-link {
   font-size: 12px;
-  color: #675a60;
+  color: var(--muted);
 }
 .phone-fields {
   display: grid;
@@ -267,10 +267,10 @@ a.secondary-button {
 }
 .privacy-details {
   font-size: 12px;
-  color: #6d5a4d;
+  color: var(--muted);
   line-height: 1.9;
   padding: 13px 0;
-  border-bottom: 1px solid #e5dbcf;
+  border-bottom: 1px solid var(--line);
 }
 .privacy-details summary {
   cursor: pointer;
@@ -281,8 +281,8 @@ a.secondary-button {
 }
 .local-captcha {
   padding: 16px;
-  background: #f2eee5;
-  border: 1px dashed #cbbba7;
+  background: var(--surface-soft);
+  border: 1px dashed var(--line);
   border-radius: 3px;
 }
 .local-captcha .checkbox-field {
@@ -290,7 +290,7 @@ a.secondary-button {
 }
 .local-captcha > small {
   font-size: 12px;
-  color: #6b5b4d;
+  color: var(--muted);
   line-height: 1.8;
   display: block;
 }
@@ -311,12 +311,12 @@ a.secondary-button {
 }
 .recovery-codes code {
   display: block;
-  border: 1px solid #dcd0c0;
-  background: #f5efe4;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
   padding: 13px 10px;
   text-align: center;
   font-size: 12px;
-  color: #69503f;
+  color: var(--muted);
   overflow-wrap: anywhere;
   user-select: all;
 }
@@ -327,15 +327,15 @@ a.secondary-button {
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: #6a5963;
+  color: var(--muted);
   padding: 30px;
   text-align: center;
 }
 .spinner {
   width: 17px;
   height: 17px;
-  border: 2px solid #e2d9cd;
-  border-top-color: #75536b;
+  border: 2px solid var(--line);
+  border-top-color: var(--line);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   flex-shrink: 0;
@@ -370,8 +370,8 @@ a.secondary-button {
   position: absolute;
   bottom: 27px;
   left: 25px;
-  color: #fbf6e8;
-  text-shadow: 0 1px 12px #39232766;
+  color: var(--on-accent);
+  text-shadow: 0 1px 12px color-mix(in srgb, var(--overlay) 40%, transparent);
 }
 .photo-caption > span {
   display: block;
@@ -402,7 +402,7 @@ a.secondary-button {
 .page-title-row p:not(.eyebrow) {
   font-size: 12px;
   line-height: 1.8;
-  color: #685961;
+  color: var(--muted);
 }
 .account-columns {
   display: grid;
@@ -410,8 +410,8 @@ a.secondary-button {
   gap: 25px;
 }
 .panel {
-  background: #fffdfa;
-  border: 1px solid #dfd5cb;
+  background: var(--surface);
+  border: 1px solid var(--line);
   padding: 30px;
   border-radius: 4px;
   margin-bottom: 25px;
@@ -444,8 +444,8 @@ a.secondary-button {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #eadfd2;
-  color: #725945;
+  background: var(--surface-soft);
+  color: var(--muted);
   font-family: "Playfair Display", serif;
   font-size: 21px;
   flex-shrink: 0;
@@ -458,15 +458,15 @@ a.secondary-button {
   grid-template-columns: 110px 1fr;
   gap: 15px;
   padding: 14px 0;
-  border-bottom: 1px solid #eee4da;
+  border-bottom: 1px solid var(--line);
   font-size: 12px;
 }
 .detail-list dt {
-  color: #685961;
+  color: var(--muted);
 }
 .detail-list dd {
   margin: 0;
-  color: #644755;
+  color: var(--muted);
   overflow-wrap: anywhere;
 }
 .badge {
@@ -476,28 +476,28 @@ a.secondary-button {
   letter-spacing: 0.4px;
   border-radius: 3px;
   padding: 5px 8px;
-  background: #f0e8df;
-  color: #745841;
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 .badge-active {
-  background: #eaf1e6;
-  color: #50634b;
+  background: var(--success-bg);
+  color: var(--success);
 }
 .badge-invited,
 .badge-pending {
-  background: #f4ead6;
-  color: #745932;
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 .badge-archived {
-  background: #eee6e7;
-  color: #74565d;
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 .empty-state {
   text-align: center;
   padding: 30px 10px;
 }
 .empty-symbol {
-  color: #6f5843;
+  color: var(--muted);
   font-size: 31px;
 }
 .empty-state h3 {
@@ -507,14 +507,14 @@ a.secondary-button {
 .empty-state p {
   font-size: 12px;
   line-height: 1.9;
-  color: #675a61;
+  color: var(--muted);
   max-width: 450px;
   margin: auto;
 }
 .account-security > p {
   font-size: 12px;
   line-height: 1.9;
-  color: #685a61;
+  color: var(--muted);
   max-width: 680px;
   margin-bottom: 20px;
 }
@@ -555,8 +555,8 @@ a.secondary-button {
   width: 33px;
   height: 33px;
   font-size: 17px;
-  background: #65465d;
-  color: #e4d3bf;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .staff-identity strong {
   font-size: 12px;
@@ -567,7 +567,7 @@ a.secondary-button {
 .staff-identity small {
   display: block;
   font-size: 12px;
-  color: #b69caa;
+  color: var(--muted);
   margin-top: 5px;
 }
 .workspace-brand-label {
@@ -575,7 +575,7 @@ a.secondary-button {
   font-size: 12px;
   font-style: normal;
   letter-spacing: 2.2px;
-  color: #baa4b4;
+  color: var(--muted);
   margin-top: 12px;
 }
 .identity-workspace .sidebar nav {
@@ -586,7 +586,7 @@ a.secondary-button {
   display: flex;
   justify-content: space-between;
   background: none;
-  color: #cbb7c4;
+  color: var(--muted);
   border: 0;
   text-align: left;
   border-radius: 3px;
@@ -594,11 +594,11 @@ a.secondary-button {
   cursor: pointer;
 }
 .sidebar nav > button:hover {
-  background: #503748;
+  background: var(--accent);
 }
 .sidebar nav > button.nav-active {
-  background: #5a4053;
-  color: #f4e8ef;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .sidebar-bottom {
   margin-top: auto;
@@ -609,7 +609,7 @@ a.secondary-button {
   font-size: 12px;
 }
 .sidebar-bottom .text-button {
-  color: #dfc8d8;
+  color: var(--on-accent);
   font-size: 12px;
 }
 .sidebar-bottom .back-link {
@@ -644,8 +644,8 @@ a.secondary-button {
   margin-top: 15px;
 }
 .credential-card {
-  border: 1px solid #c8d5c0;
-  background: #f2f5ec;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
   padding: 25px;
   border-radius: 4px;
   margin: 22px 0;
@@ -657,7 +657,7 @@ a.secondary-button {
 .credential-card > p {
   font-size: 12px;
   line-height: 1.9;
-  color: #57614f;
+  color: var(--muted);
 }
 .credential-values {
   display: grid;
@@ -670,14 +670,14 @@ a.secondary-button {
 .credential-values dt {
   font-size: 12px;
   letter-spacing: 1px;
-  color: #57604f;
+  color: var(--muted);
   margin-bottom: 6px;
   text-transform: uppercase;
 }
 .credential-values dd {
   margin: 0;
   overflow-wrap: anywhere;
-  color: #4c6445;
+  color: var(--muted);
 }
 .credential-values code {
   user-select: all;
@@ -698,16 +698,16 @@ a.secondary-button {
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #695a61;
+  color: var(--muted);
   padding: 0 14px 15px;
-  border-bottom: 1px solid #e6dbd1;
+  border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 .data-table td {
   padding: 18px 14px;
-  border-bottom: 1px solid #ede4db;
+  border-bottom: 1px solid var(--line);
   vertical-align: middle;
-  color: #6c5863;
+  color: var(--muted);
 }
 .data-table th:first-child,
 .data-table td:first-child {
@@ -720,13 +720,13 @@ a.secondary-button {
 .data-table strong {
   font-size: 12px;
   font-weight: 500;
-  color: #5b414f;
+  color: var(--muted);
   display: block;
 }
 .data-table td > small {
   display: block;
   font-size: 12px;
-  color: #675a60;
+  color: var(--muted);
   margin-top: 7px;
 }
 .table-actions {
@@ -752,7 +752,7 @@ a.secondary-button {
 }
 .confirm-panel > p {
   font-size: 12px;
-  color: #6a5861;
+  color: var(--muted);
   line-height: 1.9;
   margin-bottom: 10px;
 }
@@ -763,7 +763,7 @@ a.secondary-button {
 .invitations-panel > p:not(.eyebrow) {
   font-size: 12px;
   line-height: 1.9;
-  color: #6a5861;
+  color: var(--muted);
 }
 .invitation-row {
   display: flex;
@@ -771,18 +771,18 @@ a.secondary-button {
   gap: 20px;
   align-items: center;
   padding: 18px 0;
-  border-bottom: 1px solid #e9ded2;
+  border-bottom: 1px solid var(--line);
 }
 .invitation-row > div > strong {
   display: block;
   font-size: 12px;
   font-weight: 500;
-  color: #745565;
+  color: var(--muted);
 }
 .invitation-row > div > span {
   display: block;
   font-size: 12px;
-  color: #685860;
+  color: var(--muted);
   margin-top: 6px;
 }
 .pagination {
@@ -794,7 +794,7 @@ a.secondary-button {
 }
 .pagination > span {
   font-size: 12px;
-  color: #685961;
+  color: var(--muted);
 }
 .visually-hidden {
   position: absolute;
@@ -819,10 +819,10 @@ a.secondary-button {
 }
 footer > a:not(.wordmark) {
   font-size: 12px;
-  color: #6a5863;
+  color: var(--muted);
 }
 .credential-card .eyebrow {
-  color: #57614e;
+  color: var(--muted);
 }
 .panel .notice:first-child {
   margin-top: 0;
@@ -1114,7 +1114,7 @@ footer > a:not(.wordmark) {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, #30232a80, transparent 48%);
+  background: linear-gradient(0deg, color-mix(in srgb, var(--overlay) 50%, transparent), transparent 48%);
   pointer-events: none;
 }
 .photo-caption {

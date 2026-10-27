@@ -27,12 +27,12 @@
 .callback-product > strong {
   font-size: 20px;
   font-weight: 500;
-  color: #6f485e;
+  color: var(--muted);
 }
 .callback-product > p:not(.eyebrow) {
   font-size: 12px;
   line-height: 1.9;
-  color: #6a5960;
+  color: var(--muted);
   margin: 15px 0;
 }
 .callback-form h2 {
@@ -59,15 +59,15 @@
 }
 .contact-consent {
   padding: 20px;
-  background: #f1e8db;
-  border: 1px solid #deccb6;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 4px;
   margin: 25px 0;
 }
 .contact-consent > p {
   font-size: 12px;
   line-height: 1.95;
-  color: #6a5960;
+  color: var(--muted);
   white-space: pre-line;
 }
 .contact-consent .checkbox-field {
@@ -82,7 +82,7 @@
 }
 .contact-consent > small {
   font-size: 12px;
-  color: #6a5960;
+  color: var(--muted);
   overflow-wrap: anywhere;
 }
 .callback-form .full-width {
@@ -100,7 +100,7 @@
 }
 .callback-confirmation > p:not(.eyebrow) {
   font-size: 13px;
-  color: #6a5960;
+  color: var(--muted);
   line-height: 1.9;
   margin-bottom: 25px;
 }
@@ -114,26 +114,26 @@
   font-size: 12px;
   line-height: 1.7;
   border-radius: 3px;
-  background: #eee5d6;
-  color: #75583e;
+  background: var(--surface-soft);
+  color: var(--muted);
   white-space: nowrap;
 }
 .ticket-open,
 .ticket-customer_replied {
-  background: #ece4f0;
-  color: #6f5864;
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 .ticket-in_progress {
-  background: #ece5df;
-  color: #75573f;
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 .ticket-awaiting_customer_response {
-  background: #eee8ed;
-  color: #655864;
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 .ticket-closed {
-  background: #e8eddf;
-  color: #57614b;
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 .enquiry-status-filter {
   max-width: 260px;
@@ -152,7 +152,7 @@
   transition: border-color 0.2s;
 }
 .enquiry-summary-card:hover {
-  border-color: #97735d;
+  border-color: var(--line);
 }
 .enquiry-summary-card h2 {
   font-size: 29px;
@@ -163,7 +163,7 @@
 .enquiry-summary-card small {
   font-size: 12px;
   line-height: 1.9;
-  color: #6a5960;
+  color: var(--muted);
 }
 .enquiry-summary-card > div:last-child {
   display: flex;
@@ -171,7 +171,7 @@
   gap: 20px;
 }
 .enquiry-summary-card > div:last-child > .ui-icon {
-  color: #75573f;
+  color: var(--muted);
   font-size: 18px;
 }
 .customer-enquiry-detail > .page-title-row h1,
@@ -203,14 +203,14 @@
 }
 .enquiry-timeline > li {
   padding: 18px;
-  background: #f6f0e6;
-  border: 1px solid #e4d6c2;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 4px;
   min-width: 0;
 }
 .enquiry-timeline > .event-internal {
-  background: #ece6de;
-  border: 1px dashed #c5ad94;
+  background: var(--surface-soft);
+  border: 1px dashed var(--line);
 }
 .event-heading {
   display: flex;
@@ -222,31 +222,31 @@
 .event-heading > strong {
   font-size: 12px;
   font-weight: 500;
-  color: #5e3e55;
+  color: var(--muted);
   line-height: 1.7;
 }
 .event-visibility {
   font-size: 12px;
   white-space: nowrap;
   padding: 3px 6px;
-  background: #e8eddf;
+  background: var(--surface-soft);
   border-radius: 2px;
-  color: #57614b;
+  color: var(--muted);
   line-height: 1.7;
 }
 .event-visibility.internal-label {
-  background: #e4d5c2;
-  color: #654d37;
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 .event-actor {
   font-size: 12px;
-  color: #6a5960;
+  color: var(--muted);
   line-height: 1.8;
   margin: 8px 0 0;
 }
 .event-transition {
   font-size: 12px;
-  color: #6a5960;
+  color: var(--muted);
   line-height: 1.9;
   margin: 10px 0 0;
   display: flex;
@@ -256,7 +256,7 @@
 }
 .event-outcome {
   font-size: 12px;
-  color: #57614b;
+  color: var(--muted);
   line-height: 1.9;
   margin-top: 10px;
 }
@@ -265,18 +265,18 @@
   line-height: 1.95;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  color: #503547;
+  color: var(--ink);
   margin: 14px 0 0;
 }
 .event-redacted {
   font-size: 12px;
   font-style: italic;
   line-height: 1.9;
-  color: #6a5960;
+  color: var(--muted);
   margin-top: 13px;
 }
 .public-reply-form {
-  border-top: 1px solid #decdb9;
+  border-top: 1px solid var(--line);
   padding-top: 25px;
   margin-top: 30px;
 }
@@ -301,13 +301,13 @@
   font-size: 12px;
   letter-spacing: 0.4px;
   text-transform: uppercase;
-  color: #6a5960;
+  color: var(--muted);
 }
 .enquiry-customer-context dd,
 .enquiry-contact dd {
   font-size: 12px;
   line-height: 1.9;
-  color: #5e3e55;
+  color: var(--muted);
   margin: 7px 0 0;
   overflow-wrap: anywhere;
 }
@@ -327,8 +327,8 @@
   min-width: 22px;
   text-align: center;
   border-radius: 15px;
-  background: #755361;
-  color: #fff8ed;
+  background: var(--surface-tint);
+  color: var(--on-accent);
   padding: 3px 6px;
   font-size: 12px;
   line-height: 1.5;
@@ -346,22 +346,22 @@
   align-items: center;
   gap: 20px;
   padding: 20px 25px;
-  background: #fffdf9;
+  background: var(--surface);
 }
 .enquiry-counts strong {
   font-size: 33px;
   font-weight: 500;
-  color: #6f485e;
+  color: var(--muted);
 }
 .enquiry-counts span {
   font-size: 12px;
-  color: #6a5960;
+  color: var(--muted);
   line-height: 1.8;
 }
 .enquiry-claim-notice {
   font-size: 12px;
   line-height: 1.9;
-  color: #6a5960;
+  color: var(--muted);
   padding: 0 0 20px;
 }
 .enquiry-search {
@@ -392,7 +392,7 @@
   display: block;
   font-size: 12px;
   line-height: 1.8;
-  color: #6a5960;
+  color: var(--muted);
   margin: 7px 0;
 }
 .enquiry-table .badge {
@@ -430,7 +430,7 @@
 .contact-phone {
   display: block;
   font-size: 19px;
-  color: #6f485e;
+  color: var(--muted);
   margin: 15px 0;
 }
 .enquiry-contact > .badge {
@@ -443,7 +443,7 @@
 .enquiry-composer {
   margin-top: 30px;
   padding-top: 25px;
-  border-top: 1px solid #ddc9b2;
+  border-top: 1px solid var(--line);
 }
 .enquiry-composer h3 {
   font-size: 25px;
@@ -453,7 +453,7 @@
 .enquiry-composer > p {
   font-size: 12px;
   line-height: 1.9;
-  color: #6a5960;
+  color: var(--muted);
   margin: 0 0 20px;
 }
 .enquiry-composer .field {
@@ -463,8 +463,8 @@
   font-size: 12px;
 }
 .internal-composer {
-  background: #f0e7da;
-  border: 1px dashed #c7aa8e;
+  background: var(--surface-soft);
+  border: 1px dashed var(--line);
   border-radius: 3px;
   padding: 20px;
 }
@@ -716,7 +716,7 @@
   display: grid;
   gap: 16px;
   padding: 20px 0;
-  border-top: 1px solid #decdb9;
+  border-top: 1px solid var(--line);
   margin-top: 20px;
 }
 .enquiry-jump-links > a {

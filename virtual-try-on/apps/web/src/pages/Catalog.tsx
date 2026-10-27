@@ -77,10 +77,8 @@ function ProductCard({ product }: { product: Product }) {
           {[product.fabric, product.colour].filter(Boolean).join(" · ") ||
             product.storeName}
         </p>
-        <div className="product-price-row">
-          <strong>{rupees(product.price)}</strong>
-          <span>{product.size || "Free size"}</span>
-        </div>
+        <div className="product-price-row"><strong>{rupees(product.price)}</strong><span>{product.size || "Free size"}</span></div>
+        {product.tryOnEnabled && product.availability === "AVAILABLE" && <a className="card-tryon" href={`/try-on?product=${product.id}`} aria-label={`Try on ${product.title}`}>Try on<UiIcon kind="sparkle" /></a>}
       </div>
     </article>
   );
@@ -109,7 +107,7 @@ function CatalogSearch({
         type="search"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="Search sarees, fabrics, brands and details…"
+        placeholder="Search sarees"
         maxLength={200}
       />
       <button className="primary-button" type="submit">
@@ -168,11 +166,10 @@ export function CatalogHome() {
     <main className="catalog-home">
       <section className="catalog-hero">
         <div>
-          <p className="eyebrow">YOUR STYLE. YOUR PERSPECTIVE.</p>
-          <h1>A new way to find your favourite drape.</h1>
+          <p className="eyebrow">THE SAREE EDIT</p>
+          <h1>Sarees, your way.</h1>
           <p>
-            Beautiful sarees. Independent stores. A little more room for your
-            own point of view.
+            Find a saree you love. See it on you.
           </p>
           <a href="#collection" className="primary-button">
             Explore the collection{" "}
@@ -184,7 +181,7 @@ export function CatalogHome() {
             <span aria-hidden="true">
               <UiIcon kind="sparkle" />
             </span>{" "}
-            Thoughtfully built around your privacy.
+            Find it. Try it. Make it yours.
           </div>
         </div>
         <div className="catalog-hero-image">
@@ -219,7 +216,7 @@ export function CatalogHome() {
         <div className="collection-title">
           <div>
             <p className="eyebrow">A COLLECTION TO MAKE YOUR OWN</p>
-            <h2>Find what feels like you.</h2>
+            <h2>Find your favourite.</h2>
           </div>
           <p>
             {products.loading
@@ -491,8 +488,7 @@ export function CatalogHome() {
             <span>02 / PREVIEW</span>
             <h3>A little imagination, made visible.</h3>
             <p>
-              Upload your own photo with consent. Create a private preview, then
-              explicitly save or discard it. AI appearance and drape can differ.
+              Add a photo, see your preview, and save your favourites.
             </p>
           </article>
           <article>
@@ -500,7 +496,7 @@ export function CatalogHome() {
             <h3>Meet the people behind it.</h3>
             <p>
               Request a callback from the store, share contact details with
-              consent, and keep the conversation in your account.
+              choice, and keep the conversation in your account.
             </p>
           </article>
         </div>
@@ -659,7 +655,7 @@ export function ProductDetail({ id }: { id: string }) {
               are unavailable.
             </Notice>
           )}
-          <div className="try-on-coming">
+          <div className="try-on-coming desktop-product-tryon">
             <span className="tag">A more personal point of view</span>
             {product.status === "PUBLISHED" &&
             product.availability === "AVAILABLE" &&
@@ -688,7 +684,7 @@ export function ProductDetail({ id }: { id: string }) {
             <p>
               {!product.tryOnEnabled
                 ? "The store has not enabled try-on for this piece."
-                : "Create a private preview using your own full-body photo. Provider and retention details are shown before upload. AI appearance, garment details and drape can differ; there is no size or fit guarantee."}
+                : "Add your photo and see this saree on you."}
             </p>
           </div>
           {product.status === "PUBLISHED" &&
@@ -735,6 +731,7 @@ export function ProductDetail({ id }: { id: string }) {
           </div>
         </section>
       </div>
+      <div className="product-mobile-action mobile-action-bar"><strong>{rupees(product.price)}</strong>{product.status === "PUBLISHED" && product.availability === "AVAILABLE" && product.tryOnEnabled ? <a className="primary-button" href={`/try-on?product=${product.id}`}>Try it on me<UiIcon kind="sparkle" /></a> : <button className="primary-button" disabled>Try it on me</button>}</div>
     </main>
   );
 }

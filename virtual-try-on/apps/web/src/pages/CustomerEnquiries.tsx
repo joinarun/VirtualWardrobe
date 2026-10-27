@@ -13,6 +13,7 @@ import { checkedItems, useRemote } from "../remote";
 import type { Page } from "../types";
 import { dateTime } from "../tryon-types";
 import { useVisibleResource } from "../use-visible-resource";
+import { useUnsavedChanges } from "../navigation";
 export function CallbackPage() {
   const auth = useAuth(),
     productId =
@@ -26,6 +27,7 @@ export function CallbackPage() {
     enquiry: Enquiry;
     created: boolean;
   } | null>(null);
+  useUnsavedChanges(Boolean(note.trim()) && !result);
   const configRequest = useRemote<EnquiryConfig>("/enquiries/config", revision),
     productRequest = useRemote<Product>(
       productId ? `/products/${encodeURIComponent(productId)}` : null,

@@ -155,6 +155,11 @@ Keep authenticated maintenance active for expiry/deletion. The worker rechecks i
 
 For rollback, inspect the saved previous snapshot and choose its matching Hosting version and API/worker revisions. Verify the current additive migrations remain backward compatible. In Firebase Console, select **Hosting → virtualwardrobe-511016 → release history** and roll back only to that recorded version; its pinned API association restores with the static content. Update direct API and worker traffic to the matching recorded revisions as well, replacing the two revision placeholders below:
 
+Feature 009 adds a specific compatibility boundary: after V11 `USER_ACTION` records
+exist, do not blindly select f87 revisions. Follow the [mobile release plan](gcp-mobile-release.md)
+and use a reviewed compatible worker/API/Hosting set. The saved revision is not
+proof that it can read the newer request basis.
+
 ```bash
 gcloud run services update-traffic virtualwardrobe-demo-worker --region asia-south1 --project virtualtryon-511016 --to-revisions PREVIOUS_WORKER_REVISION=100
 gcloud run services update-traffic virtualwardrobe-demo-api --region asia-south1 --project virtualtryon-511016 --to-revisions PREVIOUS_API_REVISION=100

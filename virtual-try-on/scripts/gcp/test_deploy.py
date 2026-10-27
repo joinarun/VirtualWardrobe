@@ -22,6 +22,15 @@ class DeploymentContractTest(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory(prefix="virtualwardrobe-deploy-test-")
         self.addCleanup(self.directory.cleanup)
         self.deployment.work = Path(self.directory.name)
+        self.worker_url = "https://virtualwardrobe-demo-worker-ynpzfmjw7q-el.a.run.app"
+
+    def release_states(self, worker=None):
+        previous = {"project_id": self.deployment.project, "region": self.deployment.region,
+                    "services": {"api": None, "worker": worker}, "hosting_release": None}
+        deployed = {"services": {"api": {"ready_revision": "api-revision", "image_digest": "digest"},
+                                  "worker": {"ready_revision": "worker-revision", "image_digest": "digest"}},
+                    "hosting_release": {"version": "new-version"}}
+        return previous, deployed
 
     def test_cloud_build_is_explicit_amd64_runtime_with_scoped_source_and_identity(self):
         with patch.object(self.deployment, "gc") as gc:
@@ -88,6 +97,21 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertNotIn("APP_GENERATION_QUALITY_REPORT", environment)
         self.assertIn("socketFactory=com.google.cloud.sql.postgres.SocketFactory", environment["SPRING_DATASOURCE_URL"])
 
+    def test_role_session_policy_is_explicit_on_both_services(self):
+        for mode in ("api", "worker"):
+            environment = self.deployment.environment(mode, "public-key", self.worker_url)
+            self.assertEqual(environment["APP_SESSION_CUSTOMER_SECONDS"], "2592000")
+            self.assertEqual(environment["APP_SESSION_WORKFORCE_SECONDS"], "28800")
+            self.assertEqual(environment["APP_SESSION_ANONYMOUS_SECONDS"], "1800")
+            self.assertEqual(environment["SESSION_COOKIE_SECURE"], "true")
+        self.assertEqual(self.deployment.plan()["sessions"]["cookie_max_age_seconds"], 2592000)
+
+    def test_session_configuration_cannot_exceed_reviewed_role_limits_or_use_nonintegers(self):
+        for key, value in [("session_customer_seconds", 2592001), ("session_workforce_seconds", 28801),
+                           ("session_anonymous_seconds", 1801), ("session_customer_seconds", 59),
+                           ("session_workforce_seconds", True), ("session_anonymous_seconds", "1800")]:
+            self.assertFalse(DEPLOY.reviewed_limits(dict(self.config, **{key: value})))
+
     def test_worker_is_private_and_database_readiness_controls_startup(self):
         with patch.object(self.deployment, "gc") as gc, patch.object(self.deployment, "value", return_value="https://worker.run.app"):
             self.deployment.deploy_service("worker", "image", "public-key", "")
@@ -153,18 +177,58 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertTrue(all("channels/live/releases" in call.args[1] for call in api.call_args_list[1:]))
 
     def test_prior_release_is_saved_before_prepare_and_final_inventory_records_full_revision(self):
-        previous = {"project_id": self.deployment.project, "services": {"api": None, "worker": None}, "hosting_release": None}
-        deployed = {"services": {"api": {"ready_revision": "api-revision", "image_digest": "digest"}, "worker": {"ready_revision": "worker-revision", "image_digest": "digest"}}, "hosting_release": {"version": "new-version"}}
+        previous, deployed = self.release_states()
         def prepare():
             self.assertEqual(len(list((self.deployment.work / "releases").glob("before-*.json"))), 1)
             return {}, "captcha"
-        with patch.object(DEPLOY, "command", side_effect=[Mock(stdout=b""), Mock(stdout=b"a" * 40)]), patch.object(self.deployment, "release_state", side_effect=[previous, deployed]), patch.object(self.deployment, "prepare", side_effect=prepare), patch.object(self.deployment, "build") as build, patch.object(self.deployment, "deploy_service", side_effect=["https://worker.run.app", "https://worker.run.app", "https://api.run.app"]), patch.object(self.deployment, "schedule"), patch.object(self.deployment, "hosting"), contextlib.redirect_stdout(io.StringIO()):
+        with patch.object(DEPLOY, "command", side_effect=[Mock(stdout=b""), Mock(stdout=b"a" * 40)]), patch.object(self.deployment, "release_state", side_effect=[previous, deployed]), patch.object(self.deployment, "prepare", side_effect=prepare), patch.object(self.deployment, "build") as build, patch.object(self.deployment, "deploy_service", side_effect=[self.worker_url, self.worker_url, "https://api.run.app"]) as deploy, patch.object(self.deployment, "schedule"), patch.object(self.deployment, "hosting"), contextlib.redirect_stdout(io.StringIO()):
             self.deployment.apply(None)
         inventory = json.loads((self.deployment.work / "deployment.json").read_text())
         self.assertEqual(inventory["source_revision"], "a" * 40)
         self.assertEqual(inventory["runtime"], deployed["services"])
         self.assertTrue(Path(inventory["previous_release_inventory"]).is_file())
         self.assertTrue(build.call_args.args[0].endswith(":aaaaaaaaaaaa"))
+        self.assertEqual([call.args[3] for call in deploy.call_args_list], ["", self.worker_url, self.worker_url])
+
+    def test_redeployment_uses_the_captured_owned_worker_origin_without_empty_audience(self):
+        previous, deployed = self.release_states({"service": self.deployment.worker, "url": self.worker_url})
+        with patch.object(DEPLOY, "command", side_effect=[Mock(stdout=b""), Mock(stdout=b"a" * 40)]), patch.object(self.deployment, "release_state", side_effect=[previous, deployed]), patch.object(self.deployment, "prepare", return_value=({}, "captcha")), patch.object(self.deployment, "build"), patch.object(self.deployment, "deploy_service", side_effect=[self.worker_url, "https://api.run.app"]) as deploy, patch.object(self.deployment, "schedule"), patch.object(self.deployment, "hosting"), contextlib.redirect_stdout(io.StringIO()):
+            self.deployment.apply(None)
+        self.assertEqual([call.args[0] for call in deploy.call_args_list], ["worker", "api"])
+        self.assertTrue(all(call.args[3] == self.worker_url for call in deploy.call_args_list))
+
+    def test_foreign_or_noncanonical_captured_worker_origin_stops_before_prepare_or_build(self):
+        invalid = [None, "", "https://stylereel-ynpzfmjw7q-el.a.run.app", "http://" + self.worker_url.removeprefix("https://"),
+                   self.worker_url + "/", self.worker_url + "/internal", self.worker_url + "?token=not-a-secret",
+                   self.worker_url + "#fragment", self.worker_url + ":443", self.worker_url + ".example.com",
+                   self.worker_url.replace("https://", "https://user@"), "https://[bad"]
+        for url in invalid:
+            previous, _ = self.release_states({"service": self.deployment.worker, "url": url})
+            with self.subTest(url=url), patch.object(DEPLOY, "command", side_effect=[Mock(stdout=b""), Mock(stdout=b"a" * 40)]), patch.object(self.deployment, "release_state", return_value=previous), patch.object(self.deployment, "prepare") as prepare, patch.object(self.deployment, "build") as build, patch.object(self.deployment, "deploy_service") as deploy:
+                with self.assertRaisesRegex(RuntimeError, "canonical URL"):
+                    self.deployment.apply(None)
+            prepare.assert_not_called(); build.assert_not_called(); deploy.assert_not_called()
+
+    def test_foreign_snapshot_or_worker_identity_is_not_treated_as_first_creation(self):
+        for field, value in [("project_id", "proofroom-506314"), ("region", "us-central1"), ("service", "stylereel")]:
+            previous, _ = self.release_states({"service": self.deployment.worker, "url": self.worker_url})
+            if field == "service": previous["services"]["worker"][field] = value
+            else: previous[field] = value
+            with patch.object(DEPLOY, "command", side_effect=[Mock(stdout=b""), Mock(stdout=b"a" * 40)]), patch.object(self.deployment, "release_state", return_value=previous), patch.object(self.deployment, "prepare") as prepare:
+                with self.assertRaisesRegex(RuntimeError, "previous release"):
+                    self.deployment.apply(None)
+            prepare.assert_not_called()
+
+    def test_worker_url_change_stops_before_api_schedule_or_hosting(self):
+        changed = "https://virtualwardrobe-demo-worker-other-el.a.run.app"
+        for existing in (False, True):
+            previous, _ = self.release_states({"service": self.deployment.worker, "url": self.worker_url} if existing else None)
+            results = [changed] if existing else [self.worker_url, changed]
+            with patch.object(DEPLOY, "command", side_effect=[Mock(stdout=b""), Mock(stdout=b"a" * 40)]), patch.object(self.deployment, "release_state", return_value=previous), patch.object(self.deployment, "prepare", return_value=({}, "captcha")), patch.object(self.deployment, "build"), patch.object(self.deployment, "deploy_service", side_effect=results) as deploy, patch.object(self.deployment, "schedule") as schedule, patch.object(self.deployment, "hosting") as hosting:
+                with self.assertRaisesRegex(RuntimeError, "canonical URL changed"):
+                    self.deployment.apply(None)
+            self.assertTrue(all(call.args[0] == "worker" for call in deploy.call_args_list))
+            schedule.assert_not_called(); hosting.assert_not_called()
 
 
 if __name__ == "__main__":

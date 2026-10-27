@@ -1,0 +1,10 @@
+# Decisions and evidence
+
+- Persistent sign-in: browser-session cookie cannot survive a browser-process restart reliably. Use a persistent __session cookie up to30days; customer idle30days, workforce idle8hours, anonymous30minutes, temporary credentials absolute24hours. Keep Secure/HttpOnly/Lax/CSRF and DB revocation. Existing legacy cookies need one new sign-in; do not promise silent upgrade or rotate IDs during arbitrary concurrent reads.
+- Auth restoration: generation/abort guards prevent stale initial session or CSRF responses replacing a newer account/token. Transient failures mean unknown/reconnect, not confirmed guest. Resume events coalesce a read-only refresh; pending jobs abort old polls and resume observation without replaying mutations.
+- Photo interaction: deliberate TRY_ON action is the new record basis. No hidden true age/own-photo/provider consent flags. Preserve legacy attestations, provider snapshots and version checks internally. Provider/model/region/deployment diagnostics leave customer screens; passive Privacy remains.
+- Mobile: compact header, two-column image-led cards, bottom nav, sticky actions/safe areas and concise state transitions. No native binaries/offline photo cache/service-worker private cache.
+- Themes: Pearl/Sage/Midnight/System, semantic CSS tokens, validated enum in local preferences and same-origin head initializer before paint. Storage failure falls back safely; images remain original-colour.
+- Deployment: no new resources. Existing-worker URL is already known on redeployment, so preserve it rather than publishing an intermediate blank URL. Fresh migration backup, bounded smokes and targeted UI/session verification suffice; no repeat1000-row seed or database restore unless new evidence justifies it.
+
+Primary references used by the GCP review: https://docs.spring.io/spring-session/docs/current/api/org/springframework/session/web/http/DefaultCookieSerializer.html and https://firebase.google.com/docs/hosting/manage-cache#using_cookies . The actual deployed code/config and controlled regression results remain the decisive evidence; background-only cookie loss is not asserted without proof.

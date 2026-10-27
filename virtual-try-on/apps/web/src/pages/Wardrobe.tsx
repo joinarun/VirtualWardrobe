@@ -1,11 +1,13 @@
 import { UiIcon } from "../components/UiIcon";
 import { useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
 import { EmptyState, Loading, Notice } from "../components/Common";
 import { checkedItems, useRemote } from "../remote";
 import type { Page } from "../types";
 import type { Quota, SavedPreview, TryOnJob } from "../tryon-types";
-import { dateTime, privatePath } from "../tryon-types";
+import { dateTime, privatePath, previewFailure } from "../tryon-types";
+
+const statusLabels = { QUEUED: "Queued", RUNNING: "Creating", SUCCEEDED: "Ready", FAILED: "Not completed", EXPIRED: "Expired", CANCELLED: "Cancelled" };
 
 function WardrobeNav({ gallery }: { gallery: boolean }) {
   return (
@@ -62,13 +64,11 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
         method: "DELETE",
       });
       setRemoving(null);
-      setMessage(
-        "Preview removed. New image access is disabled and object deletion is scheduled.",
-      );
+      setMessage("Preview removed.");
       if (items.length === 1 && page > 0) setPage((v) => v - 1);
       setRevision((v) => v + 1);
     } catch (failure) {
-      setError(errorMessage(failure));
+      setError(previewFailure(failure));
     } finally {
       setBusy(false);
     }
@@ -84,8 +84,8 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
           </h1>
           <p>
             {gallery
-              ? "Only previews you deliberately save appear here. They stay private to your customer account."
-              : "Leave, return, and pick up where you left off. Every request keeps its own page."}
+              ? "Your saved previews, all in one place."
+              : "Pick up where you left off."}
           </p>
         </div>
         {quota.data && (
@@ -105,7 +105,7 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
       </button>
       {quota.error && (
         <Notice>
-          {quota.error}{" "}
+          We couldn't update your remaining previews.{" "}
           <button
             className="inline-button"
             type="button"
@@ -119,8 +119,7 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
         new URLSearchParams(window.location.search).get("notice") ===
           "discarded" && (
           <Notice tone="success">
-            Request discarded. It is hidden from your account, and new image
-            access has stopped.
+            Request discarded.
           </Notice>
         )}
       {error && <Notice>{error}</Notice>}
@@ -136,9 +135,7 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
           <h2>Delete this saved preview?</h2>
           <p>{removing.product.title}</p>
           <p>
-            This stops new image access immediately and schedules object
-            deletion within 24 hours. Previously issued links may work for up to
-            five minutes; provider and backup retention are separate.
+            This removes the preview from your saved gallery.
           </p>
           <div className="button-row">
             <button
@@ -168,7 +165,7 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
         />
       ) : request.error ? (
         <Notice>
-          {request.error}{" "}
+          {previewFailure(new Error(request.error))}{" "}
           <button
             className="inline-button"
             type="button"
@@ -187,8 +184,8 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
             }
           >
             {gallery
-              ? "Save a completed preview explicitly to keep it here across sign-ins. Unsaved previews expire."
-              : "Choose a product, upload your own photo with consent, and create your first preview."}
+              ? "Save a preview to keep it here."
+              : "Choose a saree, add a photo, and create your first preview."}
           </EmptyState>
           <a
             className="primary-button"
@@ -210,6 +207,7 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
                 job = gallery ? null : (item as TryOnJob);
               const image = saved?.imageUrl || job?.result?.imageUrl;
               const jobId = saved?.jobId || job!.id;
+              const label = item.demo ? "Sample" : "Virtual preview";
               return (
                 <article className="wardrobe-card" key={item.id}>
                   <a
@@ -220,10 +218,10 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
                       [
                         !image
                           ? job?.discarded
-                            ? "REMOVED"
-                            : job?.state
+                            ? "Removed"
+                            : job && statusLabels[job.state]
                           : null,
-                        item.label,
+                        label,
                       ]
                         .filter(Boolean)
                         .join(" "),
@@ -249,11 +247,11 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
                           />
                         </span>
                         <strong>
-                          {job?.discarded ? "REMOVED" : job?.state}
+                          {job?.discarded ? "Removed" : job && statusLabels[job.state]}
                         </strong>
                       </div>
                     )}{" "}
-                    <span className="wardrobe-image-label">{item.label}</span>
+                    <span className="wardrobe-image-label">{label}</span>
                   </a>
                   <div className="wardrobe-card-copy">
                     <p className="eyebrow">{item.product.storeName}</p>
@@ -267,12 +265,12 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
                       <span
                         className={`preview-state state-${job.state.toLowerCase()}`}
                       >
-                        {job.state}
-                        {job.discarded ? " · REMOVED" : ""}
+                        {statusLabels[job.state]}
+                        {job.discarded ? " · Removed" : ""}
                         {job.result?.saved
-                          ? " · SAVED"
+                          ? " · Saved"
                           : job.result?.saving
-                            ? " · SAVING"
+                            ? " · Saving"
                             : ""}
                       </span>
                     )}
@@ -283,7 +281,6 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
                           : "The product is currently unavailable. Your preview remains yours."}
                       </p>
                     )}
-                    <p className="wardrobe-preview-notice">{item.notice}</p>
                     <div className="wardrobe-card-actions">
                       <a
                         className="text-button"
@@ -348,9 +345,7 @@ export function WardrobePage({ gallery = false }: { gallery?: boolean }) {
         </>
       )}
       <p className="wardrobe-privacy">
-        Store teams cannot view your personal photos or this gallery. Customer
-        account deletion also removes new private-media access and schedules
-        object removal.
+        Your previews stay private. <a href="/privacy">Privacy</a>
       </p>
     </main>
   );

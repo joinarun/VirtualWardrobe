@@ -3,11 +3,12 @@ import type { ReactNode } from "react";
 import { useAuth } from "../auth-context";
 import { authLink } from "../navigation";
 import { AuthPage } from "../pages/AuthPage";
-import { Loading } from "./Common";
+import { Loading, SessionReconnect } from "./Common";
 export function CustomerOnly({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const returnTo = window.location.pathname + window.location.search;
   if (auth.loading) return <Loading />;
+  if (auth.status === "unknown") return <SessionReconnect />;
   if (!auth.user) return <AuthPage returnTo={returnTo} />;
   if (auth.user.kind !== "CUSTOMER")
     return (
