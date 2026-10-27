@@ -19,8 +19,8 @@ POSTGRES_PASSWORD=$secret
 CONFIG
   chmod 600 .env
 fi
-mkdir -p work
-chmod 700 work
+# Prepare shared local paths before root-run development/test containers can create them.
+python3 scripts/local_directories.py
 chmod +x services/backend/mvnw
 docker compose config --quiet
 docker compose build api web
