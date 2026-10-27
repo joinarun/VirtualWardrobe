@@ -121,6 +121,22 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertTrue(any("httpGet.path=/actuator/health/readiness" in arg for arg in args))
         self.assertFalse(any("APP_BOOTSTRAP_SUPERADMIN_PASSWORD=" in arg for arg in args))
 
+    def test_scheduler_update_and_create_use_supported_header_flags_without_changing_delivery(self):
+        for exists in (False, True):
+            with patch.object(self.deployment, "gc") as gc, patch.object(self.deployment, "exists", return_value=exists):
+                self.deployment.schedule(self.worker_url)
+            args = gc.call_args.args
+            self.assertEqual(args[:3], ("scheduler", "jobs", "update" if exists else "create"))
+            self.assertIn("--update-headers" if exists else "--headers", args)
+            self.assertNotIn("--headers" if exists else "--update-headers", args)
+            for option, expected in [("--uri", self.worker_url + "/internal/maintenance"),
+                                     ("--http-method", "POST"), ("--message-body", "{}"),
+                                     ("--schedule", "* * * * *"), ("--attempt-deadline", "180s"),
+                                     ("--oidc-service-account-email", self.deployment.accounts["dispatch"]),
+                                     ("--oidc-token-audience", self.worker_url)]:
+                self.assertEqual(args[args.index(option) + 1], expected)
+            self.assertIn("Content-Type=application/json", args)
+
     def test_cost_limits_fail_closed_for_unreviewed_or_malformed_values(self):
         self.assertTrue(DEPLOY.reviewed_limits(self.config))
         for key, value in [("daily_provider_budget_usd", "5.01"), ("daily_provider_budget_usd", "NaN"),

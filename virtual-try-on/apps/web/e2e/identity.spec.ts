@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import type { Page } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import {
   existsSync,
@@ -11,6 +11,34 @@ import {
 import { join } from "node:path";
 
 const freshPassword = () => `Ui-${randomUUID()}-aA9`;
+async function saveStoreProfile(page: Page) {
+  // Hold the genuine post-save session refresh so a duplicate local/global
+  // announcement cannot disappear behind a quick component remount.
+  let release!: () => void;
+  let held = 0;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const pattern = "**/api/v1/auth/session";
+  const hold = async (route: Route) => {
+    const response = await route.fetch();
+    held += 1;
+    await gate;
+    await route.fulfill({ response }).catch(() => {});
+  };
+  await page.route(pattern, hold);
+  const success = page.getByText("Store profile saved.", { exact: true });
+  try {
+    await page.getByRole("button", { name: "Save store profile", exact: true }).click();
+    await expect.poll(() => held).toBeGreaterThan(0);
+    await expect(success).toHaveCount(1);
+    await expect(success).toBeVisible();
+  } finally {
+    release();
+    await page.unroute(pattern, hold);
+  }
+  await expect(page.getByRole("button", { name: "Save store profile", exact: true })).toBeEnabled();
+  await expect(success).toHaveCount(1);
+  await expect(success).toBeVisible();
+}
 async function signIn(
   page: Page,
   kind: "CUSTOMER" | "WORKFORCE",
@@ -224,10 +252,7 @@ test("workforce rotation, invitations, final-admin errors and staff boundaries u
     .getByRole("button", { name: "Store profile", exact: true })
     .click();
   await page.getByLabel("Store status").selectOption("ACTIVE");
-  await page.getByRole("button", { name: "Save store profile" }).click();
-  await expect(
-    page.getByText("Store profile saved.", { exact: true }),
-  ).toBeVisible();
+  await saveStoreProfile(page);
   await page.getByRole("button", { name: "Store team", exact: true }).click();
   const adminRow = page.getByRole("row").filter({ hasText: operator.email });
   await adminRow.getByRole("button", { name: /Remove/ }).click();
@@ -317,10 +342,7 @@ test("workforce rotation, invitations, final-admin errors and staff boundaries u
     .getByRole("button", { name: "Store profile", exact: true })
     .click();
   await page.getByLabel("Store status").selectOption("ARCHIVED");
-  await page.getByRole("button", { name: "Save store profile" }).click();
-  await expect(
-    page.getByText("Store profile saved.", { exact: true }),
-  ).toBeVisible();
+  await saveStoreProfile(page);
 });
 
 test("UI only: disabled signup configuration never exposes a local CAPTCHA fallback", async ({

@@ -594,7 +594,7 @@ class Deployment:
                 self.scheduler, "--location", self.region,
                 "--schedule", "* * * * *", "--time-zone", "UTC",
                 "--uri", worker_url + "/internal/maintenance", "--http-method", "POST",
-                "--headers", "Content-Type=application/json", "--message-body", "{}",
+                "--update-headers" if exists else "--headers", "Content-Type=application/json", "--message-body", "{}",
                 "--oidc-service-account-email", self.accounts["dispatch"],
                 "--oidc-token-audience", worker_url, "--attempt-deadline", "180s")
 

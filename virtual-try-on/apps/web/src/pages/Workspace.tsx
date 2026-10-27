@@ -618,12 +618,10 @@ function StoreProfile({
   const [status, setStatus] = useState(store.status);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    setSaved(false);
     onSaving();
     try {
       await api<Store>(`/stores/${store.id}`, {
@@ -635,7 +633,6 @@ function StoreProfile({
           status,
         },
       });
-      setSaved(true);
       await onChanged();
     } catch (failure) {
       setError(errorMessage(failure));
@@ -656,7 +653,6 @@ function StoreProfile({
       </div>
       <form onSubmit={(event) => void submit(event)}>
         {error && <Notice>{error}</Notice>}
-        {saved && <Notice tone="success">Store profile saved.</Notice>}
         <label className="field" htmlFor="store-name">
           <span>Store name</span>
           <input
