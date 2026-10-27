@@ -80,7 +80,10 @@ async function read(page, path, status = 200) {
   const response = await page.request.get(`/api/v1${path}`, {
     maxRedirects: 0,
   });
-  requireCheck(response.status() === status, "API_READ_STATUS_UNEXPECTED");
+  requireCheck(
+    response.status() === status,
+    `API_READ_STATUS_${response.status()}_EXPECTED_${status}`,
+  );
   return status === 200 ? response.json() : response;
 }
 async function signIn(page, user, progress = () => {}) {
