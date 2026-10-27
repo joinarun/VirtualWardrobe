@@ -2,25 +2,38 @@
 // Anonymous mobile browsing only. No credentials, screenshots of accounts or AI calls.
 import { createRequire } from "node:module";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const { values } = parseArgs({ options: {
+export const profile = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2,
+  cpuSlowdown: 4, downloadMbps: 9, uploadMbps: 1.6, latencyMs: 150,
+  browserCache: "disabled", backend: "five ordinary API reads before browser timing", usableLimitMs: 3000,
+  usableDefinition: "Search is enabled; a product title, price and first product image are decoded and painted after immediate scrolling to the collection" };
+
+export function validCatalogTotal(value) {
+  return typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 1000;
+}
+export function mobileMeasurementPasses(rawMs, javascriptErrors) {
+  return typeof rawMs === "number" && Number.isFinite(rawMs) && rawMs >= 0 && rawMs <= 3000 && javascriptErrors === 0;
+}
+export function mobilePlan(count = 5) {
+  return { profile, runs: count, mutations: false };
+}
+
+export async function main(argv = process.argv.slice(2)) {
+const { values } = parseArgs({ args: argv, options: {
   run: { type: "boolean", default: false },
   inventory: { type: "string", default: resolve(root, "work/gcp/deployment.json") },
   runs: { type: "string", default: "5" },
 } });
 const count = Number(values.runs);
 if (!Number.isInteger(count) || count < 3 || count > 7) throw new Error("Use 3–7 fresh browser runs");
-const profile = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2,
-  cpuSlowdown: 4, downloadMbps: 9, uploadMbps: 1.6, latencyMs: 150,
-  browserCache: "disabled", backend: "five ordinary API reads before browser timing", usableLimitMs: 3000,
-  usableDefinition: "Search is enabled; a product title, price and first product image are rendered after immediate scrolling to the collection" };
+
 if (!values.run) {
-  console.log(JSON.stringify({ profile, runs: count, mutations: false }, null, 2));
-  process.exit(0);
+  console.log(JSON.stringify(mobilePlan(count), null, 2));
+  return 0;
 }
 const inventory = JSON.parse(await readFile(values.inventory, "utf8"));
 if (inventory.project_id !== "virtualtryon-511016" || inventory.web_url !== "https://virtualwardrobe-511016.web.app") {
@@ -61,7 +74,7 @@ try {
       const catalog = page.waitForResponse(response => new URL(response.url()).pathname === "/api/v1/products" && response.status() === 200);
       const [, catalogResponse] = await Promise.all([page.goto(inventory.web_url + "/", { waitUntil: "domcontentloaded", timeout: 60_000 }), catalog]);
       const payload = await catalogResponse.json();
-      if (payload.total < 1000) throw new Error("Performance dataset missing");
+      if (!validCatalogTotal(payload.total)) throw new Error("Performance dataset missing or invalid");
       await page.locator("#catalog-query").waitFor({ state: "visible", timeout: 30_000 });
       if (!await page.locator("#catalog-query").isEnabled()) throw new Error("Search unavailable");
       const first = page.locator(".product-card").first();
@@ -72,7 +85,16 @@ try {
         const image = card?.querySelector("img");
         return !!image && image.complete && image.naturalWidth > 0 && !!card.querySelector(".product-price-row strong")?.textContent;
       }, null, { timeout: 30_000 });
-      result.usableMs = Math.round(await page.evaluate(() => performance.now()));
+      result.usableRawMs = await page.evaluate(async () => {
+        const image = document.querySelector(".product-card img");
+        if (!(image instanceof HTMLImageElement)) throw new Error("Product image unavailable");
+        await image.decode();
+        await new Promise((resolveFrame) => requestAnimationFrame(resolveFrame));
+        await new Promise((resolveFrame) => requestAnimationFrame(resolveFrame));
+        if (!image.isConnected || !image.complete || image.naturalWidth <= 0) throw new Error("Product image changed before paint");
+        return performance.now();
+      });
+      result.usableMs = Math.round(result.usableRawMs);
       result.catalogRows = payload.total;
       const response = page.waitForResponse(response => {
         const url = new URL(response.url());
@@ -85,7 +107,7 @@ try {
       await page.getByLabel("Loading products").waitFor({ state: "hidden", timeout: 30_000 });
       result.searchMs = Math.round(await page.evaluate(() => performance.now()) - searchStart);
       result.javascriptErrors = errors;
-      result.passed = result.usableMs <= 3000 && errors === 0;
+      result.passed = mobileMeasurementPasses(result.usableRawMs, errors);
       if (index === 0) await page.screenshot({ path: resolve(output, "performance-mobile.png") });
     } catch {
       result.failure = "Browse readiness or profile check failed; request/response bodies and URLs withheld";
@@ -104,4 +126,10 @@ const report = { projectId: inventory.project_id, sourceRevision: inventory.sour
   limitation: "Synthetic Chromium profile from the operator workstation; backend warmed, browser cache empty. Not a field-user percentile or a cold-start result." };
 await writeFile(resolve(output, "performance-mobile.json"), JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(report, null, 2));
-process.exitCode = report.passed ? 0 : 1;
+return report.passed ? 0 : 1;
+
+}
+
+if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+  process.exitCode = await main();
+}

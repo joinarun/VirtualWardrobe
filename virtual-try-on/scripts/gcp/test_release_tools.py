@@ -1,8 +1,10 @@
 """Controlled release tools checks; never authenticate, deploy or call cloud APIs."""
 import contextlib
+import datetime
 import importlib.util
 import io
 import json
+import subprocess
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -19,6 +21,7 @@ def module(filename, name):
 
 PROBE = module("monitoring-probe.py", "vw_monitoring_probe")
 SMOKE = module("smoke.py", "vw_release_smoke")
+PERFORMANCE = module("performance.py", "vw_release_performance")
 
 
 class ReleaseToolsTest(unittest.TestCase):
@@ -118,6 +121,66 @@ class ReleaseToolsTest(unittest.TestCase):
                            ("api_url", "https://user:secret@virtualwardrobe-demo-api-test.run.app")):
             with self.assertRaises(ValueError):
                 SMOKE.origins(dict(self.inventory, **{key: value}))
+
+
+class PerformanceToolsTest(unittest.TestCase):
+    def test_api_threshold_uses_raw_percentile_and_fails_on_any_error(self):
+        sample = PERFORMANCE.summarize([{"status": 200, "ms": 750.004}] * 20)
+        self.assertEqual(sample["p95_ms"], 750.0)
+        self.assertEqual(sample["p95_raw_ms"], 750.004)
+        self.assertFalse(PERFORMANCE.measurement_passes(sample))
+        self.assertTrue(PERFORMANCE.measurement_passes({"p95_raw_ms": 750, "errors": 0}))
+        for value in [750.000001, float("nan"), float("inf"), None, True]:
+            self.assertFalse(PERFORMANCE.measurement_passes({"p95_raw_ms": value, "errors": 0}))
+        self.assertFalse(PERFORMANCE.measurement_passes({"p95_raw_ms": 1, "errors": 1}))
+
+    def test_startup_query_uses_exact_utc_window_and_inventory_revision(self):
+        start = datetime.datetime(2026, 10, 27, 1, 2, 3, 456000, datetime.timezone.utc)
+        end = start + datetime.timedelta(milliseconds=1234)
+        revision = "virtualwardrobe-demo-api-00001-test"
+        query, actual = PERFORMANCE.startup_query({"runtime": {"api": {"ready_revision": revision}}}, start, end)
+        self.assertEqual(actual, revision)
+        self.assertIn('resource.labels.revision_name="' + revision + '"', query)
+        self.assertIn('timestamp>="' + start.isoformat() + '"', query)
+        self.assertIn('timestamp<="' + end.isoformat() + '"', query)
+        self.assertNotIn((start - datetime.timedelta(seconds=5)).isoformat(), query)
+        self.assertIsNone(PERFORMANCE.startup_query({}, start, end)[1])
+        with self.assertRaises(ValueError):
+            PERFORMANCE.startup_query({"runtime": {"api": {"ready_revision": 'foreign" OR true'}}}, start, end)
+
+    def test_api_default_plan_does_not_read_inventory_or_send_traffic(self):
+        output = io.StringIO()
+        with patch.object(PERFORMANCE, "fetch") as fetch, patch.object(PERFORMANCE.Path, "read_text", side_effect=AssertionError("plan read inventory")), contextlib.redirect_stdout(output):
+            self.assertEqual(PERFORMANCE.main(["--inventory", "/absent-inventory.json"]), 0)
+        fetch.assert_not_called()
+        plan = json.loads(output.getvalue())
+        self.assertEqual((plan["concurrent_users"], plan["measured_requests"], plan["warm_api_p95_limit_ms"]), (20, 400, 750))
+        self.assertFalse(plan["mutations"])
+
+    def test_mobile_threshold_total_and_default_profile_are_controlled_without_browser(self):
+        script = Path(__file__).with_name("performance-mobile.mjs").resolve()
+        # Importing this module must not load inventory, browser dependencies or fetch.
+        command = """globalThis.fetch = () => { throw Error('NETWORK_REFUSED'); };
+const m = await import(process.argv[1]);
+const output = {
+ valid: [1000, 1001].map(m.validCatalogTotal),
+ invalid: [undefined, null, '1000', true, 999, 1000.5, NaN, Infinity].map(m.validCatalogTotal),
+ boundary: m.mobileMeasurementPasses(3000, 0),
+ over: m.mobileMeasurementPasses(3000.001, 0),
+ nan: m.mobileMeasurementPasses(NaN, 0),
+ error: m.mobileMeasurementPasses(1, 1), plan: m.mobilePlan()
+}; console.log(JSON.stringify(output));"""
+        result = subprocess.run(["node", "--input-type=module", "-e", command, script.as_uri()], capture_output=True, text=True, check=True)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["valid"], [True, True]); self.assertFalse(any(value["invalid"]))
+        self.assertTrue(value["boundary"]); self.assertFalse(value["over"] or value["nan"] or value["error"])
+        plan = value["plan"]; self.assertEqual(plan["runs"], 5); self.assertFalse(plan["mutations"])
+        profile = plan["profile"]
+        self.assertEqual(profile["viewport"], {"width": 390, "height": 844})
+        self.assertEqual((profile["deviceScaleFactor"], profile["cpuSlowdown"], profile["downloadMbps"], profile["uploadMbps"], profile["latencyMs"], profile["usableLimitMs"]), (2, 4, 9, 1.6, 150, 3000))
+        self.assertEqual(profile["backend"], "five ordinary API reads before browser timing")
+        planned = subprocess.run(["node", str(script), "--inventory", "/absent-inventory.json"], capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(planned.stdout)["runs"], 5)
 
 
 if __name__ == "__main__":

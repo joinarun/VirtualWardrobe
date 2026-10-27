@@ -7,6 +7,7 @@ import json
 import math
 from pathlib import Path
 import platform
+import re
 import statistics
 import subprocess
 import threading
@@ -38,14 +39,42 @@ def fetch(base, path):
         return {"status": 0, "ms": (time.perf_counter() - started) * 1000}, None
 
 
-def main():
+
+def summarize(selected):
+    values = [sample["ms"] for sample in selected]
+    raw_p95 = percentile(values, .95)
+    return {"count": len(selected), "errors": sum(sample["status"] != 200 for sample in selected),
+            "p50_ms": round(statistics.median(values), 2), "p95_ms": round(raw_p95, 2),
+            "p95_raw_ms": raw_p95, "max_ms": round(max(values), 2)}
+
+
+def measurement_passes(summary):
+    value = summary.get("p95_raw_ms")
+    return (summary.get("errors") == 0 and isinstance(value, (int, float))
+            and not isinstance(value, bool) and math.isfinite(value) and 0 <= value <= 750)
+
+
+def startup_query(inventory, started, ended):
+    revision = inventory.get("runtime", {}).get("api", {}).get("ready_revision")
+    if revision is not None and not re.fullmatch(r"virtualwardrobe-demo-api-[a-z0-9-]+", revision):
+        raise ValueError("The inventory API revision is invalid")
+    query = ('resource.type="cloud_run_revision" AND resource.labels.service_name="virtualwardrobe-demo-api" '
+             'AND logName="projects/' + PROJECT + '/logs/run.googleapis.com%2Fvarlog%2Fsystem" '
+             'AND textPayload:"Starting new instance" AND timestamp>="' + started.isoformat() +
+             '" AND timestamp<="' + ended.isoformat() + '"')
+    if revision:
+        query += ' AND resource.labels.revision_name="' + revision + '"'
+    return query, revision
+
+
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--inventory", type=Path, default=ROOT / "work/gcp/deployment.json")
     parser.add_argument("--requests-per-user", type=int, default=20)
     parser.add_argument("--client-location", default="Operator workstation; network location must be recorded in release evidence")
     parser.add_argument("--read-startup-logs", action="store_true", help="Read only app startup system-log timestamps for the first request")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not 10 <= args.requests_per_user <= 25:
         parser.error("Use 10–25 requests per user; concurrency is fixed at 20")
     plan = {"concurrent_users": 20, "measured_requests": 20 * args.requests_per_user,
@@ -94,30 +123,26 @@ def main():
     summaries = {}
     for name in ["all"] + [name for name, _ in endpoints]:
         selected = [s for s in samples if name == "all" or s["endpoint"] == name]
-        values = [s["ms"] for s in selected]
-        summaries[name] = {"count": len(selected), "errors": sum(s["status"] != 200 for s in selected),
-                           "p50_ms": round(statistics.median(values), 2), "p95_ms": round(percentile(values, .95), 2),
-                           "max_ms": round(max(values), 2)}
+        summaries[name] = summarize(selected)
     startup = {"status": "not_checked", "note": "First-observed latency alone does not establish a cold start"}
     if args.read_startup_logs:
-        lower = (first_started - datetime.timedelta(seconds=5)).isoformat()
-        upper = (first_ended + datetime.timedelta(seconds=5)).isoformat()
-        query = ('resource.type="cloud_run_revision" AND resource.labels.service_name="virtualwardrobe-demo-api" '
-                 'AND logName="projects/' + PROJECT + '/logs/run.googleapis.com%2Fvarlog%2Fsystem" '
-                 'AND textPayload:"Starting new instance" AND timestamp>="' + lower + '" AND timestamp<="' + upper + '"')
+        query, revision = startup_query(inventory, first_started, first_ended)
         result = subprocess.run(["gcloud", "logging", "read", query, "--project", PROJECT, "--limit=20",
-                                 "--format=json(timestamp,resource.labels.revision_name)"], capture_output=True, text=True)
+                                 "--format=json(timestamp,resource.labels.revision_name,labels.instanceId)"], capture_output=True, text=True)
         if result.returncode == 0:
             events = json.loads(result.stdout)
-            startup = {"status": "startup_in_first_request_window" if events else "no_startup_observed",
-                       "events": events, "note": "Use a quiet API window and verify this first request followed scale-to-zero; do not mix this latency into warmed samples"}
+            startup = {"status": "startup_candidates_in_first_request_window" if events else "no_startup_observed",
+                       "events": events, "queried_api_revision": revision, "cold_start_claimed": False,
+                       "note": "Exact request UTC window/revision candidates only. A quiet scale-to-zero window and request-to-instance correlation are still required; do not mix this latency into warmed samples"}
         else:
             startup = {"status": "lookup_unavailable", "note": "No cold-start claim made; raw CLI output withheld"}
     report = dict(plan, project_id=PROJECT, measured_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   source_revision=inventory.get("source_revision"), client={"platform": platform.platform(), "location": args.client_location},
-                  catalog_rows=catalog["total"], first_observation=first, startup_evidence=startup,
+                  catalog_rows=catalog["total"], first_observation=dict(first, started_at_utc=first_started.isoformat(),
+                      completed_at_utc=first_ended.isoformat(), api_revision=inventory.get("runtime", {}).get("api", {}).get("ready_revision"),
+                      cold_start_claimed=False), startup_evidence=startup,
                   warmup_requests=len(warmup), duration_seconds=round(duration, 2), summaries=summaries,
-                  passed=all(s["errors"] == 0 and s["p95_ms"] <= 750 for s in summaries.values()),
+                  passed=all(measurement_passes(s) for s in summaries.values()),
                   limitation="API result excludes image/AI calls. Mobile usable-time and independently evidenced cold starts are separate acceptance evidence.")
     path = ROOT / "work/gcp/performance-api.json"
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
