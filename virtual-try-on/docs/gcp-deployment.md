@@ -2,6 +2,34 @@
 
 Deploy the Phase 1 application into the existing `virtualtryon-511016` project using a distinct `virtualwardrobe-demo` resource prefix. The existing StyleReel application, buckets, queue, secrets and Hosting site are unrelated resources and must be preserved.
 
+## Actual deployment and verification
+
+Application hosting was deployed successfully on 2026-10-26 at 23:50:45 UTC. The running backend source is `f87c8f109516e0e3055c4016800548a1bc433241`; later documentation/operator-test commits do not change that recorded image provenance.
+
+| Item | Observed value |
+| --- | --- |
+| Customer/staff website | [VirtualWardrobe demo](https://virtualwardrobe-511016.web.app) |
+| Direct API | [API health](https://virtualwardrobe-demo-api-ynpzfmjw7q-el.a.run.app/api/v1/health) |
+| Private worker origin | `https://virtualwardrobe-demo-worker-ynpzfmjw7q-el.a.run.app` — public requests return 403 |
+| API ready revision | `virtualwardrobe-demo-api-00001-dnc` |
+| Worker ready revision | `virtualwardrobe-demo-worker-00002-nj9` |
+| Shared immutable backend image | `asia-south1-docker.pkg.dev/virtualtryon-511016/virtualwardrobe/backend@sha256:818014f033b967bc0baeba6c9d13191dc93c64a8ba8b5c7ff8def95cd6093e39` |
+| Build/tag | Cloud Build `c58fb04f-373c-4792-995d-fee6ff2ff62f`, successful in 88 seconds; backend tag `f87c8f109516` |
+| Hosting version | `sites/virtualwardrobe-511016/versions/e1c1099c2e389554`, pinned to the API revision |
+| Database schema | First worker applied all 10 migrations; current API/worker validated version 10 and database readiness is UP |
+
+Actual baseline provisioning passed 20 configuration checks. All 7 deployed smoke checks pass: website/rewrite/direct health 200, worker public 403, and public API internal root/worker/job routes 404. Worker IAM grants Invoker only to `virtualwardrobe-demo-dispatch@virtualtryon-511016.iam.gserviceaccount.com`; once-per-minute Scheduler uses that identity/canonical audience and actual maintenance returned 200. The first maintenance delivery during rollout returned 403; later unchanged configuration succeeded. Existing StyleReel remained at `stylereel-00013-6xr`; its default Hosting site was not deployed.
+
+Runtime configuration is real reCAPTCHA Enterprise and Google `gemini-nano-banana-2.1` at `global`, labelled **AI EVALUATION DEMO**. Observed quotas are 5/customer/day, 100 globally/day, USD5/day reserved provider spending, USD0.25 per attempt and 100 saved previews. API max 2/concurrency 20/pool 5 and worker max 1/concurrency 2/pool 3 remain minimum 0, 1 CPU/1 GiB/70% heap. SQL remains zonal PG17 f1-micro, 10 GB SSD with a 20 GB growth limit, three backups and deletion protection. Private buckets, restricted upload CORS, scoped Secret Manager/keyless signing and the INR2,500 project alerts-only budget are configured as described below.
+
+The independent bootstrap super admin completed actual Hosting sign-in/password rotation before seeding; its secret version was updated and credentials retained only in an ignored local file with mode 0600. Standard dataset `virtualwardrobe-demo-v1` is ACTIVE: 12 accounts (3 per role), 3 stores, 30 products, 11 memberships, 6 enquiries/33 events, 3 saved mock previews and 102 owned objects. Two actual seed runs plus status passed 8 checks: identical counts/objects/credential digest, second `changed=false`, minimums and 0600 credential files. Public catalog media was actually read through Hosting→API→keyless GCS URL as 200 JPEG. Seed made no provider call and bootstrap remains outside the dataset.
+
+The scoped failure metric/policy are configured without notification channels. A single labelled synthetic `RELEASE_PROBE` reached Logging and Monitoring; Console showed OPEN incident `0.oeacxougqnde` at 2026-10-26T23:58:24Z for policy `3308792671088295695`. This proves monitoring plumbing, not a manufactured real application failure. The deployed 60-second alignment triggered after propagation; [Google recommends a longer window for delayed log metrics](https://docs.cloud.google.com/monitoring/alerts/using-alerting-ui), which remains future tuning rather than a failed test.
+
+Hosted signup with real CAPTCHA, sessions/CSRF, catalog/internal-route checks and the customer/staff callback/history/privacy flow passed. Live upload verification then stopped at a combined replay/length/CORS guard before genuine finalize continued; a route-enabled diagnostic is pending. A private READ ONLY database snapshot at 2026-10-27T00:14:16Z confirmed only 3 seeded mock jobs/attempts, zero Google/non-demo jobs or provider starts, and zero generation reservations/committed/observed spend. The paid-action journal was not silently reset. Actual full AI generation/save/relogin/download/delete, load/performance/cold-start, backup/restore/removal and final source delivery remain pending until separately executed and recorded. No 40-pair human approval or statistical generation p95 is claimed.
+
+Protected local receipts live under ignored `work/gcp`: deployment/readiness/runtime config/smoke, standard-seed-verification, monitoring probe/Console verification, bootstrap-rotation and pre-provider-accounting. Generated passwords, recovery codes, signed URLs and private inputs are excluded from these public docs. See [the verification runbook](gcp-release-verification.md) for the remaining phases.
+
 ## Deployment commands
 
 From the nested application directory, inspect the reviewed non-secret configuration and resource plan:

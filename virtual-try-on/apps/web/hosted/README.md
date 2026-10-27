@@ -1,6 +1,6 @@
 # Hosted evaluation verification
 
-This runner is separate from the required local Playwright suite. The local suite continues to require LOCAL_TEST CAPTCHA and FIXTURE generation. Hosted execution requires the actual reviewed Hosting inventory, generated cloud credentials and a root-dispatched release. No hosted run has been performed by source preparation.
+This runner is separate from the required local Playwright suite. The local suite continues to require LOCAL_TEST CAPTCHA and FIXTURE generation. Hosted execution requires the actual reviewed Hosting inventory, generated cloud credentials and a root-dispatched release. Actual execution receipts remain protected under `work/gcp`; see the release verification document for their current status.
 
 ```sh
 npm --prefix apps/web run hosted:test
@@ -48,7 +48,7 @@ node apps/web/hosted/verify.mjs --run --allow-one-live-job
 
 The runner uses the original committed owned hero-person PNG and the available Ruby occasion product in the store shared by two accepted seeded staff. It confirms the actual EVALUATION_DEMO/Google/model config and all three UI consents. Before the one paid UI click it creates `work/gcp/hosted-live-job.json` exclusively, synchronizes its file and parent directory, and never replaces that reservation with another new attempt. A pre-existing journal blocks a new paid action, even after a crash or unknown provider outcome. Do not delete/move it merely to make a retry pass. The signup credential/attempt record also persists once at `demo-credentials-hosted-signup.json`; successful signup recovery codes are preserved there before UI confirmation.
 
-The actual browser first uploads the original Blob through the returned GCS capability, with automatic Content-Length and no cookies/CSRF. The runner holds the genuine finalize request, replays that same Blob/headers through browser fetch while the raw object exists, requires412 and then continues the unchanged original finalize request. Finalizing first would delete the raw object and invalidate the replay proof. No cloud response is mocked.
+The actual browser first uploads the original Blob through the returned GCS capability, with automatic Content-Length and no cookies/CSRF. The verifier binds the exact first PUT and awaits its CDP wire-header/status observation; Playwright interception can omit the automatic length from its high-level header view. Only safe status/boolean diagnostics leave the observer. The runner holds the genuine finalize request, replays that same Blob/headers through browser fetch while the raw object exists, requires412 and then continues the unchanged original finalize request. Finalizing first would delete the raw object and invalidate the replay proof. No cloud response is mocked.
 
 It observes actual persistent job states and records server created-to-terminal completion (including queue time), terminal observation, attempts and client timing before any save/login/download/delete actions. Completion must meet the server180-second deadline. Whole-workflow and post-submission lifecycle timing are separate. Provider usage is explicitly unavailable in the job DTO; the runner does not invent an estimated charge, percentile or human fidelity approval. A failed or unknown job is not replaced automatically.
 

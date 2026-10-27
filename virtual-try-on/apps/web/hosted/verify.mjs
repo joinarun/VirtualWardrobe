@@ -25,6 +25,7 @@ import {
   signupRecovery,
   terminalObservation,
 } from "./policy.mjs";
+import { bindOriginalPut } from "./put-observation.mjs";
 
 const WEB = fileURLToPath(new URL("../", import.meta.url));
 const STATE = resolve(WEB, "../../work/gcp");
@@ -167,7 +168,7 @@ async function pageContext(browser, errors) {
   await client.send("Emulation.setCPUThrottlingRate", {
     rate: PROFILE.cpuSlowdown,
   });
-  return { context, page };
+  return { context, page, client };
 }
 async function signupOnce(browser, work, revision, errors) {
   const path = join(work, "demo-credentials-hosted-signup.json");
@@ -283,11 +284,13 @@ async function callbackJourney(pages, who, product, output) {
     .getByLabel(/^I agree to share my name, unverified mobile number/)
     .check();
   let requestOnlyProduct = false;
-  const created = customer.waitForResponse(
-    (response) =>
-      isPath(response, "/me/enquiries") &&
-      response.request().method() === "POST",
-  ).catch(() => null);
+  const created = customer
+    .waitForResponse(
+      (response) =>
+        isPath(response, "/me/enquiries") &&
+        response.request().method() === "POST",
+    )
+    .catch(() => null);
   await customer
     .getByRole("button", { name: "Request a callback", exact: true })
     .click();
@@ -331,12 +334,7 @@ async function callbackJourney(pages, who, product, output) {
     ) >= 1,
     "STORE_NOTIFICATION_MISSING",
   );
-  await staff
-    .getByRole("button", {
-      name: `Open enquiry for ${product.title} from ${who.customer.name}`,
-      exact: true,
-    })
-    .click();
+  await staff.goto(`/staff?store=${who.store}&tab=enquiries&enquiry=${id}`);
   await staff
     .locator(".ticket-status")
     .filter({ hasText: /^Open$/ })
@@ -496,12 +494,11 @@ async function liveJourney(
   resume,
   observe,
 ) {
-  const { customer, other, staff } = pages;
+  const { customer, other, staff, customerClient } = pages;
   const original = await read(customer, "/me/try-on/gallery");
   let journal,
     sourceId = null,
-    replayProof = null,
-    rawProof = null;
+    replayProof = null;
   if (resume) {
     const value = await jsonFile(join(work, "hosted-live-job.json"), true);
     requireCheck(
@@ -548,26 +545,26 @@ async function liveJourney(
         }
       }
     };
-    const rawHeaders = async (request) => {
-      if (
-        request.method() === "PUT" &&
-        new URL(request.url()).hostname === "storage.googleapis.com" &&
-        rawProof === null
-      ) {
-        try {
-          const headers = await request.allHeaders();
-          rawProof =
-            headers["content-length"] === String(photo.length) &&
-            headers.origin === TARGET.origin &&
-            !headers.cookie &&
-            !headers["x-csrf-token"];
-        } catch {
-          rawProof = false;
-        }
-      }
-    };
+    const putObserver = bindOriginalPut({
+      capabilityReady: capReady,
+      expectedBytes: photo.length,
+      origin: TARGET.origin,
+    });
+    requireCheck(customerClient, "WIRE_OBSERVER_SESSION_UNAVAILABLE");
+    customerClient.on(
+      "Network.requestWillBeSent",
+      putObserver.onNetworkRequest,
+    );
+    customerClient.on(
+      "Network.requestWillBeSentExtraInfo",
+      putObserver.onNetworkExtraInfo,
+    );
+    customerClient.on(
+      "Network.responseReceived",
+      putObserver.onNetworkResponse,
+    );
     customer.on("response", capture);
-    customer.on("request", rawHeaders);
+    customer.on("request", putObserver.onPlaywrightRequest);
     const finalizePattern =
       /\/api\/v1\/me\/try-on\/uploads\/[a-f0-9-]{36}\/finalize$/;
     let replayAttempted = false;
@@ -592,6 +589,9 @@ async function liveJourney(
           value && !capError && route.request().url().includes(value.uploadId),
           "SOURCE_CAPABILITY_CAPTURE_FAILED",
         );
+        // Await the exactly-bound original request's real wire metadata/status.
+        // Fetch interception can omit automatic Content-Length from allHeaders().
+        const originalPut = await putObserver.wait(15000);
         // The raw PUT has completed, and this real finalize request has not reached the server yet.
         const status = await customer.evaluate(
           async ({ url, headers, base64 }) => {
@@ -612,12 +612,29 @@ async function liveJourney(
             base64: photo.toString("base64"),
           },
         );
+        const uploadDiagnostics = { ...originalPut, replayStatus: status };
+        journal.value = { ...journal.value, uploadDiagnostics };
+        await writePrivate(journal.path, journal.value);
+        observe({
+          phase: "SIGNED_UPLOAD",
+          uploadDiagnostics,
+          newJobSubmitted: false,
+          lifecycle: "NOT_FINISHED",
+        });
         requireCheck(
-          status === 412 && rawProof === true,
+          originalPut.originalStatus >= 200 &&
+            originalPut.originalStatus < 300 &&
+            originalPut.wireExtraInfoObserved &&
+            originalPut.lengthPresent &&
+            originalPut.lengthMatch &&
+            originalPut.originMatch &&
+            originalPut.cookieAbsent &&
+            originalPut.csrfAbsent &&
+            status === 412,
           "SIGNED_PUT_REPLAY_OR_LENGTH_CORS_FAILED",
         );
         replayProof = {
-          replayStatus: status,
+          ...uploadDiagnostics,
           browserBlobLength: true,
           originalPutWithoutCookiesOrCsrf: true,
         };
@@ -707,7 +724,20 @@ async function liveJourney(
     } finally {
       customer.off("request", countCreate);
       customer.off("response", capture);
-      customer.off("request", rawHeaders);
+      customer.off("request", putObserver.onPlaywrightRequest);
+      customerClient.off(
+        "Network.requestWillBeSent",
+        putObserver.onNetworkRequest,
+      );
+      customerClient.off(
+        "Network.requestWillBeSentExtraInfo",
+        putObserver.onNetworkExtraInfo,
+      );
+      customerClient.off(
+        "Network.responseReceived",
+        putObserver.onNetworkResponse,
+      );
+      putObserver.dispose();
       await customer.unroute(finalizePattern);
       capability = null;
     }
@@ -808,7 +838,8 @@ async function liveJourney(
     .click();
   const download = await downloaded;
   requireCheck(
-    download && download.suggestedFilename() === "virtualwardrobe-preview.jpg" &&
+    download &&
+      download.suggestedFilename() === "virtualwardrobe-preview.jpg" &&
       !(await download.failure()),
     "PRIVATE_DOWNLOAD_FAILED",
   );
@@ -948,7 +979,14 @@ export async function main(argv = process.argv.slice(2)) {
     const [customer, other, staff, teammate, foreign] = entries.map(
         (entry) => entry.page,
       ),
-      pages = { customer, other, staff, teammate, foreign };
+      pages = {
+        customer,
+        other,
+        staff,
+        teammate,
+        foreign,
+        customerClient: entries[0].client,
+      };
     const auth = await read(customer, "/auth/config"),
       provider = await read(customer, "/try-on/config");
     requireCheck(
