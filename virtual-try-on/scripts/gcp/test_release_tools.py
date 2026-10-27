@@ -3,8 +3,11 @@ import contextlib
 import datetime
 import importlib.util
 import io
+import http.server
 import json
 import subprocess
+import socket
+import threading
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -22,6 +25,52 @@ def module(filename, name):
 PROBE = module("monitoring-probe.py", "vw_monitoring_probe")
 SMOKE = module("smoke.py", "vw_release_smoke")
 PERFORMANCE = module("performance.py", "vw_release_performance")
+
+
+@contextlib.contextmanager
+def local_keepalive_server():
+    class Server(http.server.ThreadingHTTPServer):
+        request_queue_size = 64
+        daemon_threads = True
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        protocol_version = "HTTP/1.1"
+
+        def setup(self):
+            super().setup()
+            self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):
+            with self.server.records_lock:
+                port = self.client_address[1]
+                self.server.records.append((port, self.path))
+                counts = self.server.counts
+                counts[port] = counts.get(port, 0) + 1
+                if counts[port] == 4:
+                    self.server.measured_start_counts.append(dict(counts))
+            if self.path == "/disconnect":
+                self.close_connection = True
+                self.connection.shutdown(socket.SHUT_RDWR)
+                return
+            payload = b"not-json" if self.path == "/invalid-json" else b'{"ok":true}'
+            self.send_response(503 if self.path == "/unavailable" else 200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+    server = Server(("127.0.0.1", 0), Handler)
+    server.records = []; server.counts = {}; server.measured_start_counts = []
+    server.records_lock = threading.Lock()
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield server, "http://127.0.0.1:" + str(server.server_address[1])
+    finally:
+        server.shutdown(); server.server_close(); thread.join(timeout=2)
 
 
 class ReleaseToolsTest(unittest.TestCase):
@@ -156,6 +205,48 @@ class PerformanceToolsTest(unittest.TestCase):
         plan = json.loads(output.getvalue())
         self.assertEqual((plan["concurrent_users"], plan["measured_requests"], plan["warm_api_p95_limit_ms"]), (20, 400, 750))
         self.assertFalse(plan["mutations"])
+        self.assertEqual(plan["transport"]["persistent_clients"], 20)
+        self.assertEqual(plan["transport"]["automatic_request_retries"], 0)
+        self.assertEqual(plan["warmup"], {"per_user": 3, "total": 60, "same_connection_as_measured": True,
+                                         "measured_start": "barrier after all users complete warm-up"})
+
+    def test_twenty_users_reuse_independent_connections_across_sixty_warmup_and_four_hundred_reads(self):
+        with local_keepalive_server() as (server, base):
+            warmup, measured, duration = PERFORMANCE.run_load(base, [("browse", "/catalog"), ("search", "/search")], 20)
+            self.assertEqual((len(warmup), len(measured), len(server.records)), (60, 400, 460))
+            self.assertTrue(all(sample["status"] == 200 for sample in warmup + measured))
+            self.assertEqual(len(server.counts), 20)
+            self.assertEqual(set(server.counts.values()), {23})
+            self.assertEqual(len(server.measured_start_counts), 20)
+            self.assertTrue(all(len(counts) == 20 and min(counts.values()) >= 3 for counts in server.measured_start_counts))
+            self.assertGreater(duration, 0)
+
+    def test_transport_failure_is_counted_once_and_only_later_scheduled_read_reconnects(self):
+        with local_keepalive_server() as (server, base):
+            client = PERFORMANCE.PersistentReadClient(base)
+            try:
+                failed, payload = client.fetch("/disconnect")
+                self.assertEqual(failed["status"], 0); self.assertIsNone(payload)
+                successful, _ = client.fetch("/ok")
+                self.assertEqual(successful["status"], 200)
+                self.assertEqual([path for _, path in server.records], ["/disconnect", "/ok"])
+                unavailable, _ = client.fetch("/unavailable")
+                self.assertEqual(unavailable["status"], 503)
+                invalid, _ = client.fetch("/invalid-json")
+                self.assertEqual(invalid["status"], 0)
+                recovered, _ = client.fetch("/ok")
+                self.assertEqual(recovered["status"], 200)
+                self.assertEqual(len(server.records), 5)
+            finally:
+                client.close()
+
+    def test_failed_warmup_never_starts_measured_requests(self):
+        with local_keepalive_server() as (server, base):
+            warmup, measured, _ = PERFORMANCE.run_load(base, [("browse", "/unavailable")], 20)
+            self.assertEqual(len(warmup), 60)
+            self.assertTrue(all(sample["status"] == 503 for sample in warmup))
+            self.assertEqual(measured, [])
+            self.assertEqual(len(server.records), 60)
 
     def test_mobile_threshold_total_and_default_profile_are_controlled_without_browser(self):
         script = Path(__file__).with_name("performance-mobile.mjs").resolve()

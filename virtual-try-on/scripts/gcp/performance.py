@@ -4,16 +4,17 @@ import argparse
 import concurrent.futures
 import datetime
 import json
+import http.client
 import math
 from pathlib import Path
 import platform
 import re
 import statistics
+import ssl
 import subprocess
 import threading
 import time
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 from smoke import origins
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,20 +25,94 @@ def percentile(values, fraction):
     return sorted(values)[max(0, math.ceil(len(values) * fraction) - 1)] if values else None
 
 
-def fetch(base, path):
-    started = time.perf_counter()
-    try:
-        with urlopen(Request(base + path, headers={"Accept": "application/json", "Cache-Control": "no-cache",
-                     "User-Agent": "VirtualWardrobe-Release-Performance/1"}), timeout=60) as response:
-            payload = response.read(2_000_000)
-            return {"status": response.status, "ms": (time.perf_counter() - started) * 1000}, json.loads(payload)
-    except HTTPError as error:
-        status = error.code
-        error.close()
-        return {"status": status, "ms": (time.perf_counter() - started) * 1000}, None
-    except (URLError, TimeoutError, ValueError):
-        return {"status": 0, "ms": (time.perf_counter() - started) * 1000}, None
+class PersistentReadClient:
+    """One user's HTTP/1.1 client. Requests are never retried; later reads may reconnect."""
+    def __init__(self, base, tls_context=None):
+        target = urlsplit(base)
+        if target.scheme not in ("http", "https") or not target.hostname or target.username or target.password or target.query or target.fragment or target.path not in ("", "/"):
+            raise ValueError("A plain HTTP(S) origin is required")
+        if target.scheme == "https":
+            self.connection = http.client.HTTPSConnection(target.hostname, target.port, timeout=60,
+                                                          context=tls_context or ssl.create_default_context())
+        else:
+            self.connection = http.client.HTTPConnection(target.hostname, target.port, timeout=60)
 
+    def fetch(self, path):
+        started = time.perf_counter()
+        try:
+            self.connection.request("GET", path, headers={"Accept": "application/json", "Cache-Control": "no-cache",
+                                    "User-Agent": "VirtualWardrobe-Release-Performance/1", "Connection": "keep-alive"})
+            response = self.connection.getresponse()
+            payload = response.read(2_000_001)
+            if len(payload) > 2_000_000:
+                raise ValueError("Response exceeds the measurement byte limit")
+            status = response.status
+            value = json.loads(payload) if status == 200 else None
+            return {"status": status, "ms": (time.perf_counter() - started) * 1000}, value
+        except (OSError, http.client.HTTPException, ValueError):
+            # Never repeat this request. A later scheduled read may establish a
+            # new socket, just as a browser does after an expired connection.
+            self.close()
+            return {"status": 0, "ms": (time.perf_counter() - started) * 1000}, None
+
+    def close(self):
+        self.connection.close()
+
+
+def fetch(base, path):
+    """Independent first observation; its connection is not one of the warm user sessions."""
+    started = time.perf_counter()
+    client = PersistentReadClient(base)
+    try:
+        sample, payload = client.fetch(path)
+        sample["ms"] = (time.perf_counter() - started) * 1000
+        return sample, payload
+    finally:
+        client.close()
+
+
+def run_load(base, endpoints, requests_per_user, users=20):
+    # SSLContext is configured once and never mutated while shared. Each worker
+    # owns its separate connection/client for its warm-up and measured reads.
+    tls_context = ssl.create_default_context()
+    warm_by_user = [None] * users
+    warm_failed = threading.Event()
+    measurement_started = [None]
+    barrier = threading.Barrier(users, action=lambda: measurement_started.__setitem__(0, time.perf_counter()))
+
+    def user(index):
+        client = PersistentReadClient(base, tls_context)
+        try:
+            warm = []
+            for offset in range(3):
+                sample, _ = client.fetch(endpoints[(index + offset) % len(endpoints)][1])
+                warm.append(sample)
+                if sample["status"] != 200:
+                    warm_failed.set()
+            warm_by_user[index] = warm
+            try:
+                barrier.wait(timeout=30)
+            except threading.BrokenBarrierError:
+                warm_failed.set()
+                return []
+            if warm_failed.is_set():
+                return []
+            samples = []
+            for offset in range(requests_per_user):
+                name, path = endpoints[(index + offset) % len(endpoints)]
+                sample, _ = client.fetch(path)
+                samples.append(dict(sample, endpoint=name))
+            return samples
+        finally:
+            client.close()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=users) as pool:
+        samples = [sample for group in pool.map(user, range(users)) for sample in group]
+    duration = time.perf_counter() - measurement_started[0] if measurement_started[0] is not None else 0
+    warmup = [sample for group in warm_by_user if group is not None for sample in group]
+    if warm_failed.is_set() or len(warmup) != users * 3:
+        return warmup, [], duration
+    return warmup, samples, duration
 
 
 def summarize(selected):
@@ -79,6 +154,11 @@ def main(argv=None):
         parser.error("Use 10–25 requests per user; concurrency is fixed at 20")
     plan = {"concurrent_users": 20, "measured_requests": 20 * args.requests_per_user,
             "minimum_catalog_rows": 1000, "warm_api_p95_limit_ms": 750,
+            "transport": {"protocol": "HTTP/1.1", "persistent_clients": 20, "connection_ownership": "one independent client per user",
+                          "shared_ssl_context": True, "automatic_request_retries": 0, "redirects_followed": False,
+                          "reconnect": "only a later scheduled read may reconnect after peer close or a counted failure"},
+            "warmup": {"per_user": 3, "total": 60, "same_connection_as_measured": True,
+                       "measured_start": "barrier after all users complete warm-up"},
             "excluded": ["media transfer", "AI generation"],
             "first_observation": "Recorded separately; a cold start is claimed only with matching server startup evidence",
             "mutations": False}
@@ -99,27 +179,11 @@ def main(argv=None):
                  ("search", "/api/v1/products?q=saree&page=0&size=24"),
                  ("product", "/api/v1/products/" + product_id),
                  ("categories", "/api/v1/categories"), ("brands", "/api/v1/brands")]
-    # Warm class loading, connection pools and each endpoint under the actual
-    # concurrency. These 60 requests never enter the measured sample.
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as pool:
-        warmup = list(pool.map(lambda i: fetch(base, endpoints[i % len(endpoints)][1])[0], range(60)))
-    if any(sample["status"] != 200 for sample in warmup):
+    # Three warm-up reads per user retain that same user's connection for the
+    # measured phase. All 20 users meet at a barrier before measurements begin.
+    warmup, samples, duration = run_load(base, endpoints, args.requests_per_user)
+    if len(warmup) != 60 or any(sample["status"] != 200 for sample in warmup) or not samples:
         parser.error("Warm-up returned an error; inspect the deployment before running the load sample")
-    barrier = threading.Barrier(20)
-
-    def user(index):
-        barrier.wait(timeout=30)
-        samples = []
-        for offset in range(args.requests_per_user):
-            name, path = endpoints[(index + offset) % len(endpoints)]
-            sample, _ = fetch(base, path)
-            samples.append(dict(sample, endpoint=name))
-        return samples
-
-    started = time.perf_counter()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as pool:
-        samples = [sample for group in pool.map(user, range(20)) for sample in group]
-    duration = time.perf_counter() - started
     summaries = {}
     for name in ["all"] + [name for name, _ in endpoints]:
         selected = [s for s in samples if name == "all" or s["endpoint"] == name]
