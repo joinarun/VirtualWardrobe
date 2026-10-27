@@ -2,6 +2,14 @@
 
 This runner is separate from the required local Playwright suite. The local suite continues to require LOCAL_TEST CAPTCHA and FIXTURE generation. Hosted execution requires the actual reviewed Hosting inventory, generated cloud credentials and a root-dispatched release. Actual execution receipts remain protected under `work/gcp`; see the release verification document for their current status.
 
+## Completed hosted evaluation
+
+The authorized run on2026-10-27 at01:02:34–01:05:15UTC passed all five phases. It used verifier commit `c25207570b391e1496865f485fac452fce73deee` against deployed application `f87c8f109516e0e3055c4016800548a1bc433241`, with Chrome156.0.8078.48 and Node24.18.0 on darwin/arm64. Chrome ran in a temporary Playwright profile using the declared mobile/network/CPU profile below; the normal user profile was untouched. Protected evidence is `work/gcp/hosted-verification-HMgWoE/receipt.json`, its sibling source attestation, masked screenshots and owned synthetic download.
+
+Exactly one real Google job completed with one provider attempt. Server creation-to-terminal time was25.316seconds; this is one operational sample, not a latency percentile. The same run proved browser Blob upload200, replay412, actual wire length/origin and absence of cookies/CSRF, genuine finalization, RUNNING→SUCCEEDED, image rendering, save/relogin/download/delete, source/private cross-owner denials and preservation of existing saved fixtures. The durable journal remains `RESULT_DELETED`; it is not reset to permit another generation. Usage cost was not exposed in the job DTO. The40-pair human saree quality review remains pending.
+
+The complete customer/staff callback, duplicate preservation, claim winner, public/internal message separation, customer reply, reassignment, closure/history and cross-store denial checks also passed. Signup reused the earlier successful ordinary real CAPTCHA proof and did not attempt another signup. No JavaScript errors were observed. Earlier failure/diagnostic receipts and the explicit pre-submission reservation reconciliation remain preserved. Fixes were confined to verifier wire observation, bounded waits and safe fixed-stage/numeric-status diagnostics; no unproven server-authentication change was made. GCP garbage-collection, backup and performance validation are separate release operations, and this browser receipt does not claim their outcomes.
+
 ```sh
 npm --prefix apps/web run hosted:test
 npm --prefix apps/web run hosted:verify

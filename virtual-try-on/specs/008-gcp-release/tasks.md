@@ -29,9 +29,9 @@ Goal: publish one accurate revision independently of visitor/provider tests. Ind
 Goal: prove actual privacy and workflow integrations. Independent check: real hosted browser/direct requests using fictional users and owned synthetic inputs.
 
 - [x] T012 [US2] Run the prepared hosted runner with --run for actual signup/session/CSRF/store/catalog/security checks and one real CAPTCHA attempt; record blocked risk/challenge outcomes without retries/bypass in specs/008-gcp-release/validation.md (FR-004/008).
-- [ ] T013 [US2] Prove real signed PUT/CORS/Blob length/type/create-only binding: hold finalize, replay while raw exists and require412, then continue original finalize; verify actual catalog/private access and cross-owner/guessed ID denials (FR-006).
-- [ ] T014 [US2] After root's bounded authorization, journal and execute at most one new asynchronous Google job through --allow-one-live-job; record actual queue/worker OIDC/terminal timing/attempts/usage and fixture/live distinction without human quality approval (FR-005/007).
-- [ ] T015 [US2] Finish hosted save/relogin/view/download/delete and callback-without-preview, staff claim/public/internal reply/customer reply/reassign/close/history journeys; exercise direct cross-store/customer denial and retain only safe aggregate evidence (FR-008).
+- [x] T013 [US2] Prove real signed PUT/CORS/Blob length/type/create-only binding: hold finalize, replay while raw exists and require412, then continue original finalize; verify actual catalog/private access and cross-owner/guessed ID denials (FR-006).
+- [x] T014 [US2] After root's bounded authorization, journal and execute at most one new asynchronous Google job through --allow-one-live-job; record actual queue/worker OIDC/terminal timing/attempts/usage and fixture/live distinction without human quality approval (FR-005/007).
+- [x] T015 [US2] Finish hosted save/relogin/view/download/delete and callback-without-preview, staff claim/public/internal reply/customer reply/reassign/close/history journeys; exercise direct cross-store/customer denial and retain only safe aggregate evidence (FR-008).
 
 ## Phase 5 — User Story 3: Recovery and measurements (P1)
 

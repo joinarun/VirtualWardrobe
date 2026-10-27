@@ -4,7 +4,7 @@ This runbook records completed checks and the remaining feature 008 execution se
 
 ## Actual evidence and remaining gates
 
-Snapshot below includes the read-only accounting check at 2026-10-27T00:14:16Z. Update pending results only from their actual receipts; prepared tools are not a pass.
+Snapshot below includes the successful hosted journey and read-only accounting at 2026-10-27T01:09:57Z. Update pending results only from their actual receipts; prepared tools are not a pass.
 
 | Check | Status and evidence |
 | --- | --- |
@@ -17,13 +17,15 @@ Snapshot below includes the read-only accounting check at 2026-10-27T00:14:16Z. 
 | Catalog media/signing | PASS — actual public cover read via Hosting/API/keyless GCS returned 200 JPEG; `public-catalog-media-verification.json`. |
 | Monitoring | PASS — single synthetic log/metric probe and actual OPEN incident `0.oeacxougqnde`, policy `3308792671088295695`, zero channels; monitoring receipt pair. |
 | Hosted signup/auth/callback | PASS for completed phases — real CAPTCHA signup, secure sessions/CSRF, catalog/internal routes, callback/staff conversation/reassignment/closure/privacy. See hosted safe receipts. |
-| Signed source upload/full live job | PENDING diagnostic — combined replay/length/CORS assertion stopped before finalize/job creation. READ ONLY DB evidence confirms Google jobs/provider starts and reserved/committed/observed totals all0; only 3 seeded mock jobs exist. Journal reconciliation requires root review, not automatic retry. |
-| 1,000-product/20-user API and mobile/cold measurements | UNRUN — wait for quiet completed live journey and explicit execution authorization. |
-| Actual backup/isolated restore/removal | UNRUN — prepared helper does not count as recovery evidence. |
-| Human quality/statistical generation performance | PENDING — A7 human 40-pair review and meaningful A9 p95 are not established by connectivity or one future smoke. |
+| Signed source upload/full live job | PASS — native Chrome journey `hosted-verification-HMgWoE/receipt.json`: genuine browser PUT200, pre-finalize replay412 with exact wire length/origin and no cookies/CSRF, one Google attempt, RUNNING→SUCCEEDED in25.316s server time, consent/private denial/save/relogin/download/delete and original gallery preservation. Canonical paid journal RESULT_DELETED. |
+| Catalog deletion/garbage collection | Cleanup PASS at01:18:51Z, including final late-write recheck and zero remaining queue rows — one added synthetic catalog image was validated and API-deleted, app404, four candidate new keys absent, all3 original media and6 original objects preserved. The helper lost case-insensitive HTTP headers before following the new public read, so that specific new-image200 is UNRUN; existing public JPEG200 remains proved. `catalog-gc-journal.json`/`catalog-gc-observation.json`. |
+| 1,000-product/20-user API | Client target FAILED in first run —1030 published rows,60 warm-up +400 measured/20users, all200; client p951019.17ms versus750ms. Complete461-record server correlation gives warmed server p9553.736ms/max89.781ms; fresh TLS per request is a transport limitation under review, with no hidden retry. |
+| Mobile/cold measurements | Mobile PASS —5 fresh nativeChrome156 contexts, decoded/painted usable1.751–2.507s under the exact390/DPR2/CPU4×/9Mbps/150ms/cache-off profile. Cold separately confirmed from0-instance preflight and same-instance first request/startup:21.372s client/20.512s server. |
+| Actual backup/isolated restore/removal | RUNNING — live PostgreSQL17.11/schema10/JAR validation passed; baseline14 accounts/3 stores/30 products/4 jobs; successful backup1793063385022 recorded before load mutation. Recovery acceptance remains pending actual restore comparison and temporary-instance removal. |
+| Human quality/statistical generation performance | PENDING — A7 human 40-pair review and meaningful A9 p95 are not established by connectivity or one synthetic smoke. |
 | Final source/CI delivery | PENDING root publication and final acceptance matrix. |
 
-The earlier failed upload verification made no Google call: aggregate source `pre-provider-accounting.json` has zero non-demo/non-dataset/Google jobs, zero provider_started_at attempts, zero generation-day rows/accepted/reserved/committed/observed totals and zero customer quota use. No active or unfinalized non-dataset sources were counted at that snapshot. This is scoped to this application's database and is not a claim about other applications in the cloud project.
+The earlier failed upload verification made no Google call: aggregate source `pre-provider-accounting.json` has zero non-demo/non-dataset/Google jobs, zero provider_started_at attempts, zero generation-day rows/accepted/reserved/committed/observed totals and zero customer quota use. No active or unfinalized non-dataset sources were counted at that snapshot. This is scoped to this application's database and is not a claim about other applications in the cloud project. The later authorized live journey submitted exactly one real job: `post-provider-accounting.json` records one Google CONFIRMED settled attempt, no active Google jobs, zero reserved USD,2303 input/1120 candidate-output/942 thought tokens. The application estimates USD0.04412 from configured rates (USD1.50/30.00/7.50 per million respectively) and commits the conservative USD0.25 reservation. These figures are application accounting, not actual Cloud Billing charges; the three seeded mock jobs remain separate.
 
 ## Publish the reviewed source
 
@@ -86,7 +88,13 @@ Create an enquiry from an actual product/preview and verify store notification, 
 
 ## Actual performance evidence
 
-These commands are not yet executed in the current release. Wait for the real hosted job to reach its confirmed terminal state and root's phase authorization; keep the first live generation sample free of load-test traffic. Do not wake the API with extra catalog/health probes before the intended cold-start observation.
+The real hosted job completed before operational load. Successful backup1793063385022 was durably recorded before the independent load-v1 dataset was seeded:1000 published products/2006 objects, no try-on jobs. Operator source `64b4c4054237b933309626234d78d8f26dd7f5fa` measured deployed app `f87c8f1`; later operator commits do not imply an app redeploy.
+
+The first API run completed all400 measured requests without errors, but its end-to-end p95 was1019.17ms and therefore failed the750ms target. Per-endpoint p95: browse1112.61, search1173.55, product876.76, categories878.78 and brands823.19ms. The complete461-request Cloud Run sample (first observation +60 warm-up +400 measured) gives warmed server p9553.736ms/max89.781ms; this distinguishes server response time from workstation/network/TLS cost and does not relabel the failed client sample as passed. The urllib client opens a new TLS connection on every request; any correction/retest requires explicit reviewed operator source and must retain this initial result.
+
+All five fresh native Chrome156.0.8078.48 mobile contexts passed with decoded/painted usable times2506.5,1896.1,1751.0,2034.8 and1778.3ms, zero JavaScript errors and1030 catalog rows. Search timings were419–602ms. These are synthetic profile observations, not field-user percentiles.
+
+The quiet API window ended after the last request at01:08:41Z and a0-instance metric at01:25:52Z. The first request at01:26:19Z took21372ms client time and20512ms server time. A matching new-instance startup at01:26:20Z belongs to that request's exact revision and instance, so this is a confirmed cold-start observation. It is excluded from warmed metrics. `performance-server-correlation.json` retains only timestamps/aggregates/match booleans, not raw URLs or instance IDs. Do not wake the API with extra catalog/health probes before the intended cold-start observation.
 
 Prepare the separate 1,000 published catalog rows using feature 007 and record its dataset ID. Run from the declared operator location, with max instances and minimum 0 unchanged. The API tool requires 20 simultaneous users, separates 60 warm-up reads from 400 measured reads, verifies the live catalog count and enforces per-endpoint and aggregate p95 ≤750 ms. It excludes image and AI transfer. Its first observation is separate; only real startup-system-log evidence supports a cold-start statement. Use a quiet API window after scale-to-zero for that observation, and retain matching startup timestamps. A request observed without startup evidence must not be labelled cold.
 
@@ -95,7 +103,7 @@ python3 scripts/gcp/cloud-demo.py seed --project virtualtryon-511016 --dataset v
 python3 scripts/gcp/performance.py
 python3 scripts/gcp/performance.py --run --client-location 'Operator workstation, India' --read-startup-logs
 node scripts/gcp/performance-mobile.mjs
-node scripts/gcp/performance-mobile.mjs --run
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" node scripts/gcp/performance-mobile.mjs --run
 python3 scripts/gcp/cloud-demo.py cleanup --project virtualtryon-511016 --dataset virtualwardrobe-load-v1 --run
 python3 scripts/gcp/cloud-demo.py cleanup --project virtualtryon-511016 --dataset virtualwardrobe-load-v1 --run --execute-cleanup
 ```
@@ -106,7 +114,7 @@ Investigate failed measurements through query counts, indexes, response size, im
 
 ## Backup, migration and restore rehearsal
 
-This phase is currently unrun. It needs its own root authorization and must never overwrite the live source database.
+This phase was explicitly authorized after the completed live journey and is running. It must never overwrite the live source database. A prepared command or successful backup alone is not a completed restore rehearsal.
 
 After the final seeded application is quiescent, package the final tested backend JAR and use the explicit host Java21 path. The check helper loads only its JDBC/Flyway dependencies and migration resources; it does not start the application, worker or provider. It takes the password in a child environment and prints only schema versions and aggregate counts.
 
