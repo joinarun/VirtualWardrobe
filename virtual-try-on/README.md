@@ -10,7 +10,7 @@ The dedicated GCP demo uses real CAPTCHA and Google image generation with bounde
 
 ## Run locally
 
-Prerequisites: Git, Make, and a running Docker engine with Compose v2. Java21 and Node24 are supplied by containers; host Java/Maven are not required.
+Prerequisites: Git, Make, Python 3 for demo/verification scripts, and a running Docker engine with Compose v2. Java21 and Node24 are supplied by containers; host Java/Maven are not required.
 
 ```bash
 make bootstrap

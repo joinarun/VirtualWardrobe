@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 umask 077
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 ./scripts/wait-ready.sh
 # Readiness comes from make dev's packaged runtime; do not recompile a concurrently edited working tree.
 BOOTSTRAP_SKIP_PACKAGE=true ./scripts/bootstrap-admin.sh

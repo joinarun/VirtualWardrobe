@@ -37,17 +37,17 @@ Goal: prove actual privacy and workflow integrations. Independent check: real ho
 
 Goal: demonstrate reliable operations, actual performance and recovery separately from model quality. Independent check: scoped monitor/performance/restore reports and temporary-resource removal.
 
-- [ ] T016 [US3] Verify deployed authenticated maintenance enqueues/drains cleanup and safe retry behavior, using controlled owned test objects only; combine with actual PG late-write/reference evidence from T003/T004 in specs/008-gcp-release/validation.md (FR-005/009).
+- [x] T016 [US3] Verify deployed authenticated maintenance enqueues/drains cleanup and safe retry behavior, using controlled owned test objects only; combine with actual PG late-write/reference evidence from T003/T004 in specs/008-gcp-release/validation.md (FR-005/009).
 - [x] T017 [US3] Run scoped scripts/gcp/observability.py --apply, send the agreed private safe probe and observe metric/incident ingestion without channels/recipients or private fields; record sanitized evidence (FR-010).
-- [ ] T018 [US3] Seed the independent1000-product profile through scripts/gcp/cloud-demo.py, run scripts/gcp/performance.py and performance-mobile.mjs with actual20-user warm/mobile profile; separately observe a quiet-window cold start with startup logs, then dry-run/execute only that load dataset cleanup (FR-012).
-- [ ] T019 [US3] Run scripts/gcp/db-check.py and backup-rehearsal.py against the final tested JAR; restore only to a fresh strict virtualwardrobe-restore-* target, compare migration/core counts/JAR and prove deletion; resolve any pending temporary cleanup before declaring pass (FR-011).
-- [ ] T020 [US3] Record final cost/budget/retention/instance/pool/quota settings, rollback-compatible revisions and exact owned teardown inventory in docs/gcp-deployment.md; recheck unrelated resources after all operations (FR-001/013).
+- [x] T018 [US3] Seed the independent1000-product profile through scripts/gcp/cloud-demo.py, run scripts/gcp/performance.py and performance-mobile.mjs with actual20-user warm/mobile profile; separately observe a quiet-window cold start with startup logs, then dry-run/execute only that load dataset cleanup (FR-012).
+- [x] T019 [US3] Run scripts/gcp/db-check.py and backup-rehearsal.py against the final tested JAR; restore only to a fresh strict virtualwardrobe-restore-* target, compare migration/core counts/JAR and prove deletion; resolve any pending temporary cleanup before declaring pass (FR-011).
+- [x] T020 [US3] Record final cost/budget/retention/instance/pool/quota settings, rollback-compatible revisions and exact owned teardown inventory in docs/gcp-deployment.md; recheck unrelated resources after all operations (FR-001/013).
 
 ## Phase 6 — User Story 4: Reviewable delivery (P2)
 
 Goal: owner can operate and continue the exact delivered source. Independent check: repository instructions, CI and hosted revision match.
 
-- [ ] T021 [US4] Finish docs/gcp-release-verification.md, README.md and specs/008-gcp-release/validation.md with actual passed/failed/blocked/unrun A1–A12 evidence, URLs/revisions and explicit A7/A9 statistical limitations (FR-014).
+- [x] T021 [US4] Finish docs/gcp-release-verification.md, README.md and specs/008-gcp-release/validation.md with actual passed/failed/blocked/unrun A1–A12 evidence, URLs/revisions and explicit A7/A9 statistical limitations (FR-014).
 - [ ] T022 [US4] Root reviews secret-free source, pushes the intended GitHub repository and verifies ../.github/workflows/ci.yml for that revision; no credential/image/ignored-report artifacts enter Git (FR-014).
 
 ## Phase 7 — Final convergence
@@ -59,3 +59,10 @@ Goal: owner can operate and continue the exact delivered source. Independent che
 T001/reviewer gate precedes implementation. Source-only T002/T003/T005/T006/T007 may proceed in isolated ownership; T004 follows its regression cases and domain contract. T008 waits for all source work and is the hard prerequisite for T009/cloud mutations. T011 follows hosted readiness; provider work follows bootstrap/seed and the separate journal/authorization. US2 and US3 hosted checks can proceed after US1 readiness, but quiesce mutation for backup counts and use a quiet window for cold measurement. Root owns release dispatch/bootstrap/GitHub; GCP owns infra/operator; domain owns media lifecycle; frontend/root own hosted UI runner. Coordinate shared build targets.
 
 Incremental delivery: US1 supplies an operational website; US2 adds real integration evidence; US3 adds operations evidence; US4 supplies the continuation package. None independently authorizes production promotion. Failures trigger a source fix/new commit/image or an explicit failed/blocked result, never a fabricated pass or silent cost increase.
+
+
+## Evidence checkpoint2026-10-27
+
+Runtime appf87 remains unchanged. Authenticated maintenance, isolated restore/temporary-instance deletion, warm API/mobile and independently correlated cold-start checks passed. Explicit load cleanup is DELETED and all15 final baseline/object/credential/bootstrap/provider preservation checks passed. Cost/limits/rollback/teardown and delivery documentation are released. Earlier fresh-TLS client p95 failure, pre-measure platform429 and21.372s cold latency remain recorded.
+
+First private push893414d had CI run40434284728 fail only at the E2E wrapper ownership boundary; backend178/web18/operator37/lint/build passed. Root-reviewed host UID/GID plus numeric Java user.name mapping keeps Java ownership checks intact; wrapper3/3 and exact patched fresh browser14/14 passed, zero skips. The corrective commit/push and new CI result remain pending, so T022 is unchecked. T023 is root's final convergence/delivery gate. Human40-pair approval and statistical generation p95 remain pending.

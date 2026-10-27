@@ -34,5 +34,13 @@ elif [[ "$command_name" == cleanup-execute ]]; then args=(cleanup --dataset "$da
 elif [[ "$command_name" == cleanup ]]; then args+=(--dry-run)
 fi
 docker_arguments=(run --rm --no-deps)
-if [[ "$command_name" == seed ]]; then docker_arguments+=(-v "$PWD/apps/web/public/demo:/demo-assets:ro" -v "$credential_dir:/demo-credentials"); fi
-docker compose "${docker_arguments[@]}" -e APP_ENVIRONMENT=local api java -Dloader.main=com.virtualwardrobe.demo.DemoMain -cp target/backend-0.0.1-SNAPSHOT.jar org.springframework.boot.loader.launch.PropertiesLauncher "${args[@]}"
+java_command=(java)
+if [[ "$command_name" == seed ]]; then
+ # Linux bind mounts preserve the host owner; the credential CLI must run as that same user.
+ # A numeric principal also works when that UID has no entry in the container's passwd file.
+ demo_uid="$(id -u)"
+ demo_gid="$(id -g)"
+ docker_arguments+=(--user "$demo_uid:$demo_gid" -v "$PWD/apps/web/public/demo:/demo-assets:ro" -v "$credential_dir:/demo-credentials")
+ java_command+=("-Duser.name=$demo_uid")
+fi
+docker compose "${docker_arguments[@]}" -e APP_ENVIRONMENT=local api "${java_command[@]}" -Dloader.main=com.virtualwardrobe.demo.DemoMain -cp target/backend-0.0.1-SNAPSHOT.jar org.springframework.boot.loader.launch.PropertiesLauncher "${args[@]}"

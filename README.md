@@ -8,7 +8,7 @@ Open [VirtualWardrobe](https://virtualwardrobe-511016.web.app) or the [store wor
 
 ## Run locally
 
-With Docker running:
+With Docker running (Python 3 is also needed for demo data and verification commands):
 
 ```bash
 cd virtual-try-on
