@@ -34,7 +34,7 @@ Warm API measurement passed with 20 persistent users, 60 excluded warm-ups and 4
 
 Backup `1793063385022` was restored to a fresh copy with matching migrations/JAR/core counts; that copy is deleted and the live source remains RUNNABLE. Load-only cleanup completed: final counts are 14 accounts/3 stores/30 products/4 jobs, with all 12 enabled standard users and 102 live fixture objects preserved. Load-v1 has no live objects/products/accounts; its 2,006 ownership records remain deleted tombstones. Bootstrap and credential protection remain intact, schema stays at 10 and the deletion queue/provider reservations are empty.
 
-Private GitHub source is pushed at candidate `893414d`; CI and final evidence delivery are pending. No 40-pair human approval or statistical generation p95 is claimed.
+Private [GitHub source](https://github.com/joinarun/VirtualWardrobe) is pushed; corrected code `9c6649f2cf586cfde7a5788721ad7e2eaf2c1e2f` passed [CI](https://github.com/joinarun/VirtualWardrobe/actions/runs/40438095853). Final evidence is recorded in the feature008 validation document. No 40-pair human approval or statistical generation p95 is claimed.
 
 The separate connectivity-only request estimates USD0.0403965, making combined provider token-rate estimates about USD0.08452; these are not actual billed charges and exclude infrastructure and StyleReel.
 

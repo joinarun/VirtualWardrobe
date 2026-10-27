@@ -48,11 +48,11 @@ Goal: demonstrate reliable operations, actual performance and recovery separatel
 Goal: owner can operate and continue the exact delivered source. Independent check: repository instructions, CI and hosted revision match.
 
 - [x] T021 [US4] Finish docs/gcp-release-verification.md, README.md and specs/008-gcp-release/validation.md with actual passed/failed/blocked/unrun A1–A12 evidence, URLs/revisions and explicit A7/A9 statistical limitations (FR-014).
-- [ ] T022 [US4] Root reviews secret-free source, pushes the intended GitHub repository and verifies ../.github/workflows/ci.yml for that revision; no credential/image/ignored-report artifacts enter Git (FR-014).
+- [x] T022 [US4] Root reviews secret-free source, pushes the intended GitHub repository and verifies ../.github/workflows/ci.yml for that revision; no credential/image/ignored-report artifacts enter Git (FR-014).
 
 ## Phase 7 — Final convergence
 
-- [ ] T023 Review all tasks/results, source/build revision consistency, outstanding human/measurement gates and temporary-resource cleanup; root delivers actual app/GitHub links and honest remaining actions in specs/008-gcp-release/validation.md.
+- [x] T023 Review all tasks/results, source/build revision consistency, outstanding human/measurement gates and temporary-resource cleanup; root delivers actual app/GitHub links and honest remaining actions in specs/008-gcp-release/validation.md.
 
 ## Dependencies and parallel execution
 
@@ -65,4 +65,4 @@ Incremental delivery: US1 supplies an operational website; US2 adds real integra
 
 Runtime appf87 remains unchanged. Authenticated maintenance, isolated restore/temporary-instance deletion, warm API/mobile and independently correlated cold-start checks passed. Explicit load cleanup is DELETED and all15 final baseline/object/credential/bootstrap/provider preservation checks passed. Cost/limits/rollback/teardown and delivery documentation are released. Earlier fresh-TLS client p95 failure, pre-measure platform429 and21.372s cold latency remain recorded.
 
-First private push893414d had CI run40434284728 fail only at the E2E wrapper ownership boundary; backend178/web18/operator37/lint/build passed. Root-reviewed host UID/GID plus numeric Java user.name mapping keeps Java ownership checks intact; wrapper3/3 and exact patched fresh browser14/14 passed, zero skips. The corrective commit/push and new CI result remain pending, so T022 is unchecked. T023 is root's final convergence/delivery gate. Human40-pair approval and statistical generation p95 remain pending.
+The two initial CI setup failures are preserved in validation history. The corrected application/runner code at `9c6649f2cf586cfde7a5788721ad7e2eaf2c1e2f` passed [GitHub CI](https://github.com/joinarun/VirtualWardrobe/actions/runs/40438095853) in 8m22s: backend178, hosted18, operator37, local runner/security7, lint, build and required browser14/14 with zero skips. All23 feature tasks are complete for the evaluation demo. Human40-pair approval and statistical generation p95 remain explicit production-promotion gates. The final evidence update changes Markdown only; its code is identical to that tested commit.

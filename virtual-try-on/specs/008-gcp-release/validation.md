@@ -1,6 +1,6 @@
 # Feature 008 verification status
 
-Updated 2026-10-27 after all hosted operational checks and final load cleanup/preservation passed. CI correction verification and root final convergence remain pending at this checkpoint. This is an evaluation demo, not production quality approval. Results below distinguish completed checks, failed instrumentation and work still pending. No 40-pair human review or statistical generation p95 is claimed.
+Updated 2026-10-27 after all hosted operational checks and final load cleanup/preservation passed. The corrected code passed GitHub CI and root completed final convergence. This is an evaluation demo, not production quality approval. Results below distinguish completed checks, failed instrumentation and work still pending. No 40-pair human review or statistical generation p95 is claimed.
 
 ## Revision and completed source gates
 
@@ -86,7 +86,7 @@ A separate read-only database accounting check found three seeded mock jobs only
 
 Earlier25-second login/view and live-setup waits are retained as failed observations, not silently relabelled. Read-only Cloud Run/SQL diagnostics found fast sampled auth-handler responses (the observed200-response groups had p95 values below443ms), with the intended deployed revision/digest ready. Focused browser samples proved cookie rotation, matching authenticated session and `/account` navigation; an extended pre-click sample reached the real consent/file controls without submitting a job. Evidence: `work/gcp/auth-latency-sql-diagnosis.json`, `login-cloud-diagnosis.json`, `postlogin-diagnostic-receipt.json` and `tryon-preclick-extended-receipt.json`. These samples do not establish a universal latency cause or replace the declared load/mobile measurements. No auth/session business-app fix was made. The separately identified unversioned AuthProvider stale-load write remains a source review finding, not a demonstrated cause of the hosted waits.
 
-## Acceptance matrix at this checkpoint
+## Acceptance matrix
 
 | Criterion | Result and evidence boundary |
 | --- | --- |
@@ -103,15 +103,15 @@ Earlier25-second login/view and live-setup waits are retained as failed observat
 | A11 idempotent seed/safe cleanup |PASS local transactional preservation, actual cloud seed-twice and final scoped load cleanup; baseline, standard objects/credentials/bootstrap and one live attempt were preserved. |
 | A12 deployed smoke/integration |PASS real provider/worker/private-result/customer-store integration, security/runtime smokes, actual monitoring, maintenance and isolated restore/deletion. Final load cleanup and preservation passed; CI correction verification and delivery closure remain pending. |
 
-## Delivery and remaining release work
+## Delivery and final convergence
 
-The private repository was pushed to [joinarun/VirtualWardrobe](https://github.com/joinarun/VirtualWardrobe), at first pushed main revision `893414d92bc893c5389c63c7dc53be17886952dc`. The unchanged deployed app is f87, the successful native verifier is c252075 and the persistent performance operator is8b67; these are distinct provenance facts.
+The private [GitHub repository](https://github.com/joinarun/VirtualWardrobe) contains the complete source, requirements, Spec Kit workflow and operating instructions. Code/runner commit `9c6649f2cf586cfde7a5788721ad7e2eaf2c1e2f` passed [GitHub Actions run40438095853](https://github.com/joinarun/VirtualWardrobe/actions/runs/40438095853) in 8m22s. The run passed178 backend tests with zero failures/errors/skips,18 hosted guards,37 operator checks,7 local runner/security checks, lint/build and14 required browser tests in2.4m with zero skips. Protected full output is `work/gcp/github-ci-passed.log`.
 
-[First GitHub Actions run40434284728](https://github.com/joinarun/VirtualWardrobe/actions/runs/40434284728) FAILED at the E2E standalone CLI ownership boundary. Its backend178, web/hosted18 guards, operator37, lint and build checks passed; it is not recorded as a green run. The host-owned700/600 credential directory was being accessed by the container's different UID. Foundation's correction maps the bootstrap/seed wrappers to the host UID/GID and supplies the matching numeric Java user.name when that UID has no container passwd entry. Java's ownership/permission checks were not weakened. Three controlled wrapper checks passed, including the Mac Bash3.2 regression, and the exact mapped wrapper source passed a fresh required14/14 browser suite in26.3s with zero skips. Root reviewed the patch. Its clean commit/push and second actual CI result are pending; no new green CI run is claimed here. Evidence of the first failure remains in `work/gcp/github-ci-initial-failed.log`.
+The first two CI runs remain recorded as failures: [40434284728](https://github.com/joinarun/VirtualWardrobe/actions/runs/40434284728) exposed the credential directory UID mismatch; [40436578871](https://github.com/joinarun/VirtualWardrobe/actions/runs/40436578871) exposed the shared media parent ownership after the first correction. These were local/CI setup boundaries. The final fixes preserve private ownership checks and do not change Java application code or the deployed image.
 
-T016–T021 now have their required operational/documentation evidence, including owners' released cost/limits/rollback/teardown/runbook/README records. T022 remains unchecked until the corrected source is pushed and its actual CI result is verified. T023 remains root's final convergence/delivery gate. The final commit/run reference must be recorded accurately rather than assigning a newer operator/documentation revision to the deployed app. Human40-pair fidelity approval and statistically meaningful generation p95 remain explicitly pending; no approval or percentile is fabricated. The observed21.372s cold start, scale-out/platform429, infrastructure cost floor and recoverable soft-delete retention remain material delivery limits.
+All23 feature tasks are complete for this evaluation demo. Temporary load data and the restore database are removed; standard data, owner credentials and unrelated StyleReel remain preserved. The final Markdown evidence commit records the passing run without changing its tested application or tooling code. The unchanged deployed app remains f87, native hosted verifier c252075 and persistent performance operator8b67.
 
-All hosted operational work and temporary-resource cleanup are verified. Only CI correction confirmation and final root convergence remain in feature008. This specification-document update performed no tests, API/cloud/browser/model calls or runtime changes.
+Human40-pair fidelity approval and statistical generation p95 remain pending. The observed21.372s cold start, cold/scale-out429, infrastructure cost floor and recoverable soft-delete retention remain explicit limits. No production-quality approval or percentile is fabricated.
 
 ## Full Linux CI ownership follow-up
 
@@ -119,4 +119,4 @@ The second CI run [40436578871](https://github.com/joinarun/VirtualWardrobe/acti
 
 Bootstrap now prepares only the exact host-owned work/media directories as0700 before root containers start. Foreign ownership and symlinks are refused; contents are preserved without recursive chown or a root fallback. The same patched helper on a fresh Linux filesystem completed12accounts/30products/102objects, supported root API-equivalent media reads/writes on the same path, and repeated with `changed=false` and unchanged credentials. Existing PREPARING data also resumed with its original credentials. Evidence: `work/ci-linux-full-seed-receipt.json` and `work/ci-linux-prepared-full-seed-receipt.json`.
 
-The final exact-source disposable browser run passed14/14 in27.0s, zero skips (`work/virtualwardrobe-e2e-20261027074944-0b4b9e/`). All7 runner/security checks pass, including Bash3.2 status/cleanup compatibility. Java, application code, cloud runtime and credential security checks are unchanged. The next actual CI run remains pending; neither failed CI run is represented as green.
+The final exact-source disposable browser run passed14/14 in27.0s, zero skips (`work/virtualwardrobe-e2e-20261027074944-0b4b9e/`). All7 runner/security checks pass, including Bash3.2 status/cleanup compatibility. Java, application code, cloud runtime and credential security checks are unchanged. The corrected source subsequently passed [CI run40438095853](https://github.com/joinarun/VirtualWardrobe/actions/runs/40438095853); neither earlier failed run is represented as green.
