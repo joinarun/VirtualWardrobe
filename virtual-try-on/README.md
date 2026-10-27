@@ -2,6 +2,12 @@
 
 Responsive customer shopping and store workspace, developed feature by feature with Spec Kit. Product requirements and architecture are in the parent workspace's `docs/` directory. Feature specifications record the implemented scope and acceptance evidence.
 
+## Hosted evaluation
+
+[Customer storefront](https://virtualwardrobe-511016.web.app) · [Store workspace](https://virtualwardrobe-511016.web.app/staff)
+
+The dedicated GCP demo uses real CAPTCHA and Google image generation with bounded quotas. Stores, contacts and products are fictional, and the original model images are synthetic. Generated credentials remain in private owner-readable files outside Git. [Operations](docs/gcp-deployment.md), [verification runbook](docs/gcp-release-verification.md) and [acceptance evidence](specs/008-gcp-release/validation.md) record the exact deployed runtime separately from later verifier/documentation commits.
+
 ## Run locally
 
 Prerequisites: Git, Make, and a running Docker engine with Compose v2. Java21 and Node24 are supplied by containers; host Java/Maven are not required.

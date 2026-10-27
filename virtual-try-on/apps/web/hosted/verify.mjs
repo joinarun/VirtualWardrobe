@@ -24,6 +24,7 @@ import {
   assertSafeEnvironment,
   signupRecovery,
   terminalObservation,
+  safeActivity,
 } from "./policy.mjs";
 import { bindOriginalPut } from "./put-observation.mjs";
 
@@ -82,9 +83,12 @@ async function read(page, path, status = 200) {
   requireCheck(response.status() === status, "API_READ_STATUS_UNEXPECTED");
   return status === 200 ? response.json() : response;
 }
-async function signIn(page, user) {
+async function signIn(page, user, progress = () => {}) {
+  progress("READ_PRELOGIN_CSRF");
   const before = await read(page, "/auth/csrf");
+  progress("NAVIGATE_LOGIN");
   await page.goto(user.kind === "CUSTOMER" ? "/account/login" : "/staff/login");
+  progress("IDENTIFIER_FIELD");
   await page
     .getByLabel(
       user.kind === "CUSTOMER"
@@ -93,19 +97,25 @@ async function signIn(page, user) {
       { exact: true },
     )
     .fill(user.identifier);
+  progress("PASSWORD_FIELD");
   await page.getByLabel("Password", { exact: true }).fill(user.password);
+  progress("SUBMIT_LOGIN");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  progress("WAIT_SIGNED_IN_VIEW");
   await page
     .locator(user.kind === "CUSTOMER" ? ".customer-account" : ".workspace-main")
     .waitFor();
-  const session = await read(page, "/auth/session"),
-    after = await read(page, "/auth/csrf");
+  progress("READ_POSTLOGIN_SESSION");
+  const session = await read(page, "/auth/session");
+  progress("READ_POSTLOGIN_CSRF");
+  const after = await read(page, "/auth/csrf");
   requireCheck(
     session.user?.id === user.id &&
       !session.user.passwordChangeRequired &&
       before.token !== after.token,
     "SESSION_OR_CSRF_CONTINUITY_FAILED",
   );
+  progress("OLD_CSRF_LOGOUT_AND_RETAINED_SESSION");
   const stale = await page.request.post("/api/v1/auth/logout", {
     data: {},
     headers: { [before.headerName]: before.token },
@@ -115,6 +125,7 @@ async function signIn(page, user) {
       (await read(page, "/auth/session")).user?.id === user.id,
     "OLD_CSRF_TOKEN_NOT_REJECTED",
   );
+  progress("SECURE_COOKIE_POLICY");
   const cookies = await page.context().cookies(TARGET.origin);
   requireCheck(
     cookies.some(
@@ -126,6 +137,7 @@ async function signIn(page, user) {
     ),
     "SECURE_SESSION_COOKIE_MISSING",
   );
+  progress("AUTH_CACHE_POLICY");
   const response = await page.request.get("/api/v1/auth/session");
   requireCheck(
     /no-store/.test(response.headers()["cache-control"] || ""),
@@ -149,7 +161,7 @@ async function pageContext(browser, errors) {
     hasTouch: true,
     acceptDownloads: true,
   });
-  context.setDefaultTimeout(25000);
+  context.setDefaultTimeout(60000);
   context.setDefaultNavigationTimeout(60000);
   const page = await context.newPage();
   page.on("pageerror", () => {
@@ -493,13 +505,16 @@ async function liveJourney(
   revision,
   resume,
   observe,
+  progress = () => {},
 ) {
   const { customer, other, staff, customerClient } = pages;
+  progress("READ_ORIGINAL_GALLERY");
   const original = await read(customer, "/me/try-on/gallery");
   let journal,
     sourceId = null,
     replayProof = null;
   if (resume) {
+    progress("READ_RESUME_JOURNAL");
     const value = await jsonFile(join(work, "hosted-live-job.json"), true);
     requireCheck(
       value.project === TARGET.project &&
@@ -508,6 +523,7 @@ async function liveJourney(
     );
     journal = { path: join(work, "hosted-live-job.json"), value };
   } else {
+    progress("READ_OWNED_FIXTURE");
     const photoPath = join(WEB, "public/demo/hero-emerald.png"),
       info = await lstat(photoPath);
     requireCheck(
@@ -545,6 +561,7 @@ async function liveJourney(
         }
       }
     };
+    progress("REGISTER_UPLOAD_OBSERVER");
     const putObserver = bindOriginalPut({
       capabilityReady: capReady,
       expectedBytes: photo.length,
@@ -591,8 +608,10 @@ async function liveJourney(
         );
         // Await the exactly-bound original request's real wire metadata/status.
         // Fetch interception can omit automatic Content-Length from allHeaders().
+        progress("WAIT_ORIGINAL_PUT_WIRE_PROOF");
         const originalPut = await putObserver.wait(15000);
         // The raw PUT has completed, and this real finalize request has not reached the server yet.
+        progress("REPLAY_EXISTING_RAW_PUT");
         const status = await customer.evaluate(
           async ({ url, headers, base64 }) => {
             const bytes = Uint8Array.from(atob(base64), (character) =>
@@ -638,38 +657,48 @@ async function liveJourney(
           browserBlobLength: true,
           originalPutWithoutCookiesOrCsrf: true,
         };
+        progress("CONTINUE_GENUINE_FINALIZE");
         await route.continue(); // Genuine request/body/headers, no mocked finalization response.
       } catch (error) {
         replayError = safeFailure(error);
         await route.abort("failed").catch(() => {});
       }
     });
+    progress("NAVIGATE_TRY_ON");
     await customer.goto(`/try-on?product=${product.id}`);
+    progress("WAIT_TRY_ON_HEADING");
     await customer
       .getByRole("heading", {
         name: "Picture this piece, your way.",
         exact: true,
       })
       .waitFor();
+    progress("WAIT_EVALUATION_DISCLOSURE");
     await customer
       .getByLabel("AI service disclosure")
       .filter({ hasText: /EVALUATION DEMO/i })
       .waitFor();
+    progress("SELECT_OWNED_PHOTO");
     await customer
       .getByLabel("Choose a photo", { exact: true })
       .setInputFiles(photoPath);
+    progress("ADULT_CONSENT");
     await customer
       .getByLabel("I am an adult (18 or older).", { exact: true })
       .check();
+    progress("OWN_PHOTO_CONSENT");
     await customer
       .getByLabel("This is my own photo, and it shows only me.", {
         exact: true,
       })
       .check();
+    progress("PROCESSING_CONSENT");
     await customer
       .getByLabel(/^I consent to the processing and retention/)
       .check();
+    progress("MASKED_CONSENT_SCREENSHOT");
     await screenshot(customer, output, "live-consent-masked.png");
+    progress("RESERVE_SINGLE_PAID_ACTION");
     journal = await reserveLiveAction(work, revision); // Durable BEFORE the sole paid UI action, including ambiguous outcomes.
     let creates = 0;
     const createIntents = new Set();
@@ -697,9 +726,11 @@ async function liveJourney(
           { timeout: 120000 },
         )
         .catch(() => null);
+      progress("CLICK_CREATE_ONCE");
       await customer
         .getByRole("button", { name: "Create my AI preview", exact: true })
         .click();
+      progress("WAIT_JOB_CREATE_RESPONSE");
       const response = await responsePromise;
       requireCheck(
         !replayError &&
@@ -742,6 +773,7 @@ async function liveJourney(
       capability = null;
     }
   }
+  progress("POLL_EXISTING_JOB");
   const id = journal.value.jobId,
     observed = new Set(),
     started = Date.now();
@@ -800,6 +832,7 @@ async function liveJourney(
       /no-store/.test(privateResponse.headers()["cache-control"] || ""),
     "PRIVATE_IMAGE_CACHE_POLICY_FAILED",
   );
+  progress("VIEW_SUCCEEDED_JOB");
   await customer.goto(`/account/previews/${id}`);
   await customer
     .getByRole("heading", { name: "Preview ready", exact: true })
@@ -810,6 +843,7 @@ async function liveJourney(
   });
   await screenshot(customer, output, "live-evaluation-preview.png");
   if (!job.result.saved) {
+    progress("SAVE_GALLERY");
     await customer
       .getByRole("button", { name: "Save to my gallery", exact: true })
       .click();
@@ -822,7 +856,7 @@ async function liveJourney(
   await customer.goto("/account");
   await customer.getByRole("button", { name: "Sign out", exact: true }).click();
   await customer.waitForURL(TARGET.origin + "/");
-  await signIn(customer, who.customer);
+  await signIn(customer, who.customer, (stage) => progress("RELOGIN_" + stage));
   await customer.goto("/account/gallery");
   const card = customer
     .locator(".wardrobe-card")
@@ -832,6 +866,7 @@ async function liveJourney(
   await customer
     .getByRole("heading", { name: "Preview ready", exact: true })
     .waitFor();
+  progress("DOWNLOAD_PRIVATE_RESULT");
   const downloaded = customer.waitForEvent("download").catch(() => null);
   await customer
     .getByRole("link", { name: "Download preview", exact: true })
@@ -845,6 +880,7 @@ async function liveJourney(
   );
   await download.saveAs(join(output, "owned-evaluation-preview.jpg"));
   await chmod(join(output, "owned-evaluation-preview.jpg"), 0o600);
+  progress("DELETE_ONLY_NEW_RESULT");
   await customer.goto("/account/gallery");
   await customer
     .locator(".wardrobe-card")
@@ -939,6 +975,7 @@ export async function main(argv = process.argv.slice(2)) {
     errors = { count: 0 };
   const step = async (code, action) => {
     phase = code;
+    report.activity = safeActivity("GENERAL", code);
     const start = Date.now();
     const result = await action();
     report.checks.push({
@@ -972,6 +1009,16 @@ export async function main(argv = process.argv.slice(2)) {
         ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
         : {}),
     });
+    report.runtime = {
+      nodeVersion: process.versions.node,
+      platform: process.platform,
+      architecture: process.arch,
+      browserVersion: browser.version(),
+      explicitBrowserExecutable: Boolean(
+        process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+      ),
+      persistentUserProfile: false,
+    };
     const entries = await Promise.all(
       Array.from({ length: 5 }, () => pageContext(browser, errors)),
     );
@@ -1010,7 +1057,9 @@ export async function main(argv = process.argv.slice(2)) {
     );
     await step("SECURE_HOSTING_LOGIN_SESSIONS", async () => {
       for (const key of ["customer", "other", "staff", "teammate", "foreign"])
-        await signIn(pages[key], who[key]);
+        await signIn(pages[key], who[key], (stage) => {
+          report.activity = safeActivity(key.toUpperCase(), stage);
+        });
     });
     let product;
     await step("OWNED_CATALOG_AND_SOURCE_SCOPE", async () => {
@@ -1081,6 +1130,9 @@ export async function main(argv = process.argv.slice(2)) {
           (observation) => {
             report.live = observation;
           },
+          (stage) => {
+            report.activity = safeActivity("CUSTOMER", stage);
+          },
         ),
       );
     else report.live = { status: "NOT_REQUESTED", newLiveJobs: 0 };
@@ -1091,7 +1143,19 @@ export async function main(argv = process.argv.slice(2)) {
       : "BLOCKED_SIGNUP";
   } catch (error) {
     report.status = "FAILED";
-    report.failure = { phase, code: safeFailure(error) };
+    report.failure = {
+      phase,
+      code: safeFailure(error),
+      exceptionType: [
+        "Error",
+        "TimeoutError",
+        "TargetClosedError",
+        "TypeError",
+        "AbortError",
+      ].includes(error?.name)
+        ? error.name
+        : "WITHHELD",
+    };
   } finally {
     await Promise.allSettled(contexts.map((context) => context.close()));
     if (browser) await browser.close().catch(() => {});

@@ -326,3 +326,13 @@ export function safeFailure(error) {
     ? error.code
     : "HOSTED_VERIFICATION_FAILED";
 }
+
+export function safeActivity(slot, stage) {
+  requireCheck(
+    ["GENERAL", "CUSTOMER", "OTHER", "STAFF", "TEAMMATE", "FOREIGN"].includes(
+      slot,
+    ) && /^[A-Z0-9_]{1,80}$/.test(stage),
+    "UNSAFE_ACTIVITY_METADATA",
+  );
+  return { slot, stage };
+}

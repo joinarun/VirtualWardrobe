@@ -2,6 +2,10 @@
 
 A web application for discovering Indian clothing, previewing garments with AI, and connecting customers with stores. Sarees are the priority category. The implementation lives in [`virtual-try-on`](virtual-try-on/), with one Java Spring Boot backend and separate React customer and staff interfaces.
 
+## Hosted demo
+
+Open [VirtualWardrobe](https://virtualwardrobe-511016.web.app) or the [store workspace](https://virtualwardrobe-511016.web.app/staff). This is a fictional evaluation demo with real Google image generation. Demo credentials are delivered privately and are excluded from Git. Human saree fidelity review remains pending. See [deployment and operations](virtual-try-on/docs/gcp-deployment.md) and [release evidence](virtual-try-on/specs/008-gcp-release/validation.md).
+
 ## Run locally
 
 With Docker running:

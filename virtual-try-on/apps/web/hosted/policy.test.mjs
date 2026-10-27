@@ -20,6 +20,7 @@ import {
   assertSafeEnvironment,
   signupRecovery,
   terminalObservation,
+  safeActivity,
 } from "./policy.mjs";
 import { main } from "./verify.mjs";
 const validInventory = () => ({
@@ -377,4 +378,19 @@ test("terminal latency uses server job completion, independently of later galler
     null,
   );
   assert.ok(!JSON.stringify(observation).includes("lifecycleWorkflowMs"));
+});
+
+test("activity breadcrumbs allow only fixed role slots and safe stage codes", () => {
+  assert.deepEqual(safeActivity("CUSTOMER", "READ_ORIGINAL_GALLERY"), {
+    slot: "CUSTOMER",
+    stage: "READ_ORIGINAL_GALLERY",
+  });
+  assert.throws(
+    () => safeActivity("Private person", "READ_SESSION"),
+    (error) => error.code === "UNSAFE_ACTIVITY_METADATA",
+  );
+  assert.throws(
+    () => safeActivity("CUSTOMER", "https://private.test/?token=SECRET"),
+    (error) => error.code === "UNSAFE_ACTIVITY_METADATA",
+  );
 });
