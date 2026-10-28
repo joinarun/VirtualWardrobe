@@ -15,4 +15,4 @@
 - [X] T005 Review final source, run focused responsive/accessibility Chromium+WebKit checks, type/guards/lint/build and deployment unit tests; record actual evidence in validation.md (SC-001/002/003).
 - [X] T006 Commit reviewed source, secret-scan and push existing GitHub feature branch; verify required regression CI (FR-008/SC-003).
 - [X] T007 Publish exact source frontend-only to existing GCP site and verify actual hosted public screens/assets and unchanged backend/data/credentials/paid journal (FR-008/SC-004).
-- [ ] T008 Converge against specification and plan, record release evidence and promote/push main after passing gates.
+- [X] T008 Converge against specification and plan, record release evidence and promote/push main after passing gates.

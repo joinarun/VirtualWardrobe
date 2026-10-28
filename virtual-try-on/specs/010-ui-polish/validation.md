@@ -1,6 +1,6 @@
 # Validation: Customer interface polish
 
-Status: frontend published, actual hosted checks passed and required application CI passed. Main promotion is the remaining final step.
+Status: complete. Frontend published, actual hosted checks passed, required application CI passed and main was promoted/pushed.
 
 Evidence will distinguish controlled public/preview fixtures from actual hosted verification. No new paid generation, customer image export or private data mutation is required.
 
@@ -36,4 +36,8 @@ The existing actual hosted no-AI mobile runner also passed05:57:38–06:00:16UTC
 
 A further actual hosted preview check passed at06:05:25UTC using only an existing owned demo preview. At360/767/1280px the actual result has three grouped actions, Buy it points to the existing enquiry form, Requested/Available until are absent, and destructive confirmation is fully visible and passes a trial click. Keep request restores focus without submitting deletion. Genuine logout returned204 and the session became anonymous. Own jobs/gallery, credentials and canonical paid journal are byte-identical before/after; zero JavaScript errors or attempted unexpected mutations. No save, delete, download, callback, upload or generation action occurred. Receipt `work/gcp/010-preview-hosted-88u3zd/receipt.json` and six screenshots mask all private images/contacts; no unmasked private image was exported.
 
-GitHub required regression run `40640806821` passed in10m36s on exact application source `3d33fd13e6bcb20071101f314be72fd796d7fcc9`: https://github.com/joinarun/VirtualWardrobe/actions/runs/40640806821 . It ran the complete existing `make test lint build e2e` workflow and55 operator tests. The required browser suite contains45 cases. Final release-evidence commits change documentation/task status only; application source and deployed assets remain3d33fd1. Main promotion follows this passing gate.
+GitHub required regression run `40640806821` passed in10m36s on exact application source `3d33fd13e6bcb20071101f314be72fd796d7fcc9`: https://github.com/joinarun/VirtualWardrobe/actions/runs/40640806821 . It ran the complete existing `make test lint build e2e` workflow:192 backend tests with zero failures/errors/skips,45 required browser cases passed in4.6m,7 runner-security tests and55 operator tests. TypeScript/21 hosted guards, lint and build also passed. Final release-evidence commits change documentation/task status only; application source and deployed assets remain3d33fd1. Main was fast-forwarded and pushed after this passing gate; no user changes were overwritten.
+
+## Final convergence
+
+Reviewed current scoped code against all8 functional requirements,4 buildable success criteria,4 user stories, plan decisions and applicable constitution2.0.0 rules. No missing, partial, contradictory or unrequested implementation findings; no new convergence tasks or empty phase header. Convergence itself left tasks.md unchanged; implementation bookkeeping then marked T008 complete. No extension hooks or custom checklists are present. No remaining buildable work for feature010. Public screenshots are available under the task's outputs/virtualwardrobe-ui-polish directory; protected credentials/private images/raw receipts remain outside Git.
