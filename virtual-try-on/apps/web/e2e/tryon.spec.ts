@@ -2,9 +2,87 @@ import { test, expect } from "@playwright/test";
 import { assertWcagAA } from "./contrast";
 import type { Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { TryOnJob } from "../src/tryon-types";
 const baseURL = process.env.BASE_URL || "http://localhost:5173";
+
+test("UI only: preview actions stay together and confirmations remain reachable", async ({ page }) => {
+  test.setTimeout(60000);
+  const jobId = "11111111-1111-4111-8111-111111111111";
+  const productId = "22222222-2222-4222-8222-222222222222";
+  const mediaId = "33333333-3333-4333-8333-333333333333";
+  const createdAt = "2026-10-27T00:00:00Z";
+  const snapshot = { id: productId, title: "Owned preview fixture saree", sku: "PREVIEW-UI", storeId: "55555555-5555-4555-8555-555555555555", storeName: "Owned fixture store", price: "2500.00", currency: "INR" as const };
+  const result = { id: mediaId, imageUrl: `/api/v1/private-media/${mediaId}/content`, downloadUrl: `/api/v1/private-media/${mediaId}/download`, expiresAt: "2099-01-01T00:00:00Z", saved: false, saving: false };
+  let job: TryOnJob = { id: jobId, productId, product: snapshot, state: "SUCCEEDED", createdAt, updatedAt: createdAt, deadlineAt: createdAt, attempts: 1, provider: "fixture", model: "fixture", demo: true, evaluationDemo: false, label: "Sample", notice: "Owned UI fixture", discarded: false, error: null, result, canCancel: false, canSave: true, canDiscard: true };
+  const mutations: string[] = [];
+  await page.route("**/api/v1/**", async (route) => {
+    const request = route.request(), path = new URL(request.url()).pathname;
+    if (!["GET", "HEAD", "OPTIONS"].includes(request.method())) {
+      mutations.push(`${request.method()} ${path}`);
+      return route.fulfill({ status: 500, json: { code: "UI_MUTATION_UNEXPECTED" } });
+    }
+    if (path === "/api/v1/auth/session") return route.fulfill({ json: { user: { id: "44444444-4444-4444-8444-444444444444", name: "Preview fixture", kind: "CUSTOMER", phone: "+919000000009", phoneVerified: false, enabled: true, superAdmin: false, passwordChangeRequired: false, memberships: [] } } });
+    if (path === `/api/v1/me/try-on/jobs/${jobId}`) return route.fulfill({ json: job });
+    if (path === `/api/v1/products/${productId}`) return route.fulfill({ json: { ...snapshot, status: "PUBLISHED", availability: "AVAILABLE" } });
+    if (path === `/api/v1/private-media/${mediaId}/content`) return route.fulfill({ contentType: "image/png", body: readFileSync(join(process.cwd(), "public/demo/saree-rose.png")) });
+    return route.fulfill({ status: 404, json: { code: "UI_FIXTURE_UNAVAILABLE" } });
+  });
+  for (const width of [360, 390, 430, 620, 767, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const saved of [false, true]) {
+      job = { ...job, result: { ...result, saved }, canSave: !saved };
+      await page.goto(`/account/previews/${jobId}`);
+      const actions = page.getByRole("group", { name: "Preview actions", exact: true });
+      await expect(actions.locator(":scope > *")).toHaveCount(3);
+      await expect(actions.getByRole(saved ? "link" : "button", { name: saved ? "Open saved gallery" : "Save to my gallery", exact: true })).toBeVisible();
+      await expect(actions.getByRole("link", { name: "Download preview", exact: true })).toHaveAttribute("href", result.downloadUrl);
+      const discard = actions.getByRole("button", { name: saved ? "Delete this preview" : "Discard this request", exact: true });
+      await expect(discard).toHaveClass(/secondary-button/);
+      await expect(discard).not.toHaveClass(/text-button/);
+      await expect(page.getByText(/^(Requested|Available until)$/)).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Buy it", exact: true })).toHaveAttribute("href", `/callback?product=${productId}`);
+      for (const action of await actions.locator(":scope > *").all()) {
+        const bounds = await action.boundingBox();
+        expect(bounds!.width).toBeGreaterThanOrEqual(44);
+        expect(bounds!.height).toBeGreaterThanOrEqual(44);
+        if (width <= 767) {
+          expect(bounds!.x).toBeGreaterThanOrEqual(0);
+          expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+        }
+      }
+      if (!saved && [360, 1280].includes(width) && process.env.TEST_STATE_DIRECTORY) {
+        const path = join(process.env.TEST_STATE_DIRECTORY, `010-preview-actions-${width}.png`);
+        await page.screenshot({ path, animations: "disabled" });
+        chmodSync(path, 0o600);
+      }
+      await discard.click();
+      const confirmation = page.getByRole("region", { name: "Delete this preview?", exact: true });
+      await expect(confirmation).toBeFocused();
+      await expect(page.getByRole("button", { name: "Confirm discard", exact: true })).toBeInViewport({ ratio: 1 });
+      await page.getByRole("button", { name: "Confirm discard", exact: true }).click({ trial: true });
+      if (!saved && width === 360 && process.env.TEST_STATE_DIRECTORY) {
+        const path = join(process.env.TEST_STATE_DIRECTORY, "010-preview-confirmation-360.png");
+        await page.screenshot({ path, animations: "disabled" });
+        chmodSync(path, 0o600);
+      }
+      // Opening and keeping a confirmation must never submit a destructive request.
+      await page.getByRole("button", { name: "Keep request", exact: true }).click();
+      await expect(confirmation).toHaveCount(0);
+      await expect(discard).toBeFocused();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBeFalsy();
+      if (width === 360) await assertWcagAA(page);
+    }
+  }
+  job = { ...job, state: "FAILED", result: null, canSave: false };
+  await page.goto(`/account/previews/${jobId}`);
+  const discard = page.getByRole("button", { name: "Discard this request", exact: true });
+  await expect(discard).toHaveClass(/secondary-button/);
+  await discard.click();
+  await expect(page.getByRole("button", { name: "Confirm discard", exact: true })).toBeInViewport();
+  expect(mutations).toEqual([]);
+});
 async function mutate(
   page: Page,
   path: string,

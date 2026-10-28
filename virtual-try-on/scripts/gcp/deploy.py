@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import secrets
 import shlex
+import stat
 import subprocess
 import sys
 import time
@@ -567,7 +568,7 @@ class Deployment:
         return self.value("run", "services", "describe", service,
                           "--region", self.region, "--format=value(status.url)")
 
-    def ensure_captcha(self) -> str:
+    def ensure_captcha(self, *, required: bool = False) -> str:
         listing = json.loads(self.value("recaptcha", "keys", "list", "--format=json"))
         display = f"{self.base}-signup"
         existing = [key for key in listing if key.get("displayName") == display]
@@ -578,6 +579,8 @@ class Deployment:
                     settings.get("allowAllDomains", False) or set(settings.get("allowedDomains", [])) != expected_domains):
                 raise RuntimeError("Existing VirtualWardrobe CAPTCHA configuration conflicts with the reviewed site domains")
             return existing[0]["name"].split("/")[-1]
+        if required:
+            raise RuntimeError("Web-only release requires the existing reviewed CAPTCHA key")
         key = json.loads(self.value("recaptcha", "keys", "create", "--display-name", display,
             "--web", "--domains", f'{self.cfg["firebase_site"]}.web.app,{self.cfg["firebase_site"]}.firebaseapp.com',
             "--integration-type", "score", "--format=json"))
@@ -598,7 +601,7 @@ class Deployment:
                 "--oidc-service-account-email", self.accounts["dispatch"],
                 "--oidc-token-audience", worker_url, "--attempt-deadline", "180s")
 
-    def hosting(self, captcha_key: str):
+    def hosting(self, captcha_key: str, *, require_existing: bool = False, before_publish=None):
         # Avoid the existing default Hosting site and StyleReel's URLs.
         site = self.cfg["firebase_site"]
         page_token = ""
@@ -614,6 +617,8 @@ class Deployment:
             if not page_token:
                 break
         if not found:
+            if require_existing:
+                raise RuntimeError("Web-only release requires the existing dedicated Hosting site")
             self.api_request("POST",
                 f"https://firebasehosting.googleapis.com/v1beta1/projects/{self.project}/sites?siteId={site}", {})
         web_env = dict(os.environ, VITE_RECAPTCHA_SITE_KEY=captcha_key,
@@ -643,6 +648,8 @@ class Deployment:
         }}
         config_path = self.work / "firebase.json"
         config_path.write_text(json.dumps(hosting_config, indent=2) + "\n")
+        if before_publish is not None:
+            before_publish()
         command(["npx", "--yes", f'firebase-tools@{self.cfg["firebase_tools_version"]}',
                  "deploy", "--only", "hosting", "--project", self.project,
                  "--config", str(config_path), "--non-interactive"])
@@ -716,6 +723,123 @@ class Deployment:
         print(f"Cloud base prepared; application not published. Inventory: {path}", flush=True)
         return budget, captcha_key
 
+    @staticmethod
+    def private_json(path: Path, value: dict):
+        """Keep release metadata compatible with protected operator inputs."""
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(descriptor, "w") as stream:
+            os.fchmod(stream.fileno(), 0o600)
+            stream.write(json.dumps(value, indent=2) + "\n")
+
+    def web_inventory(self) -> dict:
+        path = self.work / "deployment.json"
+        try:
+            metadata = path.lstat()
+            if (not stat.S_ISREG(metadata.st_mode) or stat.S_IMODE(metadata.st_mode) != 0o600 or
+                    metadata.st_uid != os.getuid() or metadata.st_nlink != 1):
+                raise RuntimeError("Web-only release requires an owner-only regular release inventory")
+            inventory = json.loads(path.read_text())
+        except (OSError, ValueError):
+            raise RuntimeError("Web-only release requires a valid protected deployment inventory") from None
+        resources = inventory.get("resources", {})
+        if (inventory.get("project_id") != self.project or inventory.get("region") != self.region or
+                inventory.get("environment") != "demo" or
+                resources.get("firebase_hosting_site") != self.cfg["firebase_site"] or
+                resources.get("cloud_run_api") != self.api or resources.get("cloud_run_worker") != self.worker):
+            raise RuntimeError("Web-only inventory must identify the reviewed project and owned resources")
+        source = inventory.get("source_revision")
+        backend = inventory.get("backend_source_revision", source)
+        if not all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{40}", value) for value in (source, backend)):
+            raise RuntimeError("Web-only inventory requires full recorded source revisions")
+        expected_image = f"{self.region}-docker.pkg.dev/{self.project}/{self.repo}/backend:{backend[:12]}"
+        if inventory.get("image") != expected_image:
+            raise RuntimeError("Web-only inventory image must identify the recorded backend source")
+        if not isinstance(inventory.get("captcha_site_key"), str) or not inventory["captcha_site_key"]:
+            raise RuntimeError("Web-only inventory requires the existing CAPTCHA key")
+        return inventory
+
+    def check_web_target(self, inventory: dict, observed: dict, *, hosting_unchanged: bool = True):
+        if (observed.get("project_id") != self.project or observed.get("region") != self.region or
+                observed.get("hosting_site") != self.cfg["firebase_site"]):
+            raise RuntimeError("Web-only live target must identify the reviewed project and site")
+        expected_digest = None
+        for mode, name in (("api", self.api), ("worker", self.worker)):
+            expected = inventory.get("runtime", {}).get(mode, {})
+            actual = observed.get("services", {}).get(mode, {})
+            digest = expected.get("image_digest", "")
+            if (expected.get("service") != name or not re.fullmatch(re.escape(name) + r"-[a-z0-9-]{1,40}", expected.get("ready_revision", "")) or
+                    not re.fullmatch(re.escape(f"{self.region}-docker.pkg.dev/{self.project}/{self.repo}/backend@sha256:") + r"[0-9a-f]{64}", digest)):
+                raise RuntimeError("Web-only inventory requires owned ready revisions and immutable backend images")
+            if expected_digest is not None and digest != expected_digest:
+                raise RuntimeError("Web-only API and worker must share the recorded immutable image")
+            expected_digest = digest
+            if mode == "worker":
+                self.canonical_worker_url(expected.get("url"))
+            elif not re.fullmatch(r"https://" + re.escape(name) + r"-[a-z0-9-]+(?:\.[a-z0-9-]+)*\.run\.app", expected.get("url", "")):
+                raise RuntimeError("Web-only inventory requires the owned API canonical URL")
+            if any(actual.get(key) != expected.get(key) for key in ("service", "ready_revision", "image_digest", "url")):
+                raise RuntimeError("Web-only live backend differs from the recorded release")
+            # Hosting pinTag may add a metadata tag on the same API revision.
+            # It must never move traffic or publish a different backend revision.
+            for runtime in (expected, actual):
+                active = [item for item in runtime.get("traffic", []) if item.get("percent", 0)]
+                if (len(active) != 1 or active[0].get("revisionName") != expected["ready_revision"] or
+                        type(active[0].get("percent")) is not int or active[0]["percent"] != 100):
+                    raise RuntimeError("Web-only release requires 100 percent traffic on the recorded ready revision")
+        release = observed.get("hosting_release")
+        if (not isinstance(release, dict) or not re.fullmatch(r"sites/" + re.escape(self.cfg["firebase_site"]) + r"/versions/[A-Za-z0-9_-]+", release.get("version", "")) or
+                (hosting_unchanged and release != inventory.get("hosting_release"))):
+            raise RuntimeError("Web-only live Hosting release differs from the recorded inventory")
+
+    def web_source(self, expected: str | None = None) -> str:
+        dirty = command(["git", "status", "--porcelain=v1", "--untracked-files=all"], capture=True).stdout.decode().strip()
+        if dirty:
+            raise RuntimeError("Commit tracked and non-ignored source changes before building or publishing this release")
+        source = command(["git", "rev-parse", "HEAD"], capture=True).stdout.decode().strip()
+        if not re.fullmatch(r"[0-9a-f]{40}", source):
+            raise RuntimeError("Web-only release requires an exact full HEAD revision")
+        if expected is not None and source != expected:
+            raise RuntimeError("Web-only source HEAD changed during the build; nothing was published")
+        return source
+
+    def apply_web_only(self):
+        if not (ROOT / "apps/web/package-lock.json").is_file():
+            raise RuntimeError("Web lockfile is missing")
+        source = self.web_source()
+        inventory = self.web_inventory()
+        backend = inventory.get("backend_source_revision", inventory["source_revision"])
+        ancestor = command(["git", "merge-base", "--is-ancestor", backend, "HEAD"], capture=True, check=False)
+        unchanged = command(["git", "diff", "--quiet", backend, "HEAD", "--", "services/backend", "infra/backend.gcloudignore", "infra/gcp-demo.json"], capture=True, check=False)
+        if ancestor.returncode != 0 or unchanged.returncode != 0:
+            raise RuntimeError("Web-only release requires the recorded backend/config tree unchanged from its source ancestor")
+        previous = self.release_state(required=True)
+        self.check_web_target(inventory, previous)
+        captcha = self.ensure_captcha(required=True)
+        if captcha != inventory["captcha_site_key"]:
+            raise RuntimeError("Web-only CAPTCHA key differs from the recorded backend configuration")
+        directory = self.work / "releases"
+        directory.mkdir(exist_ok=True, mode=0o700)
+        prior_path = directory / f"before-web-{time.time_ns()}-{source[:12]}.json"
+        self.private_json(prior_path, previous)
+        # Recheck after npm install/build, immediately before Firebase publishes.
+        def before_publish():
+            self.web_source(source)
+            self.check_web_target(inventory, self.release_state(required=True))
+        self.hosting(captcha, require_existing=True,
+                     before_publish=before_publish)
+        deployed = self.release_state(required=True)
+        self.check_web_target(inventory, deployed, hosting_unchanged=False)
+        inventory.update(source_revision=source, frontend_source_revision=source,
+                         backend_source_revision=backend, release_mode="web-only",
+                         runtime=deployed["services"], hosting_release=deployed["hosting_release"],
+                         previous_release_inventory=str(prior_path),
+                         deployed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+        self.private_json(self.work / "deployment.json", inventory)
+        self.private_json(directory / f"deployed-web-{time.time_ns()}-{source[:12]}.json", inventory)
+        print(json.dumps({"web_url": inventory["web_url"], "source_revision": source,
+                          "backend_source_revision": backend, "release_mode": "web-only",
+                          "inventory": str(self.work / "deployment.json")}, indent=2))
+
     def apply(self, image: str | None):
         if not (ROOT / "services/backend/Dockerfile").is_file():
             raise RuntimeError("Backend Dockerfile is missing; finish application implementation first.")
@@ -753,7 +877,9 @@ class Deployment:
         self.schedule(worker_url)
         self.hosting(captcha_key)
         deployed_state = self.release_state(required=True)
-        inventory = dict(self.plan(), image=image, source_revision=source_revision, api_url=api_url,
+        inventory = dict(self.plan(), image=image, source_revision=source_revision,
+                         frontend_source_revision=source_revision, backend_source_revision=source_revision,
+                         release_mode="full", api_url=api_url,
                          worker_url=worker_url,
                          runtime=deployed_state["services"], hosting_release=deployed_state["hosting_release"],
                          previous_release_inventory=str(prior_path),
@@ -761,8 +887,8 @@ class Deployment:
                          captcha_site_key=captcha_key, billing_alert_budget=budget,
                          deployed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
         path = self.work / "deployment.json"
-        path.write_text(json.dumps(inventory, indent=2) + "\n")
-        (release_directory / f"deployed-{time.time_ns()}-{source_revision[:12]}.json").write_text(json.dumps(inventory, indent=2) + "\n")
+        self.private_json(path, inventory)
+        self.private_json(release_directory / f"deployed-{time.time_ns()}-{source_revision[:12]}.json", inventory)
         print(json.dumps({"web_url": inventory["web_url"], "api_url": api_url,
                           "inventory": str(path), "image_provider": self.cfg["image_provider"]}, indent=2))
 
@@ -777,9 +903,13 @@ def main():
     parser.add_argument("--provision-only", action="store_true",
                         help="With --apply, prepare the cloud base without building or publishing the app")
     parser.add_argument("--image", help="Use a previously built image rather than building")
+    parser.add_argument("--web-only", action="store_true",
+                        help="With --apply, publish only web assets against the verified existing backend")
     args = parser.parse_args()
     if args.provision_only and args.image:
         parser.error("--provision-only does not build or deploy an image")
+    if args.web_only and (args.provision_only or args.image):
+        parser.error("--web-only cannot provision resources or select a backend image")
     cfg = json.loads(args.config.read_text())
     if args.project != EXPECTED_PROJECT or cfg.get("project_id") != EXPECTED_PROJECT:
         parser.error(f"This reviewed deployment is restricted to {EXPECTED_PROJECT}; no other project is allowed")
@@ -803,12 +933,20 @@ def main():
             parser.error("--image must be an image from this project's VirtualWardrobe backend repository")
     deploy = Deployment(cfg)
     if args.apply:
-        if args.provision_only:
+        if args.web_only:
+            deploy.apply_web_only()
+        elif args.provision_only:
             deploy.prepare()
         else:
             deploy.apply(args.image)
     else:
-        print(json.dumps(deploy.plan(), indent=2))
+        plan = deploy.plan()
+        if args.web_only:
+            plan.update(release_mode="web-only", application_build="apps/web only",
+                        backend="Existing verified API/worker revisions and immutable image retained",
+                        cloud_changes="Dedicated Hosting assets/config and API pinTag metadata only",
+                        required_inventory=str(deploy.work / "deployment.json"))
+        print(json.dumps(plan, indent=2))
 
 
 if __name__ == "__main__":

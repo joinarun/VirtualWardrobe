@@ -175,7 +175,7 @@ test("generated demo credentials enable all roles and an actual private-preview 
     ).toBeVisible({ timeout: 30000 });
     await assertWcagAA(customer);
     await customer
-      .getByRole("link", { name: "Request a store callback", exact: true })
+      .getByRole("link", { name: "Buy it", exact: true })
       .click();
     await expect(
       customer.getByRole("heading", {

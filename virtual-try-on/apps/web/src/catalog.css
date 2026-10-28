@@ -102,13 +102,21 @@
 .catalog-layout {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
-  gap: 35px;
+  grid-template-rows: 48px auto;
+  column-gap: 35px;
+  row-gap: 18px;
   align-items: start;
 }
+.collection-results {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+}
 .catalog-filters {
-  border-top: 1px solid var(--line);
-  padding-top: 20px;
-  padding-right: 6px;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  border: 0;
+  padding: 0;
   position: sticky;
   top: 20px;
 }
@@ -118,9 +126,22 @@
   color: var(--muted);
   list-style: none;
   cursor: pointer;
-  margin-bottom: 22px;
+  margin: 0;
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.catalog-filter-options {
+  padding-top: 18px;
+}
+.catalog-filters:not([open]) > .catalog-filter-options {
+  display: none;
 }
 .catalog-filters > summary::after {
   content: "−";
@@ -163,12 +184,16 @@
   padding-top: 20px;
 }
 .collection-controls {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  min-height: 36px;
-  margin-bottom: 19px;
+  height: 48px;
+  min-height: 48px;
+  margin: 0;
 }
 .active-query {
   font-size: 12px;
@@ -190,10 +215,13 @@
 .sort-label select {
   font-size: 16px;
   color: var(--muted);
-  background: transparent;
+  background: var(--surface);
   border: 1px solid var(--line);
-  padding: 9px 10px;
-  border-radius: 3px;
+  height: 48px;
+  min-height: 48px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
   max-width: 155px;
 }
 .filter-count {

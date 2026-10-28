@@ -218,11 +218,17 @@ a.secondary-button {
   position: relative;
   min-width: 0;
 }
+.auth-story > .editorial-image {
+  height: auto;
+}
 .auth-story img {
+  display: block;
   width: 100%;
-  aspect-ratio: 0.84;
-  object-fit: cover;
-  border-radius: 45% 45% 4px 4px;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 18px;
 }
 .auth-story > div {
   padding: 25px 3px;
@@ -1106,8 +1112,7 @@ footer > a:not(.wordmark) {
   }
 }
 
-.hero-photograph > img,
-.auth-story img {
+.hero-photograph > img {
   object-position: right center;
 }
 .hero-photograph::after {

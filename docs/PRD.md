@@ -27,7 +27,7 @@ Phase 1 must deliver the complete journey from product discovery to an AI previe
 | In-app notification counts and enquiry lists | SMS, WhatsApp, email and mobile push notifications |
 | Repeatable demo data and targeted cleanup | Video try on, live camera AR and social sharing |
 
-The purchase call to action is **Request a callback**. It creates a sales enquiry rather than an order. Customers can request a callback without generating or saving a try-on image.
+The preview page purchase call to action is **Buy it**. It opens the existing store callback form and creates a sales enquiry rather than an order. Customers can request a callback without generating or saving a try-on image. Feature010 also specifies compact appearance controls, aligned catalog controls, grouped preview actions and a complete desktop sign-in photograph.
 
 ## 2 Accounts and access
 

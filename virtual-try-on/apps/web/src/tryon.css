@@ -465,27 +465,6 @@
   display: inline-block;
   margin-bottom: 20px;
 }
-.preview-details {
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  padding: 18px 0;
-  display: grid;
-  gap: 15px;
-  margin-bottom: 22px;
-}
-.preview-details dt {
-  font-size: 12px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.preview-details dd {
-  font-size: 12px;
-  line-height: 1.8;
-  color: var(--muted);
-  margin: 5px 0 0;
-  overflow-wrap: anywhere;
-}
 .result-actions {
   display: grid;
   gap: 12px;
@@ -500,6 +479,21 @@
 .result-actions .form-hint {
   font-size: 12px;
   line-height: 1.9;
+}
+.preview-actions .preview-discard {
+  color: var(--danger);
+}
+@media (max-width: 767px) {
+  .result-actions.mobile-preview-actions.result-actions-with-discard {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .result-actions.mobile-preview-actions.result-actions-with-discard > :first-child {
+    grid-column: 1 / -1;
+  }
+  .preview-page:has(.result-actions.mobile-preview-actions.result-actions-with-discard) {
+    padding-bottom: 200px;
+  }
 }
 .preview-actions > .text-button {
   font-size: 12px;
@@ -912,12 +906,6 @@
   }
   .preview-actions h2 {
     font-size: 29px;
-  }
-  .preview-details dt {
-    font-size: 12px;
-  }
-  .preview-details dd {
-    font-size: 12px;
   }
   .preview-privacy {
     font-size: 12px;

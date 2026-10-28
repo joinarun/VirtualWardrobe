@@ -1,10 +1,10 @@
 import { UiIcon } from "../components/UiIcon";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { rupees } from "../catalog-types";
 import { Loading, Notice } from "../components/Common";
 import type { TryOnJob } from "../tryon-types";
-import { dateTime, privatePath, previewFailure } from "../tryon-types";
+import { privatePath, previewFailure } from "../tryon-types";
 import { useJob } from "../use-job";
 import { useRemote } from "../remote";
 import type { Product } from "../catalog-types";
@@ -62,7 +62,21 @@ export function PreviewPage({ id }: { id: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<"cancel" | "discard" | null>(null);
+  const confirmationRef = useRef<HTMLElement>(null);
+  const confirmationTrigger = useRef<HTMLButtonElement | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const ask = (action: "cancel" | "discard", trigger: HTMLButtonElement) => {
+    confirmationTrigger.current = trigger;
+    setConfirm(action);
+  };
+  useEffect(() => {
+    if (confirm) {
+      confirmationRef.current?.focus({ preventScroll: true });
+      confirmationRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+    } else {
+      confirmationTrigger.current?.focus({ preventScroll: true });
+    }
+  }, [confirm]);
   const job = request.job;
   const currentProduct = useRemote<Product>(
     job ? `/products/${job.productId}` : null,
@@ -242,20 +256,12 @@ export function PreviewPage({ id }: { id: string }) {
           <strong className="preview-product-price">
             {rupees(job.product.price)}
           </strong>
-          <dl className="preview-details">
-            <div>
-              <dt>Requested</dt>
-              <dd>{dateTime(job.createdAt)}</dd>
-            </div>
-            {result?.expiresAt && !result.saved && (
-              <div>
-                <dt>Available until</dt>
-                <dd>{dateTime(result.expiresAt)}</dd>
-              </div>
-            )}
-          </dl>
           {result && (
-            <div className="result-actions mobile-preview-actions">
+            <div
+              className={`result-actions${confirm ? "" : " mobile-preview-actions"}${job.canDiscard ? " result-actions-with-discard" : ""}`}
+              role="group"
+              aria-label="Preview actions"
+            >
               {result.saved ? (
                 <a
                   className="primary-button full-width"
@@ -287,6 +293,16 @@ export function PreviewPage({ id }: { id: string }) {
                   <UiIcon kind="down" />
                 </span>
               </a>
+              {job.canDiscard && (
+                <button
+                  type="button"
+                  className="secondary-button full-width preview-discard"
+                  disabled={busy !== null}
+                  onClick={(event) => ask("discard", event.currentTarget)}
+                >
+                  {result.saved ? "Delete this preview" : "Discard this request"}
+                </button>
+              )}
             </div>
           )}
           {result && !result.saved && !result.saving && !job.canSave && (
@@ -301,24 +317,24 @@ export function PreviewPage({ id }: { id: string }) {
               type="button"
               className="secondary-button full-width"
               disabled={busy !== null}
-              onClick={() => setConfirm("cancel")}
+              onClick={(event) => ask("cancel", event.currentTarget)}
             >
               Cancel this request
             </button>
           )}
-          {job.canDiscard && (
+          {!result && job.canDiscard && (
             <button
               type="button"
-              className="text-button danger-text"
+              className="secondary-button full-width preview-discard"
               disabled={busy !== null}
-              onClick={() => setConfirm("discard")}
+              onClick={(event) => ask("discard", event.currentTarget)}
             >
-              {result?.saved ? "Delete this preview" : "Discard this request"}
+              Discard this request
             </button>
           )}
           {confirm && (
-            <section className="preview-confirm">
-              <h3>
+            <section className="preview-confirm" ref={confirmationRef} tabIndex={-1} role="region" aria-labelledby="preview-confirm-title">
+              <h3 id="preview-confirm-title">
                 {confirm === "cancel"
                   ? "Cancel this request?"
                   : "Delete this preview?"}
@@ -369,7 +385,7 @@ export function PreviewPage({ id }: { id: string }) {
               className="secondary-button full-width"
               href={`/callback?product=${job.productId}`}
             >
-              Request a store callback <UiIcon />
+              Buy it <UiIcon />
             </a>
           ) : (
             <p className="form-hint">

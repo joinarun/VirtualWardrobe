@@ -218,13 +218,6 @@ export function CatalogHome() {
             <p className="eyebrow">A COLLECTION TO MAKE YOUR OWN</p>
             <h2>Find your favourite.</h2>
           </div>
-          <p>
-            {products.loading
-              ? "Finding your collection…"
-              : products.data
-                ? `${products.data.total} ${products.data.total === 1 ? "piece" : "pieces"} to discover`
-                : "Independent collections, thoughtfully presented."}
-          </p>
         </div>
         <CatalogSearch
           key={`${queryParameter}:${searchRevision}`}
@@ -243,6 +236,7 @@ export function CatalogHome() {
                 <span>{selectedFilters.length}</span>
               )}
             </summary>
+            <div className="catalog-filter-options">
             {filterError && <Notice>{filterError}</Notice>}
             <label className="field" htmlFor="filter-category">
               <span>Category</span>
@@ -337,32 +331,33 @@ export function CatalogHome() {
             <p className="filter-note">
               Find a piece, explore the details and meet the store behind it.
             </p>
-          </details>
-          <div className="collection-results">
-            <div className="collection-controls">
-              <div className="active-query">
-                {params.get("q") ? (
-                  <>
-                    Results for <strong>“{params.get("q")}”</strong>
-                  </>
-                ) : (
-                  "Made for a second look."
-                )}
-              </div>
-              <label className="sort-label" htmlFor="sort-products">
-                <span>Sort by</span>
-                <select
-                  id="sort-products"
-                  aria-label="Sort by"
-                  value={params.get("sort") || "newest"}
-                  onChange={(event) => update({ sort: event.target.value })}
-                >
-                  <option value="newest">Newest first</option>
-                  <option value="price_asc">Price: low to high</option>
-                  <option value="price_desc">Price: high to low</option>
-                </select>
-              </label>
             </div>
+          </details>
+          <div className="collection-controls">
+            <div className="active-query">
+              {params.get("q") ? (
+                <>
+                  Results for <strong>“{params.get("q")}”</strong>
+                </>
+              ) : (
+                "Made for a second look."
+              )}
+            </div>
+            <label className="sort-label" htmlFor="sort-products">
+              <span>Sort by</span>
+              <select
+                id="sort-products"
+                aria-label="Sort by"
+                value={params.get("sort") || "newest"}
+                onChange={(event) => update({ sort: event.target.value })}
+              >
+                <option value="newest">Newest first</option>
+                <option value="price_asc">Price: low to high</option>
+                <option value="price_desc">Price: high to low</option>
+              </select>
+            </label>
+          </div>
+          <div className="collection-results">
             {selectedFilters.length > 0 && (
               <div className="filter-count">
                 <span>

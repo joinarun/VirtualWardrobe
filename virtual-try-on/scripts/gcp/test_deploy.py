@@ -1,6 +1,7 @@
 """Controlled deployment-contract checks; never build, deploy or contact Google."""
 import importlib.util
 import contextlib
+import copy
 import io
 import json
 from pathlib import Path
@@ -31,6 +32,29 @@ class DeploymentContractTest(unittest.TestCase):
                                   "worker": {"ready_revision": "worker-revision", "image_digest": "digest"}},
                     "hosting_release": {"version": "new-version"}}
         return previous, deployed
+
+    def web_release(self):
+        backend = "a" * 40
+        digest = f"{self.deployment.region}-docker.pkg.dev/{self.deployment.project}/{self.deployment.repo}/backend@sha256:" + "b" * 64
+        runtime = {}
+        for mode, name in (("api", self.deployment.api), ("worker", self.deployment.worker)):
+            runtime[mode] = {"service": name, "ready_revision": name + "-00003-ready",
+                             "image_digest": digest, "url": "https://" + name + "-ynpzfmjw7q-el.a.run.app",
+                             "traffic": [{"revisionName": name + "-00003-ready", "percent": 100, "tag": "fh-old"}]}
+        release = {"name": "sites/virtualwardrobe-511016/channels/live/releases/1",
+                   "version": "sites/virtualwardrobe-511016/versions/old", "release_time": "2026-10-27T20:00:00Z"}
+        inventory = dict(self.deployment.plan(), source_revision=backend,
+                         image=f"{self.deployment.region}-docker.pkg.dev/{self.deployment.project}/{self.deployment.repo}/backend:{backend[:12]}",
+                         runtime=runtime, hosting_release=release, captcha_site_key="public-key",
+                         web_url="https://virtualwardrobe-511016.web.app")
+        state = {"project_id": self.deployment.project, "region": self.deployment.region,
+                 "services": copy.deepcopy(runtime), "hosting_site": "virtualwardrobe-511016",
+                 "hosting_release": copy.deepcopy(release)}
+        return inventory, state
+
+    def git_web_responses(self, *, prepublish: bool = False):
+        responses = [Mock(stdout=b""), Mock(stdout=b"c" * 40), Mock(returncode=0), Mock(returncode=0)]
+        return responses + ([Mock(stdout=b""), Mock(stdout=b"c" * 40)] if prepublish else [])
 
     def test_cloud_build_is_explicit_amd64_runtime_with_scoped_source_and_identity(self):
         with patch.object(self.deployment, "gc") as gc:
@@ -75,6 +99,156 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertEqual(hosting["rewrites"][0], {"source": "/api/**", "run": {"serviceId": "virtualwardrobe-demo-api", "region": "asia-south1", "pinTag": True}})
         self.assertIn("--project", command.call_args.args[0])
         self.assertIn("virtualtryon-511016", command.call_args.args[0])
+
+    def test_web_only_cli_default_is_plan_and_incompatible_options_fail_before_cloud(self):
+        script = str(Path(__file__).with_name("deploy.py"))
+        base = [sys.executable, script, "--project", "virtualtryon-511016", "--web-only"]
+        result = subprocess.run(base, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["release_mode"], "web-only")
+        self.assertNotIn("+ gcloud", result.stdout)
+        for extra in (["--provision-only"], ["--image", "anything"]):
+            result = subprocess.run(base + extra, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertNotIn("+ gcloud", result.stdout)
+
+    def test_web_only_missing_or_unsafe_inventory_fails_without_cloud(self):
+        path = self.deployment.work / "deployment.json"
+        with self.assertRaisesRegex(RuntimeError, "protected deployment inventory"):
+            self.deployment.web_inventory()
+        inventory, _ = self.web_release()
+        path.write_text(json.dumps(inventory)); path.chmod(0o644)
+        with self.assertRaisesRegex(RuntimeError, "owner-only"):
+            self.deployment.web_inventory()
+        path.chmod(0o600)
+        self.assertEqual(self.deployment.web_inventory()["source_revision"], "a" * 40)
+        path.unlink(); path.symlink_to(self.deployment.work / "missing")
+        with self.assertRaisesRegex(RuntimeError, "owner-only"):
+            self.deployment.web_inventory()
+
+    def test_web_only_inventory_rejects_foreign_scope_revision_image_or_missing_captcha(self):
+        inventory, _ = self.web_release()
+        variants = []
+        for field, value in [("project_id", "proofroom-506314"), ("region", "us-central1"),
+                             ("source_revision", "short"), ("backend_source_revision", "short"),
+                             ("image", "gcr.io/other/backend:a"), ("captcha_site_key", "")]:
+            variants.append(dict(inventory, **{field: value}))
+        foreign = copy.deepcopy(inventory); foreign["resources"]["cloud_run_api"] = "stylereel"; variants.append(foreign)
+        for bad in variants:
+            self.deployment.private_json(self.deployment.work / "deployment.json", bad)
+            with self.assertRaises(RuntimeError):
+                self.deployment.web_inventory()
+
+    def test_web_only_dirty_head_or_backend_difference_stops_before_cloud_or_web_build(self):
+        inventory, _ = self.web_release()
+        for responses in ([Mock(stdout=b" M web.ts\n")],
+                          [Mock(stdout=b""), Mock(stdout=b"c" * 40), Mock(returncode=1), Mock(returncode=0)],
+                          [Mock(stdout=b""), Mock(stdout=b"c" * 40), Mock(returncode=0), Mock(returncode=1)]):
+            with patch.object(DEPLOY, "command", side_effect=responses), patch.object(self.deployment, "web_inventory", return_value=inventory), patch.object(self.deployment, "release_state") as state, patch.object(self.deployment, "hosting") as hosting:
+                with self.assertRaises(RuntimeError):
+                    self.deployment.apply_web_only()
+            state.assert_not_called(); hosting.assert_not_called()
+
+    def test_web_only_target_rejects_runtime_or_hosting_drift_and_traffic_split(self):
+        inventory, state = self.web_release()
+        variants = []
+        for mode, field, value in [("api", "ready_revision", self.deployment.api + "-00004-other"),
+                                   ("worker", "image_digest", "foreign@sha256:" + "d" * 64),
+                                   ("api", "url", "https://stylereel.run.app")]:
+            bad = copy.deepcopy(state); bad["services"][mode][field] = value; variants.append(bad)
+        bad = copy.deepcopy(state); bad["hosting_release"]["version"] = "sites/virtualwardrobe-511016/versions/other"; variants.append(bad)
+        bad = copy.deepcopy(state); bad["services"]["api"]["traffic"][0]["percent"] = 99; variants.append(bad)
+        bad = copy.deepcopy(state); bad["project_id"] = "proofroom-506314"; variants.append(bad)
+        for bad in variants:
+            with self.assertRaises(RuntimeError):
+                self.deployment.check_web_target(inventory, bad)
+
+    def test_web_only_target_rejects_missing_or_foreign_recorded_runtime(self):
+        inventory, state = self.web_release()
+        for mode, field, value in [("api", "service", "stylereel"), ("worker", "url", "https://stylereel.run.app"),
+                                   ("api", "image_digest", "foreign@sha256:" + "b" * 64),
+                                   ("worker", "image_digest", state["services"]["worker"]["image_digest"].replace("b" * 64, "d" * 64))]:
+            bad = copy.deepcopy(inventory); bad["runtime"][mode][field] = value
+            with self.assertRaises(RuntimeError):
+                self.deployment.check_web_target(bad, state)
+
+    def test_web_only_captcha_and_missing_site_never_create_cloud_resources(self):
+        with patch.object(self.deployment, "value", return_value="[]") as value:
+            with self.assertRaisesRegex(RuntimeError, "existing reviewed CAPTCHA"):
+                self.deployment.ensure_captcha(required=True)
+        self.assertEqual(value.call_count, 1)
+        self.assertEqual(value.call_args.args[:3], ("recaptcha", "keys", "list"))
+        with patch.object(self.deployment, "api_request", return_value={"sites": []}) as api, patch.object(DEPLOY, "command") as command:
+            with self.assertRaisesRegex(RuntimeError, "existing dedicated Hosting"):
+                self.deployment.hosting("public-key", require_existing=True)
+        self.assertEqual(api.call_count, 1); self.assertEqual(api.call_args.args[0], "GET")
+        command.assert_not_called()
+
+    def test_hosting_rechecks_target_after_web_build_and_before_firebase_publish(self):
+        events = []
+        def command(args, **kwargs): events.append(args[0])
+        def verify(): events.append("verify")
+        with patch.object(self.deployment, "api_request", return_value={"sites": [{"name": "projects/virtualtryon-511016/sites/virtualwardrobe-511016"}]}), patch.object(DEPLOY, "command", side_effect=command):
+            self.deployment.hosting("public-key", require_existing=True, before_publish=verify)
+        self.assertEqual(events, ["npm", "npm", "verify", "npx"])
+        with patch.object(self.deployment, "api_request", return_value={"sites": [{"name": "projects/virtualtryon-511016/sites/virtualwardrobe-511016"}]}), patch.object(DEPLOY, "command") as command:
+            with self.assertRaisesRegex(RuntimeError, "changed"):
+                self.deployment.hosting("public-key", require_existing=True, before_publish=lambda: (_ for _ in ()).throw(RuntimeError("changed")))
+        self.assertEqual(command.call_count, 2)
+
+    def test_web_only_source_edits_or_head_change_during_build_stop_publication(self):
+        inventory, before = self.web_release()
+        for changed in ([Mock(stdout=b" M apps/web/src/App.tsx\n")],
+                        [Mock(stdout=b""), Mock(stdout=b"d" * 40)]):
+            published = []
+            def hosting(key, **kwargs):
+                kwargs["before_publish"]()
+                published.append(True)
+            with patch.object(DEPLOY, "command", side_effect=self.git_web_responses() + changed), patch.object(self.deployment, "web_inventory", return_value=inventory), patch.object(self.deployment, "release_state", return_value=before) as state, patch.object(self.deployment, "ensure_captcha", return_value="public-key"), patch.object(self.deployment, "hosting", side_effect=hosting):
+                with self.assertRaises(RuntimeError):
+                    self.deployment.apply_web_only()
+            self.assertEqual(published, [])
+            self.assertEqual(state.call_count, 1)
+
+    def test_web_only_publishes_assets_and_records_distinct_source_without_backend_mutations(self):
+        inventory, before = self.web_release()
+        after = copy.deepcopy(before)
+        after["hosting_release"] = {"name": "sites/virtualwardrobe-511016/channels/live/releases/2", "version": "sites/virtualwardrobe-511016/versions/new", "release_time": "2026-10-28T00:00:00Z"}
+        after["services"]["api"]["traffic"][0]["tag"] = "fh-new"
+        self.deployment.private_json(self.deployment.work / "deployment.json", inventory)
+        def hosting(key, **kwargs):
+            self.assertEqual(key, "public-key"); self.assertTrue(kwargs["require_existing"])
+            self.assertEqual(len(list((self.deployment.work / "releases").glob("before-web-*.json"))), 1)
+            kwargs["before_publish"]()
+        forbidden = ["prepare", "provision", "build", "deploy_service", "schedule"]
+        with contextlib.ExitStack() as stack:
+            mutations = [stack.enter_context(patch.object(self.deployment, name)) for name in forbidden]
+            cmd = stack.enter_context(patch.object(DEPLOY, "command", side_effect=self.git_web_responses(prepublish=True)))
+            stack.enter_context(patch.object(self.deployment, "release_state", side_effect=[before, before, after]))
+            captcha = stack.enter_context(patch.object(self.deployment, "ensure_captcha", return_value="public-key"))
+            stack.enter_context(patch.object(self.deployment, "hosting", side_effect=hosting))
+            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+            self.deployment.apply_web_only()
+        for mutation in mutations: mutation.assert_not_called()
+        captcha.assert_called_once_with(required=True)
+        self.assertEqual(cmd.call_args_list[3].args[0][-3:], ["services/backend", "infra/backend.gcloudignore", "infra/gcp-demo.json"])
+        self.assertEqual(cmd.call_count, 6)
+        result = json.loads((self.deployment.work / "deployment.json").read_text())
+        self.assertEqual(result["source_revision"], "c" * 40)
+        self.assertEqual(result["frontend_source_revision"], "c" * 40)
+        self.assertEqual(result["backend_source_revision"], "a" * 40)
+        self.assertEqual(result["image"], inventory["image"])
+        self.assertEqual(result["release_mode"], "web-only")
+        self.assertEqual((self.deployment.work / "deployment.json").stat().st_mode & 0o777, 0o600)
+
+    def test_later_web_release_preserves_explicit_backend_source_and_checks_captcha_match(self):
+        inventory, before = self.web_release()
+        inventory.update(source_revision="d" * 40, backend_source_revision="a" * 40)
+        with patch.object(DEPLOY, "command", side_effect=self.git_web_responses()) as command, patch.object(self.deployment, "web_inventory", return_value=inventory), patch.object(self.deployment, "release_state", return_value=before), patch.object(self.deployment, "ensure_captcha", return_value="different-key"), patch.object(self.deployment, "hosting") as hosting:
+            with self.assertRaisesRegex(RuntimeError, "CAPTCHA key differs"):
+                self.deployment.apply_web_only()
+        self.assertEqual(command.call_args.args[0][3], "a" * 40)
+        hosting.assert_not_called()
 
     def test_existing_captcha_with_wrong_domain_or_multiple_names_fails_closed(self):
         key = {"displayName": "virtualwardrobe-demo-signup", "name": "projects/1/keys/public",
