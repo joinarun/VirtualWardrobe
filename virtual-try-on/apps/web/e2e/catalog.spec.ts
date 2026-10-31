@@ -492,6 +492,23 @@ test("real catalog publishing, media validation, logos, gallery, discovery, pagi
   await expect(
     page.getByRole("button", { name: "Save product details", exact: true }),
   ).toBeEnabled();
+  // Saving must release product selection without closing the media editor.
+  const nextProduct = page.getByRole("button", {
+    name: `Edit ${title} Variant 1`,
+    exact: true,
+  });
+  await expect(nextProduct).toBeEnabled();
+  await nextProduct.click();
+  await expect(page.getByLabel("Product title", { exact: true })).toHaveValue(
+    `${title} Variant 1`,
+  );
+  await page.getByLabel("Description", { exact: true }).fill(
+    "Saved through the next product editor without closing the previous one.",
+  );
+  await page.getByRole("button", { name: "Save product details", exact: true }).click();
+  await expect(page.getByRole("button", { name: `Edit ${title}`, exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: `Edit ${title}`, exact: true }).click();
+  await expect(page.getByLabel("Availability", { exact: true })).toHaveValue("UNAVAILABLE");
   await customer.reload();
   await expect(
     customer.getByText(

@@ -27,7 +27,6 @@ import { LogoUploader } from "../components/LogoUploader";
 import { StoreEnquiries } from "./StoreEnquiries";
 import type { EnquiryCounts } from "../enquiry-types";
 import { useVisibleResource } from "../use-visible-resource";
-import { DemoNotice } from "../components/DemoNotice";
 import { ThemeChooser } from "../components/ThemeChooser";
 
 type Tab =
@@ -253,7 +252,6 @@ export function Workspace() {
             View storefront <UiIcon kind="up-right" />
           </a>
         </header>
-        <DemoNotice />
         {auth.error && <Notice>{auth.error}</Notice>}
         {workspaceMessage && <Notice tone="success">{workspaceMessage}</Notice>}
         {new URLSearchParams(window.location.search).get("notice") ===
@@ -673,7 +671,7 @@ function StoreProfile({
             rows={4}
           />
         </label>
-        <div className="two-fields">
+        <div className="two-fields store-profile-contact-status">
           <label className="field" htmlFor="store-contact">
             <span>Contact phone</span>
             <input
@@ -684,8 +682,36 @@ function StoreProfile({
               maxLength={24}
             />
           </label>
-          <label className="field" htmlFor="store-status">
-            <span>Store status</span>
+          <div className="field">
+            <div className="store-status-label">
+              <label htmlFor="store-status">Store status</label>
+              <details
+                className="store-status-help"
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.currentTarget.open = false;
+                    event.currentTarget.querySelector("summary")?.focus();
+                  }
+                }}
+              >
+                <summary
+                  role="button"
+                  aria-label="About store status"
+                  title="About store status"
+                  aria-controls="store-status-explanation"
+                  aria-describedby="store-status-explanation"
+                >
+                  <span aria-hidden="true">i</span>
+                </summary>
+                <div id="store-status-explanation" role="tooltip">
+                  <dl>
+                    <div><dt>Pending</dt><dd>Hidden from customers while you prepare the store. After a store admin accepts their invitation, set Store status to Active and save to publish it.</dd></div>
+                    <div><dt>Active</dt><dd>Visible to customers. Published, available products can receive previews and buying enquiries.</dd></div>
+                    <div><dt>Archived</dt><dd>Hidden from customers and closed to new customer requests. Existing enquiries and history remain available.</dd></div>
+                  </dl>
+                </div>
+              </details>
+            </div>
             <select
               id="store-status"
               value={status}
@@ -697,7 +723,7 @@ function StoreProfile({
               <option value="ACTIVE">Active</option>
               <option value="ARCHIVED">Archived</option>
             </select>
-          </label>
+          </div>
         </div>
         <LogoUploader
           label="Upload store logo"
@@ -868,58 +894,62 @@ function StoreTeam({
         <section className="panel">
           <h3>Edit access for {editing.name}.</h3>
           <form
-            className="inline-form"
+            className="team-access-form"
             onSubmit={(event) => void update(event)}
           >
-            <label className="field" htmlFor="edit-role">
-              <span>Role</span>
-              <select
-                id="edit-role"
-                value={editing.role}
-                onChange={(event) =>
-                  setEditing({
-                    ...editing,
-                    role: event.target.value as MembershipRole,
-                  })
-                }
+            <div className="two-fields">
+              <label className="field" htmlFor="edit-role">
+                <span>Role</span>
+                <select
+                  id="edit-role"
+                  value={editing.role}
+                  onChange={(event) =>
+                    setEditing({
+                      ...editing,
+                      role: event.target.value as MembershipRole,
+                    })
+                  }
+                >
+                  <option value="STAFF">Staff</option>
+                  <option value="STORE_ADMIN">Store admin</option>
+                </select>
+              </label>
+              <label className="field" htmlFor="edit-membership-state">
+                <span>Membership state</span>
+                <select
+                  id="edit-membership-state"
+                  value={editing.state}
+                  onChange={(event) =>
+                    setEditing({
+                      ...editing,
+                      state: event.target.value as Member["state"],
+                    })
+                  }
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INVITED">Invited</option>
+                </select>
+                <small className="form-hint">
+                  An invitation must still be accepted by the recipient.
+                </small>
+              </label>
+            </div>
+            <div className="button-row">
+              <button
+                className="secondary-button"
+                type="submit"
+                disabled={busy !== null}
               >
-                <option value="STAFF">Staff</option>
-                <option value="STORE_ADMIN">Store admin</option>
-              </select>
-            </label>
-            <label className="field" htmlFor="edit-membership-state">
-              <span>Membership state</span>
-              <select
-                id="edit-membership-state"
-                value={editing.state}
-                onChange={(event) =>
-                  setEditing({
-                    ...editing,
-                    state: event.target.value as Member["state"],
-                  })
-                }
+                Save access
+              </button>
+              <button
+                className="text-button"
+                type="button"
+                onClick={() => setEditing(null)}
               >
-                <option value="ACTIVE">Active</option>
-                <option value="INVITED">Invited</option>
-              </select>
-              <small className="form-hint">
-                An invitation must still be accepted by the recipient.
-              </small>
-            </label>
-            <button
-              className="secondary-button"
-              type="submit"
-              disabled={busy !== null}
-            >
-              Save access
-            </button>
-            <button
-              className="text-button"
-              type="button"
-              onClick={() => setEditing(null)}
-            >
-              Cancel
-            </button>
+                Cancel
+              </button>
+            </div>
           </form>
         </section>
       )}

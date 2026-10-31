@@ -182,3 +182,7 @@ Provide seed and cleanup commands. Seeding must be repeatable, require no retail
 | A12 | A deployed smoke test verifies real provider access, private-worker authorization, private media, quotas, restore instructions and the customer-to-store journey. |
 
 Track discovery-to-try-on rate, generation success rate, preview-save rate, callback-request rate, time to first staff action and AI cost per accepted result. Do not send personal photos or enquiry text to analytics.
+
+### Owner workspace issue follow-up 2026-10-31
+
+Feature012 removes the long fictional-demo/evaluation/fit-disclaimer banner from all screens, including workforce. Internal operator evaluation evidence and small Sample labels on seeded previews remain. Membership edit controls align, Store status has accessible explanatory help reflecting current manual activation, and a clean successful product save permits selecting another product while unsaved and in-flight edits stay guarded. No provider or activation workflow changes are implied.

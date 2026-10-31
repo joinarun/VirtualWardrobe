@@ -1,5 +1,5 @@
 import { UiIcon } from "../components/UiIcon";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, errorMessage } from "../api";
 import { categoryOptions, rupees } from "../catalog-types";
@@ -49,6 +49,7 @@ export function ProductAdmin({ store }: { store: Store }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [editing, setEditing] = useState<Product | "new" | null>(null);
+  const [editorBlocked, setEditorBlocked] = useState(false);
   const [archiving, setArchiving] = useState<Product | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +62,7 @@ export function ProductAdmin({ store }: { store: Store }) {
     revision,
   );
   const products = checkedItems(request.data);
+  const switchingBlocked = busy || (editing !== null && editorBlocked);
   const archive = async () => {
     if (!archiving) return;
     setBusy(true);
@@ -91,8 +93,9 @@ export function ProductAdmin({ store }: { store: Store }) {
         <button
           className="primary-button"
           type="button"
-          disabled={editing !== null}
+          disabled={switchingBlocked || editing === "new"}
           onClick={() => {
+            setEditorBlocked(true);
             setEditing("new");
             setMessage(null);
           }}
@@ -115,6 +118,7 @@ export function ProductAdmin({ store }: { store: Store }) {
           initial={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
           onChanged={() => setRevision((value) => value + 1)}
+          onBlockedChange={setEditorBlocked}
         />
       )}
       {archiving && (
@@ -263,8 +267,9 @@ export function ProductAdmin({ store }: { store: Store }) {
                           <button
                             className="text-button"
                             type="button"
-                            disabled={editing !== null}
+                            disabled={switchingBlocked || (editing !== "new" && editing?.id === product.id)}
                             onClick={() => {
+                              setEditorBlocked(true);
                               setEditing(product);
                               setMessage(null);
                             }}
@@ -341,11 +346,13 @@ function ProductEditor({
   initial,
   onClose,
   onChanged,
+  onBlockedChange,
 }: {
   store: Store;
   initial: Product | null;
   onClose: () => void;
   onChanged: () => void;
+  onBlockedChange: (blocked: boolean) => void;
 }) {
   const [product, setProduct] = useState<Product | null>(initial);
   const [form, setForm] = useState<ProductForm>(formOf(initial));
@@ -373,6 +380,9 @@ function ProductEditor({
     value: ProductForm[K],
   ) => setForm((previous) => ({ ...previous, [field]: value }));
   const dirty = JSON.stringify(form) !== JSON.stringify(formOf(product));
+  useEffect(() => {
+    onBlockedChange(dirty || busy !== null);
+  }, [dirty, busy, onBlockedChange]);
   const save = async (event: FormEvent) => {
     event.preventDefault();
     setBusy("save");

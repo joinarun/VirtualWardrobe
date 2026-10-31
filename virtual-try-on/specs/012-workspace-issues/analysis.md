@@ -1,0 +1,3 @@
+# Pre-implementation analysis
+
+All four source document issues have implementation and acceptance tasks. FR001–003→T002/T004/T006;FR004→T003/T004;FR005→T005/T006/T007. SC001/002→T004,SC003→T005/T006,SC004→T006. Three user stories covered. No CRITICAL/HIGH conflict or unresolved clarification; no custom checklist/extension hooks. Current banner is workforce-only DemoNotice, so removal is isolated. Original product bug is parent editing!==null permanently disabling other Edit controls even after child save. Media workflow requires retaining the editor while using its dirty/busy state to permit safe switching.

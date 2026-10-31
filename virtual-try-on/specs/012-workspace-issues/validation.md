@@ -1,0 +1,21 @@
+# Workspace issue validation
+
+Status: local implementation and focused verification complete. GitHub CI and actual frontend publication are pending.
+
+Read-only source document extraction covered all paragraphs and both embedded screenshots. The four owner-authorized issues are fully mapped in spec/plan/analysis; original DOCX and its screenshots remain outside Git. No other scope or hidden instructions were adopted.
+
+## Product switching
+
+Original1280px fixture reproduced the defect after a successful PATCH: Edit Second owned saree remained disabled. ProductAdmin previously disabled every Edit action while editing was non-null; child save updated data but left that parent condition unchanged. The child now reports dirty/busy state through a stable state setter, allowing clean editors to switch products. Selecting the same current product stays disabled, avoiding redundant same-key state changes. Draft creation retains its media editor, dirty forms and active requests retain protection, failures retain input, and explicit Close/Keep behavior remains.
+
+Final focused Chromium3/3(7.9s) and WebKit3/3(3.4s) pass across360/1280, with a held save, sequential selection, failed save, unsaved-close/Keep and new-draft media flow. Added1280 WCAG scan has zero violations. The existing real catalog journey now saves a second product and returns to the first without Close; this must pass required CI. Root independently reviewed ProductAdmin changes and owned-fixture product screenshot. Source scope16lines plus focused tests/real journey extension. No backend/API change.
+
+## Membership and status help
+
+Original fixture confirmed Role/Membership-state select top edges differed36.39px at768px due to the old flex align-items:end including the helper paragraph. New scoped two-column top-aligned fields place actions below. Store-status help is a native44px disclosure button with keyboard/click/touch support and Escape focus restoration. It explains current manual activation, public visibility and archival truthfully. The global DemoNotice component/import/render and its failed-loading fallback are removed; internal diagnostics and small Sample labels remain. Root inspected1280 membership and360 status help screenshots. Final Chromium3/3(5.6s) and WebKit3/3(6.1s) pass, zero skips, across360/768/1280 for membership and360/1280 for status help. Tests use actual touch tap at360, keyboard Enter/Escape and focus return, click toggling and Pearl/Sage/Midnight automated WCAG scans with zero violations. WebKit initially exposed26px native selects; explicit48px scoped height corrected the real tap-target issue. WebKit document scrollWidth rounds to361 at viewport360 with help both closed and open; all actual visible elements and popup bounds fit within the viewport. Tests apply the existing1px paint-rounding tolerance plus strict element bounds, without hiding CSS overflow.
+
+## Source and release gates
+
+Root independently ran55 operator tests: PASS2.1s. Product type/21 hosted guards/lint/build passed. Initial working-source/history scan reported zero protected credential/token/key matches, including fresh and historical credentials. Fresh read-only GCP preflight PASS6/6; no deployment yet. Private baseline work/gcp/012-before-preservation.json:22 account rows/8 enabled/4 stores/34 products/10 jobs/7 Google starts/0 saved/146 objects/USD1.75 committed, no active work/reserved spend. Existing frontend6baf223/backendc2d/API00003-s7f/worker00004-745/Hosting2a16e0a1ddf14fe6/CAPTCHA/StyleReel match inventory. Preserve user-created Pothys data; old pre-reset fixtures are revoked and must not be reused.
+
+Final source review found no unresolved code findings. The full required browser suite lists52 cases, including six new focused cases and the extended real catalog sequence. No test was skipped to claim success. Original banner text has no remaining rendered component; dead CSS does not render a banner. Source/backend/config scope remains frontend-only.

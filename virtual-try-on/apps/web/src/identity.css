@@ -756,6 +756,71 @@ a.secondary-button {
   flex: 1;
   margin-top: 10px;
 }
+/* Keep access fields aligned even when one has an invitation hint. */
+.team-access-form > .two-fields {
+  align-items: start;
+  gap: 17px;
+}
+.team-access-form .field {
+  margin: 0;
+}
+.team-access-form select,
+.store-profile-contact-status select { height: 48px; min-height: 48px; }
+.team-access-form > .button-row {
+  margin-top: 18px;
+}
+.store-profile-contact-status > .field > span:first-child,
+.store-status-label {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.store-status-label {
+  justify-content: space-between;
+  gap: 8px;
+}
+.store-status-help {
+  position: relative;
+  flex-shrink: 0;
+}
+.store-status-help > summary {
+  display: grid;
+  place-items: center;
+  list-style: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 16px;
+  cursor: pointer;
+}
+.store-status-help > summary::-webkit-details-marker { display: none; }
+.store-status-help > summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.store-status-help [role="tooltip"] {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: min(340px, calc(100vw - 68px));
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  line-height: 1.65;
+  font-weight: 400;
+}
+.store-status-help dl { margin: 0; }
+.store-status-help dl > div + div { margin-top: 12px; }
+.store-status-help dt { font-weight: 700; }
+.store-status-help dd { margin: 3px 0 0; }
 .confirm-panel > p {
   font-size: 12px;
   color: var(--muted);

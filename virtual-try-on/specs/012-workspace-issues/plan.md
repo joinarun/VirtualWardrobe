@@ -1,0 +1,11 @@
+# Implementation plan
+
+Consulted constitution2.0.0 and parent PRD/architecture. PASS: existing React/TypeScript frontend, scoped server authorization unchanged; truthful internal evaluation and small Sample labels retained. Explicit owner request approves removing global/staff banner. No new infrastructure, schema or protocol. Existing roles, invitations, manual activation, image privacy and cost/retention controls remain.
+
+Ownership: workspace agent owns Workspace.tsx, identity.css, dead DemoNotice component and new workspace fixture tests. Product agent owns ProductAdmin.tsx, any product-specific CSS and regression tests. Root owns specs/parent-doc clarification, review/CI/Git/main. Release agent owns ignored read-only preservation evidence and exact-SHA existing frontend-only deployment after root GO; no tracked operator changes expected.
+
+Design: top-align membership fields in scoped layout so helper text stays below row. Native accessible status popover/help, never hover-only. Delete unused banner component/render. Keep product editor available for media, but expose dirty/busy switching gate to parent; clean save allows another product; dirty/failed/in-flight edits keep guards. Do not drop editor on draft creation before media can be attached. Guard late async callbacks after editor switch/store/auth navigation.
+
+Failures/ownership: existing backend permissions are authoritative. Product failures preserve dirty form and permit retry/cancel; successful save clears gate even if list refreshes. Tests use explicit controlled local UI fixtures and existing disposable CI data; no actual cloud product changes, uploads or account reset. Actual hosted screenshots must mask all contacts/private fields and all private images; raw credentials/receipts remain ignored600 files.
+
+Validation: focused Chromium+WebKit regression; WCAG A/AA across supported themes/viewport; npm test/lint/build,55 operator checks, full required GitHub CI. Release clean exactHEAD via deploy.py --project virtualtryon-511016 --web-only --apply, preserving recorded backendc2d. Read-only fresh before/after counts and credential/journal hashes; do not compare against pre-reset14-user or old7-job baseline. Verify deployed asset hashes and read-only workspace behavior. Publish main after gates, final docs-only evidence does not require app redeploy.
