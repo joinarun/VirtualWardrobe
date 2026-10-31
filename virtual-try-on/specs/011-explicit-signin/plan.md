@@ -1,0 +1,7 @@
+# Plan
+
+Constitution2.0.0 check: one shared backend, private media, password+CSRF, role scope and mobile persistence retained. Owner explicitly authorizes deletion/replacement of previous accounts including bootstrap; replacement super admin and store admins created in the same transaction, preserving final-admin invariants. Historical FK/audit stubs remain anonymized/disabled, not active accounts. Catalog and provider-spend history remain. No schema change.
+
+Frontend AuthPage clarifies application credentials and validates customer phone. Existing backend already rejects Google/email-only/passwordless authentication. Restricted plan-only-by-default GCP operator uses existing keyless ADC, exact project, protected local credentials and one bounded SQL transaction. Refuse active jobs/unsettled spend; revoke sessions/recovery, anonymize accounts/enquiry contacts, revoke memberships, remove private media access and enqueue normal deletion; create exactly four identities. Preserve audit/accounting/catalog. On failure rollback; credential output persists before mutation for recovery. Operator refuses reapplication after a successful receipt.
+
+Checks: TypeScript/lint/build/guards, focused browser test no automatic POST and customer email rejection, operator plan/syntax/Java compilation, actual hosted all four roles/password rejection/old sessions + account inventory. Frontend-only Hosting release retains backend revision. Commit clean source before apply; credentials only ignored/private outputs. No new paid generation.

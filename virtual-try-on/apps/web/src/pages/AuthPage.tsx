@@ -46,6 +46,10 @@ export function AuthPage({
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
+    if (mode === "login" && !workforce && !/^\+?[0-9][0-9 ()-]{6,23}$/.test(identifier.trim())) {
+      setError("Use your mobile number and VirtualWardrobe password to sign in.");
+      return;
+    }
     setBusy(true);
     try {
       if (mode !== "login") {
@@ -262,8 +266,8 @@ export function AuthPage({
             : mode === "recover"
               ? "Use an unused recovery code saved when you created your account."
               : workforce
-                ? "Use the email address provided by your store administrator."
-                : "Use your mobile number and password to continue."}
+                ? "Use your store-issued VirtualWardrobe email and password."
+                : "Sign in with your VirtualWardrobe mobile number and password."}
         </p>
         {auth.error && (
           <Notice>
