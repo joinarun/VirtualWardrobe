@@ -92,6 +92,13 @@ test("store status help explains all states and supports keyboard and touch", as
   for (const width of [360, 1280]) {
     await page.setViewportSize({ width, height: 1100 });
     await page.getByRole("button", { name: "Store profile", exact: true }).click();
+    // The help label must not make the exact store-status control ambiguous.
+    const status = page.getByLabel("Store status", { exact: true });
+    await expect(status).toHaveCount(1);
+    await status.selectOption("PENDING");
+    await expect(status).toHaveValue("PENDING");
+    await status.selectOption("ACTIVE");
+    await expect(status).toHaveValue("ACTIVE");
     const help = page.getByRole("button", { name: "About store status", exact: true });
     await expect(help).toBeVisible();
     const bounds = await help.boundingBox(); expect(bounds!.height).toBeGreaterThanOrEqual(44); expect(bounds!.width).toBeGreaterThanOrEqual(44);

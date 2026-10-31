@@ -1,6 +1,6 @@
 # Workspace issue validation
 
-Status: local implementation and focused verification complete. GitHub CI and actual frontend publication are pending.
+Status: frontend published and actual hosted/preservation checks passed. Full GitHub regression CI and main promotion remain pending.
 
 Read-only source document extraction covered all paragraphs and both embedded screenshots. The four owner-authorized issues are fully mapped in spec/plan/analysis; original DOCX and its screenshots remain outside Git. No other scope or hidden instructions were adopted.
 
@@ -19,3 +19,17 @@ Original fixture confirmed Role/Membership-state select top edges differed36.39p
 Root independently ran55 operator tests: PASS2.1s. Product type/21 hosted guards/lint/build passed. Initial working-source/history scan reported zero protected credential/token/key matches, including fresh and historical credentials. Fresh read-only GCP preflight PASS6/6; no deployment yet. Private baseline work/gcp/012-before-preservation.json:22 account rows/8 enabled/4 stores/34 products/10 jobs/7 Google starts/0 saved/146 objects/USD1.75 committed, no active work/reserved spend. Existing frontend6baf223/backendc2d/API00003-s7f/worker00004-745/Hosting2a16e0a1ddf14fe6/CAPTCHA/StyleReel match inventory. Preserve user-created Pothys data; old pre-reset fixtures are revoked and must not be reused.
 
 Final source review found no unresolved code findings. The full required browser suite lists52 cases, including six new focused cases and the extended real catalog sequence. No test was skipped to claim success. Original banner text has no remaining rendered component; dead CSS does not render a banner. Source/backend/config scope remains frontend-only.
+
+## Actual publication and hosted checks
+
+Reviewed application source e766a2a06c1c72d96aa8cbf8eb2e96b9c0e74371 was committed clean and pushed to feat/12-workspace-issues. Source/history scan passed:688 reachable blobs/432 working files/55 protected values, zero matches. Backend/config source is unchanged fromc2d7549. Existing frontend-only deploy succeeded; Hosting versione1f09ec0f3a6614a released2026-10-31T17:52:21.338Z at https://virtualwardrobe-511016.web.app. Backendc2d/APIvirtualwardrobe-demo-api-00003-s7f/workervirtualwardrobe-demo-worker-00004-745 retain the same immutable image/schema11. No backend/SQL/Scheduler/infra/model change or account reset.
+
+Fresh before/after preservation PASS10/10:22 account rows/8 enabled/4 stores/34 products/10 jobs/7 Google provider starts/0 saved/146 objects/USD1.75 committed remain unchanged,0 active/reserved work. Existing credential JSON/TXT and canonical paid journal are byte-identical; StyleReel remains unchanged. This is the current post-reset/user-created-data baseline, not a stale seed expectation. Protected receipts work/gcp/012-deployment.json and012-after-preservation.json remain ignored.
+
+Actual hosted source check used the existing fresh super-admin account with genuine UI sign-in and auth-only mutations. HTML/JS/CSS hashes match final local build. At360/767/1280: membership fields and native controls fit; desktop labels/selects align; Store status help exposes all3 descriptions, Enter opens, Escape closes/restores focus, banner absent and no overflow. All3 actual WCAG scans have zero violations. Existing clean product editor switches from one real product to another without submitting any product mutation; sequential save/dirty/failure behavior uses explicit local fixtures and the real disposable CI journey above. Genuine logout204 restores an anonymous session. Zero JavaScript errors, blocked mutations, new jobs or uploads. No private image/contact screenshot was exported. Private receipt work/gcp/012-hosted-ui-receipt.json.
+
+Required GitHub run41226594209 is in progress: https://github.com/joinarun/VirtualWardrobe/actions/runs/41226594209 . Main promotion is pending this gate. Physical-device and new live-generation tests are not claimed for these four presentation/editor issues.
+
+## Initial full CI result and test selector repair
+
+Initial CI41226594209 ran all52 browser cases:51 passed, sole failure in existing identity.spec.ts workforce journey at Store status selection. The old non-exact getByLabel("Store status") now matches both the correctly labelled select and the new About store status help button. This is a test-locator ambiguity, not a failed save/activation or published application error; actual live dropdown/help checks passed. Two legacy selection locators are being made exact; the focused help test will also explicitly exercise status selection with the help control present. All business assertions and backend boundaries are retained. The published application remains e766; this repair changes tests only and needs no frontend or backend redeployment. A new full CI run is required before main promotion. Initial failure evidence is preserved privately in work/gcp/012-ci-initial-failed.log.

@@ -251,7 +251,7 @@ test("workforce rotation, invitations, final-admin errors and staff boundaries u
   await page
     .getByRole("button", { name: "Store profile", exact: true })
     .click();
-  await page.getByLabel("Store status").selectOption("ACTIVE");
+  await page.getByLabel("Store status", { exact: true }).selectOption("ACTIVE");
   await saveStoreProfile(page);
   await page.getByRole("button", { name: "Store team", exact: true }).click();
   const adminRow = page.getByRole("row").filter({ hasText: operator.email });
@@ -341,7 +341,7 @@ test("workforce rotation, invitations, final-admin errors and staff boundaries u
   await page
     .getByRole("button", { name: "Store profile", exact: true })
     .click();
-  await page.getByLabel("Store status").selectOption("ARCHIVED");
+  await page.getByLabel("Store status", { exact: true }).selectOption("ARCHIVED");
   await saveStoreProfile(page);
 });
 
