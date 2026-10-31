@@ -4,4 +4,4 @@
 - [X] T002 Clarify and test explicit app credentials without breaking valid mobile sessions.
 - [X] T003 Implement guarded operator and private credential export.
 - [X] T004 Verify source, commit, deploy frontend and replace old accounts with four new identities.
-- [ ] T005 Verify live role/password/session boundaries, publish private text file and push GitHub; record evidence.
+- [X] T005 Verify live role/password/session boundaries, publish private text file and push GitHub; record evidence.
