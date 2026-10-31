@@ -1,6 +1,6 @@
 # Workspace issue validation
 
-Status: frontend published and actual hosted/preservation checks passed. Full GitHub regression CI and main promotion remain pending.
+Status: frontend published, hosted/preservation checks passed, corrected full CI passed. Main promotion is the remaining final step.
 
 Read-only source document extraction covered all paragraphs and both embedded screenshots. The four owner-authorized issues are fully mapped in spec/plan/analysis; original DOCX and its screenshots remain outside Git. No other scope or hidden instructions were adopted.
 
@@ -32,4 +32,10 @@ Required GitHub run41226594209 is in progress: https://github.com/joinarun/Virtu
 
 ## Initial full CI result and test selector repair
 
-Initial CI41226594209 ran all52 browser cases:51 passed, sole failure in existing identity.spec.ts workforce journey at Store status selection. The old non-exact getByLabel("Store status") now matches both the correctly labelled select and the new About store status help button. This is a test-locator ambiguity, not a failed save/activation or published application error; actual live dropdown/help checks passed. Two legacy selection locators are being made exact; the focused help test will also explicitly exercise status selection with the help control present. All business assertions and backend boundaries are retained. The published application remains e766; this repair changes tests only and needs no frontend or backend redeployment. A new full CI run is required before main promotion. Initial failure evidence is preserved privately in work/gcp/012-ci-initial-failed.log.
+Initial CI41226594209 ran all52 browser cases:51 passed, sole failure in existing identity.spec.ts workforce journey at Store status selection. The old non-exact getByLabel("Store status") now matches both the correctly labelled select and the new About store status help button. This is a test-locator ambiguity, not a failed save/activation or published application error; actual live dropdown/help checks passed. Both legacy selection locators now use exact matching; the focused help test explicitly selects Pending then Active with the help control present. Targeted3/3Chromium(6.0s) and3/3WebKit(6.4s) passed without skipped cases. All business assertions and backend boundaries are retained. The published application remains e766; this repair changes tests only and needs no frontend or backend redeployment. A new full CI run is required before main promotion. Initial failure evidence is preserved privately in work/gcp/012-ci-initial-failed.log.
+
+The test-only repair and hosted evidence are committed as7ada5637eaa3264e32c526a66e703246f69bc543. Corrected required CI41227603397 is running: https://github.com/joinarun/VirtualWardrobe/actions/runs/41227603397 . All application source/public assets/manifests/index files are byte-identical to deployed e766, so no additional cloud publication was needed for the test-locator correction.
+
+Corrected required CI41227603397 PASSED in9m11s on7ada5637eaa3264e32c526a66e703246f69bc543. All52 required browser cases pass, including the real sequential second-product save and workforce activation/invitation/permission journey. No business assertion was weakened, no case skipped. The application files deployed ase766 are unchanged by this test-only correction; final evidence commits change documentation/task status only.
+
+Convergence review checked all5 requirements,4 buildable success criteria,3 stories and the plan against scoped current code and constitution2.0.0. No missing/partial/contradictory/unrequested implementation gaps, no new convergence tasks or empty header, and no extension hooks. Original source DOCX remains unchanged and private.
